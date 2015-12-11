@@ -29,15 +29,16 @@ struct Model_Space;
 struct Channels;
 struct CCD;
 struct CC_Matrix_Elements;
+struct CC_Eff;
 
 int Index(const std::vector<std::vector<int> > &vec1, const std::vector<std::vector<int> > &vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s);
 int Index2(const std::vector<int> &vec1, const std::vector<std::vector<int> > &vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s);
-//Channels HO_Setup_Channels(const Model_Space &Space);
+Channels HO_Setup_Channels(const Model_Space &Space);
 Channels CART_Setup_Channels(const Model_Space &Space);
 Input_Parameters Get_Input_Parameters(std::string &infile);
-//Model_Space Build_Model_Space(const Input_Parameters &Parameters);
+Model_Space Build_Model_Space(const Input_Parameters &Parameters);
 Model_Space CART_Build_Model_Space(const Input_Parameters &Parameters);
-//CC_Matrix_Elements Read_Matrix_Elements(const std::string &MEfile, const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan);
+CC_Matrix_Elements Read_Matrix_Elements(const std::string &MEfile, const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan);
 CCD Perform_CCD(const Model_Space &Space, const Input_Parameters &Parameters, CC_Matrix_Elements &CCME, const Channels &Chan);
 void HF(const Input_Parameters &Parameters, Model_Space &Space, const Channels &Chan, const CC_Matrix_Elements &ME);
 double E_Ref(const Input_Parameters &Parameters, Model_Space &Space, const Channels &Chan, const CC_Matrix_Elements &ME);
@@ -48,9 +49,11 @@ int spinExchangeMtxEle(const int &i, const int &j, const int &k, const int &l);
 CC_Matrix_Elements Minnesota_Matrix_Elements(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan);
 int CART_tbInd1(const Model_Space &Space, const int &Nx, const int &Ny, const int &Nz, const double &M, const double &T);
 int CART_tbInd2(const Model_Space &Space, const int &Nx2, const int &Ny2, const int &Nz2, const double &M2, const double &T2);
-//int HO_tbInd1(const Model_Space &Space, const double &P, const double &M, const double &T);
-//int HO_tbInd2(const Model_Space &Space, const double &P2, const double &M2, const double &T2);
+int HO_tbInd1(const Model_Space &Space, const double &P, const double &M, const double &T);
+int HO_tbInd2(const Model_Space &Space, const double &P2, const double &M2, const double &T2);
 void Print_Parameters(const Input_Parameters &Parameters);
+CC_Eff Build_CC_Eff(const Model_Space &Space, const Input_Parameters &Parameters, CC_Matrix_Elements &CCME, CCD &CC, const Channels &Chan);
+
 
 //Structure for holding Input parameters
 struct Input_Parameters{
@@ -80,35 +83,31 @@ struct Model_Space{
   //for HO
   std::vector<int> levelsn; //list of single particle state principal quantum numbers
   std::vector<int> levelsl; //list of single particle state orbital angular momentum
+  int Pmin;
+  int HO_tb1Indsize;
+  std::vector<int> HO_tb1Indvec;
+  int P2min;
+  int HO_tb2Indsize;
+  std::vector<int> HO_tb2Indvec;
+  
   //for CART
   std::vector<int> levelsnx; //list of single particle state x-momeuntum quantum number
-  std::vector<int> levelsny; //list of single particle state x-momeuntum quantum number
-  std::vector<int> levelsnz; //list of single particle state x-momeuntum quantum number
-
+  std::vector<int> levelsny; //list of single particle state y-momeuntum quantum number
+  std::vector<int> levelsnz; //list of single particle state z-momeuntum quantum number
   int nmax;
   int Nxmin;
-  int tb1Indsize;
+  int CART_tb1Indsize;
   std::vector<int> Nymin;
   std::vector<std::vector<int> > Nzmin;
-  std::vector<std::vector<std::vector<int> > > tb1Indvec;
+  std::vector<std::vector<std::vector<int> > > CART_tb1Indvec;
   int Nx2min;
-  int tb2Indsize;
+  int CART_tb2Indsize;
   std::vector<int> Ny2min;
   std::vector<std::vector<int> > Nz2min;
-  std::vector<std::vector<std::vector<int> > > tb2Indvec;
+  std::vector<std::vector<std::vector<int> > > CART_tb2Indvec;
 
-  //int Nxmin, Nxmax, Nxsize;
-  //int Nymin, Nymax, Nysize;
-  //int Nzmin, Nzmax, Nzsize;
-  int Mmin, Mmax, Msize;
-  int Tmin, Tmax, Tsize;
-  int Pmin, Pmax, Psize;
-  //int Nx2min, Nx2max, Nx2size;
-  //int Ny2min, Ny2max, Ny2size;
-  //int Nz2min, Nz2max, Nz2size;
-  int M2min, M2max, M2size;
-  int T2min, T2max, T2size;
-  int P2min, P2max, P2size;
+  int Mmin, Msize, M2min, M2size;
+  int Tmin, Tsize, T2min, T2size;
 };
 
 //Structure for holding channel information
@@ -173,6 +172,15 @@ struct CC_Matrix_Elements{
   std::vector<std::vector<double> > HHPP4;
   std::vector<std::vector<double> > HHPP4T;
   CC_Matrix_Elements(Channels);
+};
+
+struct CC_Eff{
+  std::vector<std::vector<double> > V1;
+  std::vector<std::vector<double> > V2;
+  std::vector<std::vector<double> > V3;
+  std::vector<std::vector<double> > V4;
+  std::vector<std::vector<double> > V5;
+  CC_Eff(Channels);
 };
 
 #endif

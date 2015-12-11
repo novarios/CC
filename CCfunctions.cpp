@@ -4,52 +4,44 @@
 int Index(const std::vector<int> &vec1, const std::vector<int> &vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s)
 {
   int ind1, ind2;
-  for(int i = 0; i < num1; ++i)
-    {
-      if(vec1[2*i] == p && vec1[2*i + 1] == q){ ind1 = i; break; }
-      else if(i == num1 - 1)
-	{
-	  for(int j = 0; j < num1; ++j){ std::cout << vec1[2*j] << "," << vec1[2*j + 1] << " "; }
-	  std::cout << std::endl;
-	  std::cerr << "Index for " << p << " " << q << ", not Found" << std::endl; exit(1);
-	}
+  for(int i = 0; i < num1; ++i){
+    if(vec1[2*i] == p && vec1[2*i + 1] == q){ ind1 = i; break; }
+    else if(i == num1 - 1){
+      for(int j = 0; j < num1; ++j){ std::cout << vec1[2*j] << "," << vec1[2*j + 1] << " "; }
+      std::cout << std::endl;
+      std::cerr << "Index for " << p << " " << q << ", not Found" << std::endl; exit(1);
     }
-  for(int i = 0; i < num2; ++i)
-    {
-      if(vec2[2*i] == r && vec2[2*i + 1] == s){ ind2 = i; break; }
-      else if(i == num2 - 1)
-	{
-	  for(int j = 0; j < num2; ++j){ std::cout << vec2[2*j] << "," << vec2[2*j + 1] << " "; }
-	  std::cout << std::endl;
-	  std::cerr << "Index for " << r << " " << s << ", not Found" << std::endl; exit(1);
-	}
+  }
+  for(int i = 0; i < num2; ++i){
+    if(vec2[2*i] == r && vec2[2*i + 1] == s){ ind2 = i; break; }
+    else if(i == num2 - 1){
+      for(int j = 0; j < num2; ++j){ std::cout << vec2[2*j] << "," << vec2[2*j + 1] << " "; }
+      std::cout << std::endl;
+      std::cerr << "Index for " << r << " " << s << ", not Found" << std::endl; exit(1);
     }
+  }
   return ind1*num2 + ind2;  
 }
 
 int Index2(const std::vector<int> &vec1, const std::vector<int> &vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s)
 {
   int ind1, ind2;
-  for(int i = 0; i < num1; ++i)
-    {
-      if(vec1[i] == p){ ind1 = i; break; }
-      else if(i == num1 - 1)
-	{ 
-	  for(int j = 0; j < num1; ++j){ std::cout << vec1[j] << " "; }
-	  std::cout << std::endl;
-	  std::cerr << "Index2 for " << p << ", not Found" << std::endl; exit(1);
-	}
+  for(int i = 0; i < num1; ++i){
+    if(vec1[i] == p){ ind1 = i; break; }
+    else if(i == num1 - 1){ 
+      for(int j = 0; j < num1; ++j){ std::cout << vec1[j] << " "; }
+      std::cout << std::endl;
+      std::cerr << "Index2 for " << p << ", not Found" << std::endl; exit(1);
     }
-  for(int i = 0; i < num2; ++i)
-    {
-      if(vec2[3*i] == q && vec2[3*i + 1] == r && vec2[3*i + 2] == s){ ind2 = i; break; }
-      else if(i == num2 - 1)
-	{ 
-	  for(int j = 0; j < num2; ++j){ std::cout << vec2[3*j] << "," << vec2[3*j + 1] << "," << vec2[3*j + 2] << " "; }
-	  std::cout << std::endl;
-	  std::cerr << "Index2 for " << q << " " << r << " " << s << ", not Found" << std::endl; exit(1);
-	}
+  }
+  for(int i = 0; i < num2; ++i){
+    if(vec2[3*i] == q && vec2[3*i + 1] == r && vec2[3*i + 2] == s){ ind2 = i; break; }
+    else if(i == num2 - 1){ 
+      for(int j = 0; j < num2; ++j){ std::cout << vec2[3*j] << "," << vec2[3*j + 1] << "," << vec2[3*j + 2] << " "; }
+      std::cout << std::endl;
+      std::cerr << "Index2 for " << q << " " << r << " " << s << ", not Found" << std::endl; exit(1);
     }
+  }
   return ind1*num2 + ind2;  
 }
 
@@ -82,301 +74,267 @@ CCD::CCD(const Channels &Chan, const Input_Parameters &Parameters, const Model_S
   CCDE = 0.0;
 
   #pragma omp parallel for
-  for(int i = 0; i < Chan.size1; ++i)
-    {
-      Tmap[i].resize(Chan.hh[i] * Chan.pp[i] * 15);
-      Evec[i].assign(Chan.hh[i] * Chan.pp[i], 0.0);
-      T1[i].assign(Chan.hh[i] * Chan.pp[i], 0.0);
-      S1[i].assign(Chan.hh[i] * Chan.hh[i], 0.0);
-      for(int j = 0; j < (Chan.hh[i] * Chan.pp[i]); ++j)
-	{
-	  Tmap[i][15*j] = j;
+  for(int i = 0; i < Chan.size1; ++i){
+    Tmap[i].resize(Chan.hh[i] * Chan.pp[i] * 15);
+    Evec[i].assign(Chan.hh[i] * Chan.pp[i], 0.0);
+    T1[i].assign(Chan.hh[i] * Chan.pp[i], 0.0);
+    S1[i].assign(Chan.hh[i] * Chan.hh[i], 0.0);
+    for(int j = 0; j < (Chan.hh[i] * Chan.pp[i]); ++j){
+      Tmap[i][15*j] = j;
+    }
+  }
+
+  if(Parameters.basis == "HO"){
+    #pragma omp parallel for
+    for(int i = 0; i < Chan.size3; ++i){
+      T4[i].assign(Chan.p[i] * Chan.hhp[i], 0.0);
+      T5[i].assign(Chan.p[i] * Chan.hhp[i], 0.0);
+      S2[i].assign(Chan.p[i] * Chan.p[i], 0.0);
+      int count = -1;
+      int ind, ind1;
+      int hind1, hind2, pind1, pind2;
+      for(int hhp = 0; hhp < Chan.hhp[i]; ++hhp){
+	hind1 = Chan.hhpvec1[i][3*hhp];
+	hind2 = Chan.hhpvec1[i][3*hhp + 1];
+	pind1 = Chan.hhpvec1[i][3*hhp + 2];
+	ind1 = HO_tbInd1(Space, std::pow(-1.0, Space.levelsl[hind1]+Space.levelsl[hind2]), Space.levelsm[hind1]+Space.levelsm[hind2], 
+			 Space.levelst[hind1]+Space.levelst[hind2]);
+	for(int p2 = 0; p2 < Chan.p[i]; ++p2){
+	  ++count;
+	  pind2 = Chan.pvec1[i][p2];
+	  if(pind1 == pind2){ continue; }
+	  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
+	  Tmap[ind1][15*ind + 7] = i;
+	  Tmap[ind1][15*ind + 8] = count;
+	  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind2, pind1);
+	  Tmap[ind1][15*ind + 9] = i;
+	  Tmap[ind1][15*ind + 10] = count;
 	}
+      }
+    }
+      
+    #pragma omp parallel for
+    for(int i = 0; i < Chan.size3; ++i){
+      T6[i].assign(Chan.h[i] * Chan.hpp[i], 0.0);
+      T7[i].assign(Chan.h[i] * Chan.hpp[i], 0.0);
+      S3[i].assign(Chan.h[i] * Chan.h[i], 0.0);
+      int count = -1;
+      int ind, ind1;
+      int hind1, hind2, pind1, pind2;
+      for(int hpp = 0; hpp < Chan.hpp[i]; ++hpp){
+	hind1 = Chan.hppvec1[i][3*hpp];
+	pind1 = Chan.hppvec1[i][3*hpp + 1];
+	pind2 = Chan.hppvec1[i][3*hpp + 2];
+	ind1 = HO_tbInd1(Space, std::pow(-1.0, Space.levelsl[pind1]+Space.levelsl[pind2]), Space.levelsm[pind1]+Space.levelsm[pind2], 
+			 Space.levelst[pind1]+Space.levelst[pind2]);
+	for(int h2 = 0; h2 < Chan.h[i]; ++h2){
+	  ++count;
+	  hind2 = Chan.hvec1[i][h2];
+	  if(hind1 == hind2){ continue; }
+	  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
+	  Tmap[ind1][15*ind + 11] = i;
+	  Tmap[ind1][15*ind + 12] = count;
+	  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind2, hind1, pind1, pind2);
+	  Tmap[ind1][15*ind + 13] = i;
+	  Tmap[ind1][15*ind + 14] = count;
+	}
+      }
+    }
+      
+    #pragma omp parallel for
+    for(int i = 0; i < Chan.size2; ++i){
+      T2[i].resize(Chan.hp1[i] * Chan.hp2[i]);
+      T2T[i].resize(Chan.hp1[i] * Chan.hp2[i]);
+      T3[i].resize(Chan.hp1[i] * Chan.hp2[i]);
+      S4[i].resize(Chan.hp1[i] * Chan.hp1[i]);
+      S4T[i].resize(Chan.hp1[i] * Chan.hp1[i]);
+      int count = -1;
+      int ind, ind1;
+      int hind1, hind2, pind1, pind2;
+      for(int j = 0; j < Chan.hp1[i]; ++j){
+	hind1 = Chan.hp1vec1[i][2*j];
+	pind1 = Chan.hp1vec1[i][2*j + 1];
+	for(int k = 0; k < Chan.hp2[i]; ++k){
+	  ++count;
+	  hind2 = Chan.hp2vec1[i][2*k];
+	  pind2 = Chan.hp2vec1[i][2*k + 1];
+	  if(hind1 == hind2 || pind1 == pind2){ continue; }
+	  ind1 = HO_tbInd1(Space, std::pow(-1.0, Space.levelsl[pind1]+Space.levelsl[pind2]), Space.levelsm[pind1]+Space.levelsm[pind2], 
+			   Space.levelst[pind1]+Space.levelst[pind2]);
+	  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
+	  Tmap[ind1][15*ind + 1] = i;
+	  Tmap[ind1][15*ind + 2] = count;
+	}
+      }
     }
 
-  /*if(Parameters.basis == "HO")
-    {
-      #pragma omp parallel for
-      for(int i = 0; i < Chan.size3; ++i)
-	{
-	  T4[i].assign(Chan.p[i] * Chan.hhp[i], 0.0);
-	  T5[i].assign(Chan.p[i] * Chan.hhp[i], 0.0);
-	  S2[i].assign(Chan.p[i] * Chan.p[i], 0.0);
-	  int count = -1;
-	  int ind, ind1;
-	  int hind1, hind2, pind1, pind2;
-	  for(int hhp = 0; hhp < Chan.hhp[i]; ++hhp)
-	    {
-	      hind1 = Chan.hhpvec1[i][3*hhp];
-	      hind2 = Chan.hhpvec1[i][3*hhp + 1];
-	      pind1 = Chan.hhpvec1[i][3*hhp + 2];
-	      ind1 = HO_tbInd1(Space, std::pow(-1.0, Space.levelsl[hind1]+Space.levelsl[hind2]), Space.levelsm[hind1]+Space.levelsm[hind2], 
-		     Space.levelst[hind1]+Space.levelst[hind2]);
-	      for(int p2 = 0; p2 < Chan.p[i]; ++p2)
-		{
-		  ++count;
-		  pind2 = Chan.pvec1[i][p2];
-		  if(pind1 == pind2){ continue; }
-		  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
-		  Tmap[ind1][15*ind + 7] = i;
-		  Tmap[ind1][15*ind + 8] = count;
-		  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind2, pind1);
-		  Tmap[ind1][15*ind + 9] = i;
-		  Tmap[ind1][15*ind + 10] = count;
-		}
-	    }
+    #pragma omp parallel for
+    for(int i = 0; i < Chan.size2; ++i){
+      int count = -1;
+      int ind, ind1;
+      int hind1, hind2, pind1, pind2;
+      for(int j = 0; j < Chan.hp1[i]; ++j){
+	hind2 = Chan.hp1vec1[i][2*j];
+	pind2 = Chan.hp1vec1[i][2*j + 1];
+	for(int k = 0; k < Chan.hp2[i]; ++k){
+	  ++count;
+	  hind1 = Chan.hp2vec1[i][2*k];
+	  pind1 = Chan.hp2vec1[i][2*k + 1];
+	  if(hind1 == hind2 || pind1 == pind2){ continue; }
+	  ind1 = HO_tbInd1(Space, std::pow(-1.0, Space.levelsl[pind1]+Space.levelsl[pind2]), Space.levelsm[pind1]+Space.levelsm[pind2], 
+			   Space.levelst[pind1]+Space.levelst[pind2]);
+	  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
+	  Tmap[ind1][15*ind + 3] = i;
+	  Tmap[ind1][15*ind + 4] = count;
 	}
-      
-      #pragma omp parallel for
-      for(int i = 0; i < Chan.size3; ++i)
-	{
-	  T6[i].assign(Chan.h[i] * Chan.hpp[i], 0.0);
-	  T7[i].assign(Chan.h[i] * Chan.hpp[i], 0.0);
-	  S3[i].assign(Chan.h[i] * Chan.h[i], 0.0);
-	  int count = -1;
-	  int ind, ind1;
-	  int hind1, hind2, pind1, pind2;
-	  for(int hpp = 0; hpp < Chan.hpp[i]; ++hpp)
-	    {
-	      hind1 = Chan.hppvec1[i][3*hpp];
-	      pind1 = Chan.hppvec1[i][3*hpp + 1];
-	      pind2 = Chan.hppvec1[i][3*hpp + 2];
-	      ind1 = HO_tbInd1(Space, std::pow(-1.0, Space.levelsl[pind1]+Space.levelsl[pind2]), Space.levelsm[pind1]+Space.levelsm[pind2], 
-		     Space.levelst[pind1]+Space.levelst[pind2]);
-	      for(int h2 = 0; h2 < Chan.h[i]; ++h2)
-		{
-		  ++count;
-		  hind2 = Chan.hvec1[i][h2];
-		  if(hind1 == hind2){ continue; }
-		  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
-		  Tmap[ind1][15*ind + 11] = i;
-		  Tmap[ind1][15*ind + 12] = count;
-		  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind2, hind1, pind1, pind2);
-		  Tmap[ind1][15*ind + 13] = i;
-		  Tmap[ind1][15*ind + 14] = count;
-		}
-	    }
-	}
-      
-      #pragma omp parallel for
-      for(int i = 0; i < Chan.size2; ++i)
-	{
-	  T2[i].resize(Chan.hp1[i] * Chan.hp2[i]);
-	  T2T[i].resize(Chan.hp1[i] * Chan.hp2[i]);
-	  T3[i].resize(Chan.hp1[i] * Chan.hp2[i]);
-	  S4[i].resize(Chan.hp1[i] * Chan.hp1[i]);
-	  S4T[i].resize(Chan.hp1[i] * Chan.hp1[i]);
-	  int count = -1;
-	  int ind, ind1;
-	  int hind1, hind2, pind1, pind2;
-	  for(int j = 0; j < Chan.hp1[i]; ++j)
-	    {
-	      hind1 = Chan.hp1vec1[i][2*j];
-	      pind1 = Chan.hp1vec1[i][2*j + 1];
-	      for(int k = 0; k < Chan.hp2[i]; ++k)
-		{
-		  ++count;
-		  hind2 = Chan.hp2vec1[i][2*k];
-		  pind2 = Chan.hp2vec1[i][2*k + 1];
-		  if(hind1 == hind2 || pind1 == pind2){ continue; }
-		  ind1 = HO_tbInd1(Space, std::pow(-1.0, Space.levelsl[pind1]+Space.levelsl[pind2]), Space.levelsm[pind1]+Space.levelsm[pind2], 
-			 Space.levelst[pind1]+Space.levelst[pind2]);
-		  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
-		  Tmap[ind1][15*ind + 1] = i;
-		  Tmap[ind1][15*ind + 2] = count;
-		}
-	    }
-	}
-
-      #pragma omp parallel for
-      for(int i = 0; i < Chan.size2; ++i)
-	{
-	  int count = -1;
-	  int ind, ind1;
-	  int hind1, hind2, pind1, pind2;
-	  for(int j = 0; j < Chan.hp1[i]; ++j)
-	    {
-	      hind2 = Chan.hp1vec1[i][2*j];
-	      pind2 = Chan.hp1vec1[i][2*j + 1];
-	      for(int k = 0; k < Chan.hp2[i]; ++k)
-		{
-		  ++count;
-		  hind1 = Chan.hp2vec1[i][2*k];
-		  pind1 = Chan.hp2vec1[i][2*k + 1];
-		  if(hind1 == hind2 || pind1 == pind2){ continue; }
-		  ind1 = HO_tbInd1(Space, std::pow(-1.0, Space.levelsl[pind1]+Space.levelsl[pind2]), Space.levelsm[pind1]+Space.levelsm[pind2], 
-			 Space.levelst[pind1]+Space.levelst[pind2]);
-		  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
-		  Tmap[ind1][15*ind + 3] = i;
-		  Tmap[ind1][15*ind + 4] = count;
-		}
-	    }
-	}
-      #pragma omp parallel for
-      for(int i = 0; i < Chan.size2; ++i)
-	{
-	  int count = -1;
-	  int ind, ind1;
-	  int hind1, hind2, pind1, pind2;
-	  for(int j = 0; j < Chan.hp1[i]; ++j)
-	    {
-	      hind2 = Chan.hp1vec1[i][2*j];
-	      pind1 = Chan.hp1vec1[i][2*j + 1];
-	      for(int k = 0; k < Chan.hp2[i]; ++k)
-		{
-		  ++count;
-		  hind1 = Chan.hp2vec1[i][2*k];
-		  pind2 = Chan.hp2vec1[i][2*k + 1];
-		  if(hind1 == hind2 || pind1 == pind2){ continue; }
-		  ind1 = HO_tbInd1(Space, std::pow(-1.0, Space.levelsl[pind1]+Space.levelsl[pind2]), Space.levelsm[pind1]+Space.levelsm[pind2], 
-			 Space.levelst[pind1]+Space.levelst[pind2]);
-		  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
-		  Tmap[ind1][15*ind + 5] = i;
-		  Tmap[ind1][15*ind + 6] = count;
-		}
-	    }	
-	}
+      }
     }
-  else if(Parameters.basis == "CART")
-  {*/
-      #pragma omp parallel for
-      for(int i = 0; i < Chan.size3; ++i)
-	{
-	  T4[i].assign(Chan.p[i] * Chan.hhp[i], 0.0);
-	  T5[i].assign(Chan.p[i] * Chan.hhp[i], 0.0);
-	  S2[i].assign(Chan.p[i] * Chan.p[i], 0.0);
-	  int count = -1;
-	  int ind, ind1;
-	  int hind1, hind2, pind1, pind2;
-	  for(int hhp = 0; hhp < Chan.hhp[i]; ++hhp)
-	    {
-	      hind1 = Chan.hhpvec1[i][3*hhp];
-	      hind2 = Chan.hhpvec1[i][3*hhp + 1];
-	      pind1 = Chan.hhpvec1[i][3*hhp + 2];
-	      ind1 = CART_tbInd1(Space, Space.levelsnx[hind1]+Space.levelsnx[hind2], Space.levelsny[hind1]+Space.levelsny[hind2], 
-		     Space.levelsnz[hind1]+Space.levelsnz[hind2], Space.levelsm[hind1]+Space.levelsm[hind2], Space.levelst[hind1]+Space.levelst[hind2]);
-	      for(int p2 = 0; p2 < Chan.p[i]; ++p2)
-		{
-		  ++count;
-		  pind2 = Chan.pvec1[i][p2];
-		  if(pind1 == pind2){ continue; }
-		  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
-		  Tmap[ind1][15*ind + 7] = i;
-		  Tmap[ind1][15*ind + 8] = count;
-		  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind2, pind1);
-		  Tmap[ind1][15*ind + 9] = i;
-		  Tmap[ind1][15*ind + 10] = count;
-		}
-	    }
+    #pragma omp parallel for
+    for(int i = 0; i < Chan.size2; ++i){
+      int count = -1;
+      int ind, ind1;
+      int hind1, hind2, pind1, pind2;
+      for(int j = 0; j < Chan.hp1[i]; ++j){
+	hind2 = Chan.hp1vec1[i][2*j];
+	pind1 = Chan.hp1vec1[i][2*j + 1];
+	for(int k = 0; k < Chan.hp2[i]; ++k){
+	  ++count;
+	  hind1 = Chan.hp2vec1[i][2*k];
+	  pind2 = Chan.hp2vec1[i][2*k + 1];
+	  if(hind1 == hind2 || pind1 == pind2){ continue; }
+	  ind1 = HO_tbInd1(Space, std::pow(-1.0, Space.levelsl[pind1]+Space.levelsl[pind2]), Space.levelsm[pind1]+Space.levelsm[pind2], 
+			   Space.levelst[pind1]+Space.levelst[pind2]);
+	  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
+	  Tmap[ind1][15*ind + 5] = i;
+	  Tmap[ind1][15*ind + 6] = count;
 	}
-      #pragma omp parallel for
-      for(int i = 0; i < Chan.size3; ++i)
-	{
-	  T6[i].assign(Chan.h[i] * Chan.hpp[i], 0.0);
-	  T7[i].assign(Chan.h[i] * Chan.hpp[i], 0.0);
-	  S3[i].assign(Chan.h[i] * Chan.h[i], 0.0);
-	  int count = -1;
-	  int ind, ind1;
-	  int hind1, hind2, pind1, pind2;
-	  for(int hpp = 0; hpp < Chan.hpp[i]; ++hpp)
-	    {
-	      hind1 = Chan.hppvec1[i][3*hpp];
-	      pind1 = Chan.hppvec1[i][3*hpp + 1];
-	      pind2 = Chan.hppvec1[i][3*hpp + 2];
-	      ind1 = CART_tbInd1(Space, Space.levelsnx[pind1]+Space.levelsnx[pind2], Space.levelsny[pind1]+Space.levelsny[pind2], 
-		     Space.levelsnz[pind1]+Space.levelsnz[pind2], Space.levelsm[pind1]+Space.levelsm[pind2], Space.levelst[pind1]+Space.levelst[pind2]);
-	      for(int h2 = 0; h2 < Chan.h[i]; ++h2)
-		{
-		  ++count;
-		  hind2 = Chan.hvec1[i][h2];
-		  if(hind1 == hind2){ continue; }
-		  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
-		  Tmap[ind1][15*ind + 11] = i;
-		  Tmap[ind1][15*ind + 12] = count;
-		  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind2, hind1, pind1, pind2);
-		  Tmap[ind1][15*ind + 13] = i;
-		  Tmap[ind1][15*ind + 14] = count;
-		}
-	    }
+      }	
+    }
+  }
+  else if(Parameters.basis == "CART"){
+    #pragma omp parallel for
+    for(int i = 0; i < Chan.size3; ++i){
+      T4[i].assign(Chan.p[i] * Chan.hhp[i], 0.0);
+      T5[i].assign(Chan.p[i] * Chan.hhp[i], 0.0);
+      S2[i].assign(Chan.p[i] * Chan.p[i], 0.0);
+      int count = -1;
+      int ind, ind1;
+      int hind1, hind2, pind1, pind2;
+      for(int hhp = 0; hhp < Chan.hhp[i]; ++hhp){
+	hind1 = Chan.hhpvec1[i][3*hhp];
+	hind2 = Chan.hhpvec1[i][3*hhp + 1];
+	pind1 = Chan.hhpvec1[i][3*hhp + 2];
+	ind1 = CART_tbInd1(Space, Space.levelsnx[hind1]+Space.levelsnx[hind2], Space.levelsny[hind1]+Space.levelsny[hind2], 
+			   Space.levelsnz[hind1]+Space.levelsnz[hind2], Space.levelsm[hind1]+Space.levelsm[hind2], Space.levelst[hind1]+Space.levelst[hind2]);
+	for(int p2 = 0; p2 < Chan.p[i]; ++p2){
+	  ++count;
+	  pind2 = Chan.pvec1[i][p2];
+	  if(pind1 == pind2){ continue; }
+	  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
+	  Tmap[ind1][15*ind + 7] = i;
+	  Tmap[ind1][15*ind + 8] = count;
+	  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind2, pind1);
+	  Tmap[ind1][15*ind + 9] = i;
+	  Tmap[ind1][15*ind + 10] = count;
 	}
-      #pragma omp parallel for
-      for(int i = 0; i < Chan.size2; ++i)
-	{
-	  T2[i].assign(Chan.hp1[i] * Chan.hp2[i], 0.0);
-	  T2T[i].assign(Chan.hp1[i] * Chan.hp2[i], 0.0);
-	  T3[i].assign(Chan.hp1[i] * Chan.hp2[i], 0.0);
-	  S4[i].assign(Chan.hp1[i] * Chan.hp1[i], 0.0);
-	  S4T[i].assign(Chan.hp1[i] * Chan.hp1[i], 0.0);
-	  int count = -1;
-	  int ind, ind1;
-	  int hind1, hind2, pind1, pind2;
-	  for(int j = 0; j < Chan.hp1[i]; ++j)
-	    {
-	      hind1 = Chan.hp1vec1[i][2*j];
-	      pind1 = Chan.hp1vec1[i][2*j + 1];
-	      for(int k = 0; k < Chan.hp2[i]; ++k)
-		{
-		  ++count;
-		  hind2 = Chan.hp2vec1[i][2*k];
-		  pind2 = Chan.hp2vec1[i][2*k + 1];
-		  if(hind1 == hind2 || pind1 == pind2){ continue; }
-		  ind1 = CART_tbInd1(Space, Space.levelsnx[pind1]+Space.levelsnx[pind2], Space.levelsny[pind1]+Space.levelsny[pind2], 
-			 Space.levelsnz[pind1]+Space.levelsnz[pind2], Space.levelsm[pind1]+Space.levelsm[pind2], Space.levelst[pind1]+Space.levelst[pind2]);
-		  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
-		  Tmap[ind1][15*ind + 1] = i;
-		  Tmap[ind1][15*ind + 2] = count;
-		}
-	    }
+      }
+    }
+    #pragma omp parallel for
+    for(int i = 0; i < Chan.size3; ++i){
+      T6[i].assign(Chan.h[i] * Chan.hpp[i], 0.0);
+      T7[i].assign(Chan.h[i] * Chan.hpp[i], 0.0);
+      S3[i].assign(Chan.h[i] * Chan.h[i], 0.0);
+      int count = -1;
+      int ind, ind1;
+      int hind1, hind2, pind1, pind2;
+      for(int hpp = 0; hpp < Chan.hpp[i]; ++hpp){
+	hind1 = Chan.hppvec1[i][3*hpp];
+	pind1 = Chan.hppvec1[i][3*hpp + 1];
+	pind2 = Chan.hppvec1[i][3*hpp + 2];
+	ind1 = CART_tbInd1(Space, Space.levelsnx[pind1]+Space.levelsnx[pind2], Space.levelsny[pind1]+Space.levelsny[pind2], 
+			   Space.levelsnz[pind1]+Space.levelsnz[pind2], Space.levelsm[pind1]+Space.levelsm[pind2], Space.levelst[pind1]+Space.levelst[pind2]);
+	for(int h2 = 0; h2 < Chan.h[i]; ++h2){
+	  ++count;
+	  hind2 = Chan.hvec1[i][h2];
+	  if(hind1 == hind2){ continue; }
+	  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
+	  Tmap[ind1][15*ind + 11] = i;
+	  Tmap[ind1][15*ind + 12] = count;
+	  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind2, hind1, pind1, pind2);
+	  Tmap[ind1][15*ind + 13] = i;
+	  Tmap[ind1][15*ind + 14] = count;
 	}
-      #pragma omp parallel for
-      for(int i = 0; i < Chan.size2; ++i)
-	{
-	  int count = -1;
-	  int ind, ind1;
-	  int hind1, hind2, pind1, pind2;
-	  for(int j = 0; j < Chan.hp1[i]; ++j)
-	    {
-	      hind2 = Chan.hp1vec1[i][2*j];
-	      pind2 = Chan.hp1vec1[i][2*j + 1];
-	      for(int k = 0; k < Chan.hp2[i]; ++k)
-		{
-		  ++count;
-		  hind1 = Chan.hp2vec1[i][2*k];
-		  pind1 = Chan.hp2vec1[i][2*k + 1];
-		  if(hind1 == hind2 || pind1 == pind2){ continue; }
-		  ind1 = CART_tbInd1(Space, Space.levelsnx[pind1]+Space.levelsnx[pind2], Space.levelsny[pind1]+Space.levelsny[pind2], 
-			 Space.levelsnz[pind1]+Space.levelsnz[pind2], Space.levelsm[pind1]+Space.levelsm[pind2], Space.levelst[pind1]+Space.levelst[pind2]);
-		  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
-		  Tmap[ind1][15*ind + 3] = i;
-		  Tmap[ind1][15*ind + 4] = count;
-		}
-	    }
+      }
+    }
+    #pragma omp parallel for
+    for(int i = 0; i < Chan.size2; ++i){
+      T2[i].assign(Chan.hp1[i] * Chan.hp2[i], 0.0);
+      T2T[i].assign(Chan.hp1[i] * Chan.hp2[i], 0.0);
+      T3[i].assign(Chan.hp1[i] * Chan.hp2[i], 0.0);
+      S4[i].assign(Chan.hp1[i] * Chan.hp1[i], 0.0);
+      S4T[i].assign(Chan.hp1[i] * Chan.hp1[i], 0.0);
+      int count = -1;
+      int ind, ind1;
+      int hind1, hind2, pind1, pind2;
+      for(int j = 0; j < Chan.hp1[i]; ++j){
+	hind1 = Chan.hp1vec1[i][2*j];
+	pind1 = Chan.hp1vec1[i][2*j + 1];
+	for(int k = 0; k < Chan.hp2[i]; ++k){
+	  ++count;
+	  hind2 = Chan.hp2vec1[i][2*k];
+	  pind2 = Chan.hp2vec1[i][2*k + 1];
+	  if(hind1 == hind2 || pind1 == pind2){ continue; }
+	  ind1 = CART_tbInd1(Space, Space.levelsnx[pind1]+Space.levelsnx[pind2], Space.levelsny[pind1]+Space.levelsny[pind2], 
+			     Space.levelsnz[pind1]+Space.levelsnz[pind2], Space.levelsm[pind1]+Space.levelsm[pind2], Space.levelst[pind1]+Space.levelst[pind2]);
+	  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
+	  Tmap[ind1][15*ind + 1] = i;
+	  Tmap[ind1][15*ind + 2] = count;
 	}
-      #pragma omp parallel for
-      for(int i = 0; i < Chan.size2; ++i)
-	{
-	  int count = -1;
-	  int ind, ind1;
-	  int hind1, hind2, pind1, pind2;
-	  for(int j = 0; j < Chan.hp1[i]; ++j)
-	    {
-	      hind2 = Chan.hp1vec1[i][2*j];
-	      pind1 = Chan.hp1vec1[i][2*j + 1];
-	      for(int k = 0; k < Chan.hp2[i]; ++k)
-		{
-		  ++count;
-		  hind1 = Chan.hp2vec1[i][2*k];
-		  pind2 = Chan.hp2vec1[i][2*k + 1];
-		  if(hind1 == hind2 || pind1 == pind2){ continue; }
-		  ind1 = CART_tbInd1(Space, Space.levelsnx[pind1]+Space.levelsnx[pind2], Space.levelsny[pind1]+Space.levelsny[pind2], 
-			 Space.levelsnz[pind1]+Space.levelsnz[pind2], Space.levelsm[pind1]+Space.levelsm[pind2], Space.levelst[pind1]+Space.levelst[pind2]);
-		  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
-		  Tmap[ind1][15*ind + 5] = i;
-		  Tmap[ind1][15*ind + 6] = count;
-		}
-	    }	
+      }
+    }
+    #pragma omp parallel for
+    for(int i = 0; i < Chan.size2; ++i){
+      int count = -1;
+      int ind, ind1;
+      int hind1, hind2, pind1, pind2;
+      for(int j = 0; j < Chan.hp1[i]; ++j){
+	hind2 = Chan.hp1vec1[i][2*j];
+	pind2 = Chan.hp1vec1[i][2*j + 1];
+	for(int k = 0; k < Chan.hp2[i]; ++k){
+	  ++count;
+	  hind1 = Chan.hp2vec1[i][2*k];
+	  pind1 = Chan.hp2vec1[i][2*k + 1];
+	  if(hind1 == hind2 || pind1 == pind2){ continue; }
+	  ind1 = CART_tbInd1(Space, Space.levelsnx[pind1]+Space.levelsnx[pind2], Space.levelsny[pind1]+Space.levelsny[pind2], 
+			     Space.levelsnz[pind1]+Space.levelsnz[pind2], Space.levelsm[pind1]+Space.levelsm[pind2], Space.levelst[pind1]+Space.levelst[pind2]);
+	  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
+	  Tmap[ind1][15*ind + 3] = i;
+	  Tmap[ind1][15*ind + 4] = count;
 	}
-      //}
+      }
+    }
+    #pragma omp parallel for
+    for(int i = 0; i < Chan.size2; ++i){
+      int count = -1;
+      int ind, ind1;
+      int hind1, hind2, pind1, pind2;
+      for(int j = 0; j < Chan.hp1[i]; ++j){
+	hind2 = Chan.hp1vec1[i][2*j];
+	pind1 = Chan.hp1vec1[i][2*j + 1];
+	for(int k = 0; k < Chan.hp2[i]; ++k){
+	  ++count;
+	  hind1 = Chan.hp2vec1[i][2*k];
+	  pind2 = Chan.hp2vec1[i][2*k + 1];
+	  if(hind1 == hind2 || pind1 == pind2){ continue; }
+	  ind1 = CART_tbInd1(Space, Space.levelsnx[pind1]+Space.levelsnx[pind2], Space.levelsny[pind1]+Space.levelsny[pind2], 
+			     Space.levelsnz[pind1]+Space.levelsnz[pind2], Space.levelsm[pind1]+Space.levelsm[pind2], Space.levelst[pind1]+Space.levelst[pind2]);
+	  ind = Index(Chan.hhvec1[ind1], Chan.ppvec1[ind1], Chan.hh[ind1], Chan.pp[ind1], hind1, hind2, pind1, pind2);
+	  Tmap[ind1][15*ind + 5] = i;
+	  Tmap[ind1][15*ind + 6] = count;
+	}
+      }	
+    }
+  }
 
       /*std::ofstream mapfile;
   mapfile.open ("mapfileN4.txt");
@@ -444,7 +402,7 @@ double CCD::get_T(int i, int j) const
 
 
 //Function to setup Channels
-/*Channels HO_Setup_Channels(const Model_Space &Space)
+Channels HO_Setup_Channels(const Model_Space &Space)
 {
   std::cout << "Building Channels ... " << std::endl;
   std::cout << "----------------------------------------------------------" << std::endl;
@@ -458,14 +416,31 @@ double CCD::get_T(int i, int j) const
   std::vector<std::vector<int> > Hvec, Pvec;
 
   Chan.size3 = 0;
-  int count = 0;
-  for(int i = 0; i < Space.indtot; ++i)
-    {
-      M = Space.levelsm[i];
-      T = Space.levelst[i];
-      P = std::pow(-1.0, Space.levelsl[i]);
-      if(count == 0)
-	{
+  for(int i = 0; i < Space.indtot; ++i){
+    M = Space.levelsm[i];
+    T = Space.levelst[i];
+    P = std::pow(-1.0, Space.levelsl[i]);
+    if(Chan.size3 == 0){
+      ++Chan.size3;
+      Hvec.resize(Chan.size3);
+      Pvec.resize(Chan.size3);
+      HPMs.push_back(M);
+      HPTs.push_back(T);
+      HPPs.push_back(P);
+      Chan.indvec.push_back(Chan.size3 - 1);
+      if(Space.levelstype[i] == "hole"){ Hvec[Chan.size3 - 1].push_back(i); }
+      else{ Pvec[Chan.size3 - 1].push_back(i); }
+      continue;
+    }
+    else{
+      for(int k = 0; k < Chan.size3; ++k){
+	if(M == HPMs[k] && T == HPTs[k] && P == HPPs[k]){
+	  Chan.indvec.push_back(k);
+	  if(Space.levelstype[i] == "hole"){ Hvec[k].push_back(i); }
+	  else{ Pvec[k].push_back(i); }
+	  break;
+	}
+	else if(k == Chan.size3 - 1){
 	  ++Chan.size3;
 	  Hvec.resize(Chan.size3);
 	  Pvec.resize(Chan.size3);
@@ -475,206 +450,159 @@ double CCD::get_T(int i, int j) const
 	  Chan.indvec.push_back(Chan.size3 - 1);
 	  if(Space.levelstype[i] == "hole"){ Hvec[Chan.size3 - 1].push_back(i); }
 	  else{ Pvec[Chan.size3 - 1].push_back(i); }
-	  continue;
+	  break;
 	}
-      else
-	{
-	  for(int k = 0; k < Chan.size3; ++k)
-	    {
-	      if(M == HPMs[k] && T == HPTs[k] && P == HPPs[k])
-		{ 
-		  Chan.indvec.push_back(k);
-		  if(Space.levelstype[i] == "hole"){ Hvec[k].push_back(i); }
-		  else{ Pvec[k].push_back(i); }
-		  break;
-		}
-	      else if(k == Chan.size3 - 1)
-		{
-		  ++Chan.size3;
-		  Hvec.resize(Chan.size3);
-		  Pvec.resize(Chan.size3);
-		  HPMs.push_back(M);
-		  HPTs.push_back(T);
-		  HPPs.push_back(P);
-		  Chan.indvec.push_back(Chan.size3 - 1);
-		  if(Space.levelstype[i] == "hole"){ Hvec[Chan.size3 - 1].push_back(i); }
-		  else{ Pvec[Chan.size3 - 1].push_back(i); }
-		  break;
-		}
-	    }
-	}
+      }
     }
+  }
 
-  Chan.size1 = Space.Psize * Space.Msize * Space.Tsize;
-  Chan.size2 = Space.P2size * Space.M2size * Space.T2size;
+  Chan.size1 = Space.HO_tb1Indsize * Space.Msize * Space.Tsize;
+  Chan.size2 = Space.HO_tb2Indsize * Space.M2size * Space.T2size;
 
   std::vector<std::vector<int> > tempvec1(Chan.size3);
   std::vector<std::vector<int> > tempvec2(Chan.size3);
 
   //Make Vector of Two-Body States for Each Channel
   #pragma omp parallel for
-  for(int i = 0; i < Chan.size3; ++i)
-    {
-      int ind1, ind2;
-      tempvec1[i].assign(Chan.size1, -1);
-      tempvec2[i].assign(Chan.size2, -1);
-      double M, T, M2, T2, P, P2;
-      for(int j = 0; j < Chan.size3; ++j)
-	{
-	  M = HPMs[i] + HPMs[j];
-	  T = HPTs[i] + HPTs[j];
-	  P = HPPs[i] * HPPs[j];
-	  M2 = HPMs[i] - HPMs[j];
-	  T2 = HPTs[i] - HPTs[j];
-	  P2 = HPPs[i] / HPPs[j];
-	  ind1 = HO_tbInd1(Space, P, M, T);
-	  tempvec1[i][ind1] = j;
-	  ind2 = HO_tbInd2(Space, P2, M2, T2);
-	  tempvec2[i][ind2] = j;
-	}
+  for(int i = 0; i < Chan.size3; ++i){
+    int ind1, ind2;
+    tempvec1[i].assign(Chan.size1, -1);
+    tempvec2[i].assign(Chan.size2, -1);
+    double M, T, M2, T2, P, P2;
+    for(int j = 0; j < Chan.size3; ++j){
+      M = HPMs[i] + HPMs[j];
+      T = HPTs[i] + HPTs[j];
+      P = HPPs[i] * HPPs[j];
+      M2 = HPMs[i] - HPMs[j];
+      T2 = HPTs[i] - HPTs[j];
+      P2 = HPPs[i] / HPPs[j];
+      ind1 = HO_tbInd1(Space, P, M, T);
+      tempvec1[i][ind1] = j;
+      ind2 = HO_tbInd2(Space, P2, M2, T2);
+      tempvec2[i][ind2] = j;
     }
+  }
 
   Chan.hhvec1.resize(Chan.size1);
   Chan.ppvec1.resize(Chan.size1);
   Chan.hp1vec1.resize(Chan.size2);
   Chan.hp2vec1.resize(Chan.size2);
-  for(int i = 0; i < Chan.size3; ++i)
-    {
-      #pragma omp parallel for
-      for(int j = 0; j < Chan.size1; ++j)
-	{
-	  if(tempvec1[i][j] == -1){ continue; }
-	  int ind1, ind2;
-	  int hsize1, hsize2, psize1, psize2;
-	  ind1 = i;
-	  ind2 = tempvec1[i][j];
-	  hsize1 = int(Hvec[ind1].size());
-	  hsize2 = int(Hvec[ind2].size());
-	  for(int h1 = 0; h1 < hsize1; ++h1)
-	    {
-	      for(int h2 = 0; h2 < hsize2; ++h2)
-		{
-		  if(ind1 == ind2 && h1 == h2){ continue; }
-		  Chan.hhvec1[j].push_back(Hvec[ind1][h1]);
-		  Chan.hhvec1[j].push_back(Hvec[ind2][h2]);
-		}
-	    }
-	  psize1 = int(Pvec[ind1].size());
-	  psize2 = int(Pvec[ind2].size());
-	  for(int p1 = 0; p1 < psize1; ++p1)
-	    {
-	      for(int p2 = 0; p2 < psize2; ++p2)
-		{
-		  if(ind1 == ind2 && p1 == p2){ continue; }
-		  Chan.ppvec1[j].push_back(Pvec[ind1][p1]);
-		  Chan.ppvec1[j].push_back(Pvec[ind2][p2]);
-		}
-	    }
+  for(int i = 0; i < Chan.size3; ++i){
+    #pragma omp parallel for
+    for(int j = 0; j < Chan.size1; ++j){
+      if(tempvec1[i][j] == -1){ continue; }
+      int ind1, ind2;
+      int hsize1, hsize2, psize1, psize2;
+      ind1 = i;
+      ind2 = tempvec1[i][j];
+      hsize1 = int(Hvec[ind1].size());
+      hsize2 = int(Hvec[ind2].size());
+      for(int h1 = 0; h1 < hsize1; ++h1){
+	for(int h2 = 0; h2 < hsize2; ++h2){
+	  if(ind1 == ind2 && h1 == h2){ continue; }
+	  Chan.hhvec1[j].push_back(Hvec[ind1][h1]);
+	  Chan.hhvec1[j].push_back(Hvec[ind2][h2]);
 	}
-      #pragma omp parallel for
-      for(int j = 0; j < Chan.size2; ++j)
-	{
-	  if(tempvec2[i][j] == -1){ continue; }
-	  int ind1, ind2;
-	  int hsize1, psize1;
-	  ind1 = i;
-	  ind2 = tempvec2[i][j];
-	  hsize1 = int(Hvec[ind1].size());
-	  psize1 = int(Pvec[ind2].size());
-	  for(int h1 = 0; h1 < hsize1; ++h1)
-	    {
-	      for(int p1 = 0; p1 < psize1; ++p1)
-		{
-		  Chan.hp1vec1[j].push_back(Hvec[ind1][h1]);
-		  Chan.hp1vec1[j].push_back(Pvec[ind2][p1]);
-		}
-	    }
-	  hsize1 = int(Hvec[ind2].size());
-	  psize1 = int(Pvec[ind1].size());
-	  for(int h1 = 0; h1 < hsize1; ++h1)
-	    {
-	      for(int p1 = 0; p1 < psize1; ++p1)
-		{
-		  Chan.hp2vec1[j].push_back(Hvec[ind2][h1]);
-		  Chan.hp2vec1[j].push_back(Pvec[ind1][p1]);
-		}
-	    }
+      }
+      psize1 = int(Pvec[ind1].size());
+      psize2 = int(Pvec[ind2].size());
+      for(int p1 = 0; p1 < psize1; ++p1){
+	for(int p2 = 0; p2 < psize2; ++p2){
+	  if(ind1 == ind2 && p1 == p2){ continue; }
+	  Chan.ppvec1[j].push_back(Pvec[ind1][p1]);
+	  Chan.ppvec1[j].push_back(Pvec[ind2][p2]);
 	}
+      }
     }
+    #pragma omp parallel for
+    for(int j = 0; j < Chan.size2; ++j){
+      if(tempvec2[i][j] == -1){ continue; }
+      int ind1, ind2;
+      int hsize1, psize1;
+      ind1 = i;
+      ind2 = tempvec2[i][j];
+      hsize1 = int(Hvec[ind1].size());
+      psize1 = int(Pvec[ind2].size());
+      for(int h1 = 0; h1 < hsize1; ++h1){
+	for(int p1 = 0; p1 < psize1; ++p1){
+	  Chan.hp1vec1[j].push_back(Hvec[ind1][h1]);
+	  Chan.hp1vec1[j].push_back(Pvec[ind2][p1]);
+	}
+      }
+      hsize1 = int(Hvec[ind2].size());
+      psize1 = int(Pvec[ind1].size());
+      for(int h1 = 0; h1 < hsize1; ++h1){
+	for(int p1 = 0; p1 < psize1; ++p1){
+	  Chan.hp2vec1[j].push_back(Hvec[ind2][h1]);
+	  Chan.hp2vec1[j].push_back(Pvec[ind1][p1]);
+	}
+      }
+    }
+  }
+
   Chan.hvec1.resize(Chan.size3);
   Chan.hppvec1.resize(Chan.size3);
   Chan.pvec1.resize(Chan.size3);
   Chan.hhpvec1.resize(Chan.size3);
   #pragma omp parallel for
-  for(int i = 0; i < Chan.size3; ++i)
-    {
-      int ind1, ind2, ind3, ind4;
-      int hsize1, hsize2, psize1, psize2;
-      std::vector<int> inds(3);
-      hsize1 = int(Hvec[i].size());
-      if(hsize1 == 0){ goto break1; }
-      for(int h1 = 0; h1 < hsize1; ++h1){ Chan.hvec1[i].push_back(Hvec[i][h1]); }
-      for(int j = 0; j < Chan.size1; ++j)
-	{
-	  if(tempvec1[i][j] == -1){ continue; }
-	  for(int k = 0; k < Chan.size3; ++k)
-	    {
-	      if(tempvec1[k][j] == -1){ continue; }
-	      ind2 = tempvec1[i][j];
-	      ind3 = k;
-	      ind4 = tempvec1[k][j];
-	      hsize2 = int(Hvec[ind2].size());
-	      psize1 = int(Pvec[ind3].size());
-	      psize2 = int(Pvec[ind4].size());
-	      for(int h2 = 0; h2 < hsize2; ++h2)
-		{
-		  for(int p1 = 0; p1 < psize1; ++p1)
-		    {
-		      for(int p2 = 0; p2 < psize2; ++p2)
-			{
-			  if(ind3 == ind4 && p1 == p2){ continue; }
-			  inds[0] = Hvec[ind2][h2];
-			  inds[1] = Pvec[ind3][p1];
-			  inds[2] = Pvec[ind4][p2];
-			  Chan.hppvec1[i].insert(Chan.hppvec1[i].end(), inds.begin(), inds.end());
-			}
-		    }
-		}
+  for(int i = 0; i < Chan.size3; ++i){
+    int ind1, ind2, ind3, ind4;
+    int hsize1, hsize2, psize1, psize2;
+    std::vector<int> inds(3);
+    hsize1 = int(Hvec[i].size());
+    if(hsize1 == 0){ goto break1; }
+    for(int h1 = 0; h1 < hsize1; ++h1){ Chan.hvec1[i].push_back(Hvec[i][h1]); }
+    for(int j = 0; j < Chan.size1; ++j){
+      if(tempvec1[i][j] == -1){ continue; }
+      for(int k = 0; k < Chan.size3; ++k){
+	if(tempvec1[k][j] == -1){ continue; }
+	ind2 = tempvec1[i][j];
+	ind3 = k;
+	ind4 = tempvec1[k][j];
+	hsize2 = int(Hvec[ind2].size());
+	psize1 = int(Pvec[ind3].size());
+	psize2 = int(Pvec[ind4].size());
+	for(int h2 = 0; h2 < hsize2; ++h2){
+	  for(int p1 = 0; p1 < psize1; ++p1){
+	    for(int p2 = 0; p2 < psize2; ++p2){
+	      if(ind3 == ind4 && p1 == p2){ continue; }
+	      inds[0] = Hvec[ind2][h2];
+	      inds[1] = Pvec[ind3][p1];
+	      inds[2] = Pvec[ind4][p2];
+	      Chan.hppvec1[i].insert(Chan.hppvec1[i].end(), inds.begin(), inds.end());
 	    }
+	  }
 	}
-    break1:
-      psize1 = int(Pvec[i].size());
-      if(psize1 == 0){ continue; }
-      for(int p1 = 0; p1 < psize1; ++p1){ Chan.pvec1[i].push_back(Pvec[i][p1]); }
-      for(int j = 0; j < Chan.size1; ++j)
-	{
-	  if(tempvec1[i][j] == -1){ continue; }
-	  for(int k = 0; k < Chan.size3; ++k)
-	    {
-	      if(tempvec1[k][j] == -1){ continue; }
-	      ind1 = k;
-	      ind2 = tempvec1[k][j];
-	      ind4 = tempvec1[i][j];
-	      hsize1 = int(Hvec[ind1].size());
-	      hsize2 = int(Hvec[ind2].size());
-	      psize2 = int(Pvec[ind4].size());
-	      for(int h1 = 0; h1 < hsize1; ++h1)
-		{
-		  for(int h2 = 0; h2 < hsize2; ++h2)
-		    {
-		      if(ind1 == ind2 && h1 == h2){ continue; }
-		      for(int p2 = 0; p2 < psize2; ++p2)
-			{
-			  inds[0] = Hvec[ind1][h1];
-			  inds[1] = Hvec[ind2][h2];
-			  inds[2] = Pvec[ind4][p2];
-			  Chan.hhpvec1[i].insert(Chan.hhpvec1[i].end(), inds.begin(), inds.end());
-			}
-		    }
-		}
-	    }
-	}
+      }
     }
+  break1:
+    psize1 = int(Pvec[i].size());
+    if(psize1 == 0){ continue; }
+    for(int p1 = 0; p1 < psize1; ++p1){ Chan.pvec1[i].push_back(Pvec[i][p1]); }
+    for(int j = 0; j < Chan.size1; ++j){
+      if(tempvec1[i][j] == -1){ continue; }
+      for(int k = 0; k < Chan.size3; ++k){
+	if(tempvec1[k][j] == -1){ continue; }
+	ind1 = k;
+	ind2 = tempvec1[k][j];
+	ind4 = tempvec1[i][j];
+	hsize1 = int(Hvec[ind1].size());
+	hsize2 = int(Hvec[ind2].size());
+	psize2 = int(Pvec[ind4].size());
+	for(int h1 = 0; h1 < hsize1; ++h1){
+	  for(int h2 = 0; h2 < hsize2; ++h2){
+	    if(ind1 == ind2 && h1 == h2){ continue; }
+	    for(int p2 = 0; p2 < psize2; ++p2){
+	      inds[0] = Hvec[ind1][h1];
+	      inds[1] = Hvec[ind2][h2];
+	      inds[2] = Pvec[ind4][p2];
+	      Chan.hhpvec1[i].insert(Chan.hhpvec1[i].end(), inds.begin(), inds.end());
+	    }
+	  }
+	}
+      }
+    }
+  }
 
   double memory = 0.0;
   std::vector<int> mem1(Chan.size1, 0.0);
@@ -685,36 +613,33 @@ double CCD::get_T(int i, int j) const
   Chan.pp.resize(Chan.size1);
   memory += (7.0 * Chan.size1 + 1) * 24.0;
   #pragma omp parallel for
-  for(int i = 0; i < Chan.size1; ++i)
-    {
-      Chan.hh[i] = int(Chan.hhvec1[i].size()/2);
-      Chan.pp[i] = int(Chan.ppvec1[i].size()/2);
-      mem1[i] = 8.0 * (2.0 * Chan.hh[i]*Chan.hh[i] + Chan.pp[i]*Chan.pp[i] + 3.0 * Chan.hh[i]*Chan.pp[i]) + 4.0 * (15.0 * Chan.hh[i]*Chan.pp[i]);
-    }
+  for(int i = 0; i < Chan.size1; ++i){
+    Chan.hh[i] = int(Chan.hhvec1[i].size()/2);
+    Chan.pp[i] = int(Chan.ppvec1[i].size()/2);
+    mem1[i] = 8.0 * (2.0 * Chan.hh[i]*Chan.hh[i] + Chan.pp[i]*Chan.pp[i] + 3.0 * Chan.hh[i]*Chan.pp[i]) + 4.0 * (15.0 * Chan.hh[i]*Chan.pp[i]);
+  }
   Chan.hp1.resize(Chan.size2);
   Chan.hp2.resize(Chan.size2);
   memory += (9.0 * Chan.size2 + 1) * 24.0;
   #pragma omp parallel for
-  for(int i = 0; i < Chan.size2; ++i)
-    {
-      Chan.hp1[i] = int(Chan.hp1vec1[i].size()/2);
-      Chan.hp2[i] = int(Chan.hp2vec1[i].size()/2);
-      mem2[i] = 8.0 * (5.0 * Chan.hp1[i]*Chan.hp2[i] + 3.0 * Chan.hp1[i]*Chan.hp1[i] + Chan.hp2[i]*Chan.hp2[i]);
-    }
+  for(int i = 0; i < Chan.size2; ++i){
+    Chan.hp1[i] = int(Chan.hp1vec1[i].size()/2);
+    Chan.hp2[i] = int(Chan.hp2vec1[i].size()/2);
+    mem2[i] = 8.0 * (5.0 * Chan.hp1[i]*Chan.hp2[i] + 3.0 * Chan.hp1[i]*Chan.hp1[i] + Chan.hp2[i]*Chan.hp2[i]);
+  }
   Chan.h.resize(Chan.size3);
   Chan.hpp.resize(Chan.size3);
   Chan.p.resize(Chan.size3);
   Chan.hhp.resize(Chan.size3);
   memory += (8.0 * Chan.size3 + 1) * 24.0;
   #pragma omp parallel for
-  for(int i = 0; i < Chan.size3; ++i)
-    {
-      Chan.h[i] = int(Chan.hvec1[i].size());
-      Chan.hpp[i] = int(Chan.hppvec1[i].size()/3);
-      Chan.p[i] = int(Chan.pvec1[i].size());
-      Chan.hhp[i] = int(Chan.hhpvec1[i].size()/3);
-      mem3[i] = 8.0 * (Chan.h[i]*Chan.h[i] + 3.0 * Chan.h[i]*Chan.hpp[i] + Chan.p[i]*Chan.p[i] + 3.0 * Chan.p[i]*Chan.hhp[i]);
-    }
+  for(int i = 0; i < Chan.size3; ++i){
+    Chan.h[i] = int(Chan.hvec1[i].size());
+    Chan.hpp[i] = int(Chan.hppvec1[i].size()/3);
+    Chan.p[i] = int(Chan.pvec1[i].size());
+    Chan.hhp[i] = int(Chan.hhpvec1[i].size()/3);
+    mem3[i] = 8.0 * (Chan.h[i]*Chan.h[i] + 3.0 * Chan.h[i]*Chan.hpp[i] + Chan.p[i]*Chan.p[i] + 3.0 * Chan.p[i]*Chan.hhp[i]);
+  }
   
   for(int i = 0; i < Chan.size1; ++i){ memory += mem1[i]; }
   for(int i = 0; i < Chan.size2; ++i){ memory += mem2[i]; }
@@ -725,7 +650,8 @@ double CCD::get_T(int i, int j) const
 
   return Chan;
 
-}*/
+}
+
 
 //Function to setup Channels
 Channels CART_Setup_Channels(const Model_Space &Space)
@@ -745,16 +671,35 @@ Channels CART_Setup_Channels(const Model_Space &Space)
   std::vector<std::vector<int> > Hvec, Pvec;
 
   Chan.size3 = 0;
-  int count = 0;
-  for(int i = 0; i < Space.indtot; ++i)
-    {
-      M = Space.levelsm[i];
-      T = Space.levelst[i];
-      Nx = Space.levelsnx[i];
-      Ny = Space.levelsny[i];
-      Nz = Space.levelsnz[i];
-      if(count == 0)
-	{
+  for(int i = 0; i < Space.indtot; ++i){
+    M = Space.levelsm[i];
+    T = Space.levelst[i];
+    Nx = Space.levelsnx[i];
+    Ny = Space.levelsny[i];
+    Nz = Space.levelsnz[i];
+    if(Chan.size3 == 0){
+      ++Chan.size3;
+      Hvec.resize(Chan.size3);
+      Pvec.resize(Chan.size3);
+      HPMs.push_back(M);
+      HPTs.push_back(T);
+      HPNxs.push_back(Nx);
+      HPNys.push_back(Ny);
+      HPNzs.push_back(Nz);
+      Chan.indvec.push_back(Chan.size3 - 1);
+      if(Space.levelstype[i] == "hole"){ Hvec[Chan.size3 - 1].push_back(i); }
+      else{ Pvec[Chan.size3 - 1].push_back(i); }
+      continue;
+    }
+    else{
+      for(int k = 0; k < Chan.size3; ++k){
+	if(M == HPMs[k] && T == HPTs[k] && Nx == HPNxs[k] && Ny == HPNys[k] && Nz == HPNzs[k]){ 
+	  Chan.indvec.push_back(k);
+	  if(Space.levelstype[i] == "hole"){ Hvec[k].push_back(i); }
+	  else{ Pvec[k].push_back(i); }
+	  break;
+	}
+	else if(k == Chan.size3 - 1){
 	  ++Chan.size3;
 	  Hvec.resize(Chan.size3);
 	  Pvec.resize(Chan.size3);
@@ -766,217 +711,163 @@ Channels CART_Setup_Channels(const Model_Space &Space)
 	  Chan.indvec.push_back(Chan.size3 - 1);
 	  if(Space.levelstype[i] == "hole"){ Hvec[Chan.size3 - 1].push_back(i); }
 	  else{ Pvec[Chan.size3 - 1].push_back(i); }
-	  continue;
+	  break;
 	}
-      else
-	{
-	  for(int k = 0; k < Chan.size3; ++k)
-	    {
-	      if(M == HPMs[k] && T == HPTs[k] && Nx == HPNxs[k] && Ny == HPNys[k] && Nz == HPNzs[k])
-		{ 
-		  Chan.indvec.push_back(k);
-		  if(Space.levelstype[i] == "hole"){ Hvec[k].push_back(i); }
-		  else{ Pvec[k].push_back(i); }
-		  break;
-		}
-	      else if(k == Chan.size3 - 1)
-		{
-		  ++Chan.size3;
-		  Hvec.resize(Chan.size3);
-		  Pvec.resize(Chan.size3);
-		  HPMs.push_back(M);
-		  HPTs.push_back(T);
-		  HPNxs.push_back(Nx);
-		  HPNys.push_back(Ny);
-		  HPNzs.push_back(Nz);
-		  Chan.indvec.push_back(Chan.size3 - 1);
-		  if(Space.levelstype[i] == "hole"){ Hvec[Chan.size3 - 1].push_back(i); }
-		  else{ Pvec[Chan.size3 - 1].push_back(i); }
-		  break;
-		}
-	    }
-	}
+      }
     }
+  }
 
-  Chan.size1 = Space.tb1Indsize * Space.Msize * Space.Tsize;
-  Chan.size2 = Space.tb2Indsize * Space.M2size * Space.T2size;
-  //Chan.size1 = Space.Nxsize * Space.Nysize * Space.Nzsize * Space.Msize * Space.Tsize;
-  //Chan.size2 = Space.Nx2size * Space.Ny2size * Space.Nz2size * Space.M2size * Space.T2size;
+  Chan.size1 = Space.CART_tb1Indsize * Space.Msize * Space.Tsize;
+  Chan.size2 = Space.CART_tb2Indsize * Space.M2size * Space.T2size;
 
   std::vector<std::vector<int> > tempvec1(Chan.size3);
   std::vector<std::vector<int> > tempvec2(Chan.size3);
 
   //Make Vector of Two-Body States for Each Channel
-  //#pragma omp parallel for
-  for(int i = 0; i < Chan.size3; ++i)
-    {
-      int ind1, ind2;
-      tempvec1[i].assign(Chan.size1, -1);
-      tempvec2[i].assign(Chan.size2, -1);
-      double M, T, M2, T2;
-      int Nx, Ny, Nz, Nx2, Ny2, Nz2;
-      for(int j = 0; j < Chan.size3; ++j)
-	{
-	  M = HPMs[i] + HPMs[j];
-	  T = HPTs[i] + HPTs[j];
-	  M2 = HPMs[i] - HPMs[j];
-	  T2 = HPTs[i] - HPTs[j];
-	  Nx = HPNxs[i] + HPNxs[j];
-	  Ny = HPNys[i] + HPNys[j];
-	  Nz = HPNzs[i] + HPNzs[j];
-	  Nx2 = HPNxs[i] - HPNxs[j];
-	  Ny2 = HPNys[i] - HPNys[j];
-	  Nz2 = HPNzs[i] - HPNzs[j];
-	  //std::cout << "test1" << std::endl;
-	  ind1 = CART_tbInd1(Space, Nx, Ny, Nz, M, T);
-	  tempvec1[i][ind1] = j;
-	  //std::cout << "test2" << std::endl;
-	  ind2 = CART_tbInd2(Space, Nx2, Ny2, Nz2, M2, T2);
-	  tempvec2[i][ind2] = j;
-	}
+  #pragma omp parallel for
+  for(int i = 0; i < Chan.size3; ++i){
+    int ind1, ind2;
+    tempvec1[i].assign(Chan.size1, -1);
+    tempvec2[i].assign(Chan.size2, -1);
+    double M, T, M2, T2;
+    int Nx, Ny, Nz, Nx2, Ny2, Nz2;
+    for(int j = 0; j < Chan.size3; ++j){
+      M = HPMs[i] + HPMs[j];
+      T = HPTs[i] + HPTs[j];
+      M2 = HPMs[i] - HPMs[j];
+      T2 = HPTs[i] - HPTs[j];
+      Nx = HPNxs[i] + HPNxs[j];
+      Ny = HPNys[i] + HPNys[j];
+      Nz = HPNzs[i] + HPNzs[j];
+      Nx2 = HPNxs[i] - HPNxs[j];
+      Ny2 = HPNys[i] - HPNys[j];
+      Nz2 = HPNzs[i] - HPNzs[j];
+      ind1 = CART_tbInd1(Space, Nx, Ny, Nz, M, T);
+      tempvec1[i][ind1] = j;
+      ind2 = CART_tbInd2(Space, Nx2, Ny2, Nz2, M2, T2);
+      tempvec2[i][ind2] = j;
     }
+  }
 
   Chan.hhvec1.resize(Chan.size1);
   Chan.ppvec1.resize(Chan.size1);
   Chan.hp1vec1.resize(Chan.size2);
   Chan.hp2vec1.resize(Chan.size2);
-  for(int i = 0; i < Chan.size3; ++i)
-    {
-      #pragma omp parallel for
-      for(int j = 0; j < Chan.size1; ++j)
-	{
-	  if(tempvec1[i][j] == -1){ continue; }
-	  int ind1, ind2;
-	  int hsize1, hsize2, psize1, psize2;
-	  ind1 = i;
-	  ind2 = tempvec1[i][j];
-	  hsize1 = int(Hvec[ind1].size());
-	  hsize2 = int(Hvec[ind2].size());
-	  for(int h1 = 0; h1 < hsize1; ++h1)
-	    {
-	      for(int h2 = 0; h2 < hsize2; ++h2)
-		{
-		  if(ind1 == ind2 && h1 == h2){ continue; }
-		  Chan.hhvec1[j].push_back(Hvec[ind1][h1]);
-		  Chan.hhvec1[j].push_back(Hvec[ind2][h2]);
-		}
-	    }
-	  psize1 = int(Pvec[ind1].size());
-	  psize2 = int(Pvec[ind2].size());
-	  for(int p1 = 0; p1 < psize1; ++p1)
-	    {
-	      for(int p2 = 0; p2 < psize2; ++p2)
-		{
-		  if(ind1 == ind2 && p1 == p2){ continue; }
-		  Chan.ppvec1[j].push_back(Pvec[ind1][p1]);
-		  Chan.ppvec1[j].push_back(Pvec[ind2][p2]);
-		}
-	    }
+  for(int i = 0; i < Chan.size3; ++i){
+    #pragma omp parallel for
+    for(int j = 0; j < Chan.size1; ++j){
+      if(tempvec1[i][j] == -1){ continue; }
+      int ind1, ind2;
+      int hsize1, hsize2, psize1, psize2;
+      ind1 = i;
+      ind2 = tempvec1[i][j];
+      hsize1 = int(Hvec[ind1].size());
+      hsize2 = int(Hvec[ind2].size());
+      for(int h1 = 0; h1 < hsize1; ++h1){
+	for(int h2 = 0; h2 < hsize2; ++h2){
+	  if(ind1 == ind2 && h1 == h2){ continue; }
+	  Chan.hhvec1[j].push_back(Hvec[ind1][h1]);
+	  Chan.hhvec1[j].push_back(Hvec[ind2][h2]);
 	}
-      #pragma omp parallel for
-      for(int j = 0; j < Chan.size2; ++j)
-	{
-	  if(tempvec2[i][j] == -1){ continue; }
-	  int ind1, ind2;
-	  int hsize1, psize1;
-	  ind1 = i;
-	  ind2 = tempvec2[i][j];
-	  hsize1 = int(Hvec[ind1].size());
-	  psize1 = int(Pvec[ind2].size());
-	  for(int h1 = 0; h1 < hsize1; ++h1)
-	    {
-	      for(int p1 = 0; p1 < psize1; ++p1)
-		{
-		  Chan.hp1vec1[j].push_back(Hvec[ind1][h1]);
-		  Chan.hp1vec1[j].push_back(Pvec[ind2][p1]);
-		}
-	    }
-	  hsize1 = int(Hvec[ind2].size());
-	  psize1 = int(Pvec[ind1].size());
-	  for(int h1 = 0; h1 < hsize1; ++h1)
-	    {
-	      for(int p1 = 0; p1 < psize1; ++p1)
-		{
-		  Chan.hp2vec1[j].push_back(Hvec[ind2][h1]);
-		  Chan.hp2vec1[j].push_back(Pvec[ind1][p1]);
-		}
-	    }
+      }
+      psize1 = int(Pvec[ind1].size());
+      psize2 = int(Pvec[ind2].size());
+      for(int p1 = 0; p1 < psize1; ++p1){
+	for(int p2 = 0; p2 < psize2; ++p2){
+	  if(ind1 == ind2 && p1 == p2){ continue; }
+	  Chan.ppvec1[j].push_back(Pvec[ind1][p1]);
+	  Chan.ppvec1[j].push_back(Pvec[ind2][p2]);
 	}
+      }
     }
+    #pragma omp parallel for
+    for(int j = 0; j < Chan.size2; ++j){
+      if(tempvec2[i][j] == -1){ continue; }
+      int ind1, ind2;
+      int hsize1, psize1;
+      ind1 = i;
+      ind2 = tempvec2[i][j];
+      hsize1 = int(Hvec[ind1].size());
+      psize1 = int(Pvec[ind2].size());
+      for(int h1 = 0; h1 < hsize1; ++h1){
+	for(int p1 = 0; p1 < psize1; ++p1){
+	  Chan.hp1vec1[j].push_back(Hvec[ind1][h1]);
+	  Chan.hp1vec1[j].push_back(Pvec[ind2][p1]);
+	}
+      }
+      hsize1 = int(Hvec[ind2].size());
+      psize1 = int(Pvec[ind1].size());
+      for(int h1 = 0; h1 < hsize1; ++h1){
+	for(int p1 = 0; p1 < psize1; ++p1){
+	  Chan.hp2vec1[j].push_back(Hvec[ind2][h1]);
+	  Chan.hp2vec1[j].push_back(Pvec[ind1][p1]);
+	}
+      }
+    }
+  }
   Chan.hvec1.resize(Chan.size3);
   Chan.hppvec1.resize(Chan.size3);
   Chan.pvec1.resize(Chan.size3);
   Chan.hhpvec1.resize(Chan.size3);
   #pragma omp parallel for
-  for(int i = 0; i < Chan.size3; ++i)
-    {
-      int ind1, ind2, ind3, ind4;
-      int hsize1, hsize2, psize1, psize2;
-      std::vector<int> inds(3);
-      hsize1 = int(Hvec[i].size());
-      if(hsize1 == 0){ goto break1; }
-      for(int h1 = 0; h1 < hsize1; ++h1){ Chan.hvec1[i].push_back(Hvec[i][h1]); }
-      for(int j = 0; j < Chan.size1; ++j)
-	{
-	  if(tempvec1[i][j] == -1){ continue; }
-	  for(int k = 0; k < Chan.size3; ++k)
-	    {
-	      if(tempvec1[k][j] == -1){ continue; }
-	      ind2 = tempvec1[i][j];
-	      ind3 = k;
-	      ind4 = tempvec1[k][j];
-	      hsize2 = int(Hvec[ind2].size());
-	      psize1 = int(Pvec[ind3].size());
-	      psize2 = int(Pvec[ind4].size());
-	      for(int h2 = 0; h2 < hsize2; ++h2)
-		{
-		  for(int p1 = 0; p1 < psize1; ++p1)
-		    {
-		      for(int p2 = 0; p2 < psize2; ++p2)
-			{
-			  if(ind3 == ind4 && p1 == p2){ continue; }
-			  inds[0] = Hvec[ind2][h2];
-			  inds[1] = Pvec[ind3][p1];
-			  inds[2] = Pvec[ind4][p2];
-			  Chan.hppvec1[i].insert(Chan.hppvec1[i].end(), inds.begin(), inds.end());
-			}
-		    }
-		}
+  for(int i = 0; i < Chan.size3; ++i){
+    int ind1, ind2, ind3, ind4;
+    int hsize1, hsize2, psize1, psize2;
+    std::vector<int> inds(3);
+    hsize1 = int(Hvec[i].size());
+    if(hsize1 == 0){ goto break1; }
+    for(int h1 = 0; h1 < hsize1; ++h1){ Chan.hvec1[i].push_back(Hvec[i][h1]); }
+    for(int j = 0; j < Chan.size1; ++j){
+      if(tempvec1[i][j] == -1){ continue; }
+      for(int k = 0; k < Chan.size3; ++k){
+	if(tempvec1[k][j] == -1){ continue; }
+	ind2 = tempvec1[i][j];
+	ind3 = k;
+	ind4 = tempvec1[k][j];
+	hsize2 = int(Hvec[ind2].size());
+	psize1 = int(Pvec[ind3].size());
+	psize2 = int(Pvec[ind4].size());
+	for(int h2 = 0; h2 < hsize2; ++h2){
+	  for(int p1 = 0; p1 < psize1; ++p1){
+	    for(int p2 = 0; p2 < psize2; ++p2){
+	      if(ind3 == ind4 && p1 == p2){ continue; }
+	      inds[0] = Hvec[ind2][h2];
+	      inds[1] = Pvec[ind3][p1];
+	      inds[2] = Pvec[ind4][p2];
+	      Chan.hppvec1[i].insert(Chan.hppvec1[i].end(), inds.begin(), inds.end());
 	    }
+	  }
 	}
-    break1:
-      psize1 = int(Pvec[i].size());
-      if(psize1 == 0){ continue; }
-      for(int p1 = 0; p1 < psize1; ++p1){ Chan.pvec1[i].push_back(Pvec[i][p1]); }
-      for(int j = 0; j < Chan.size1; ++j)
-	{
-	  if(tempvec1[i][j] == -1){ continue; }
-	  for(int k = 0; k < Chan.size3; ++k)
-	    {
-	      if(tempvec1[k][j] == -1){ continue; }
-	      ind1 = k;
-	      ind2 = tempvec1[k][j];
-	      ind4 = tempvec1[i][j];
-	      hsize1 = int(Hvec[ind1].size());
-	      hsize2 = int(Hvec[ind2].size());
-	      psize2 = int(Pvec[ind4].size());
-	      for(int h1 = 0; h1 < hsize1; ++h1)
-		{
-		  for(int h2 = 0; h2 < hsize2; ++h2)
-		    {
-		      if(ind1 == ind2 && h1 == h2){ continue; }
-		      for(int p2 = 0; p2 < psize2; ++p2)
-			{
-			  inds[0] = Hvec[ind1][h1];
-			  inds[1] = Hvec[ind2][h2];
-			  inds[2] = Pvec[ind4][p2];
-			  Chan.hhpvec1[i].insert(Chan.hhpvec1[i].end(), inds.begin(), inds.end());
-			}
-		    }
-		}
-	    }
-	}
+      }
     }
+  break1:
+    psize1 = int(Pvec[i].size());
+    if(psize1 == 0){ continue; }
+    for(int p1 = 0; p1 < psize1; ++p1){ Chan.pvec1[i].push_back(Pvec[i][p1]); }
+    for(int j = 0; j < Chan.size1; ++j){
+      if(tempvec1[i][j] == -1){ continue; }
+      for(int k = 0; k < Chan.size3; ++k){
+	if(tempvec1[k][j] == -1){ continue; }
+	ind1 = k;
+	ind2 = tempvec1[k][j];
+	ind4 = tempvec1[i][j];
+	hsize1 = int(Hvec[ind1].size());
+	hsize2 = int(Hvec[ind2].size());
+	psize2 = int(Pvec[ind4].size());
+	for(int h1 = 0; h1 < hsize1; ++h1){
+	  for(int h2 = 0; h2 < hsize2; ++h2){
+	    if(ind1 == ind2 && h1 == h2){ continue; }
+	    for(int p2 = 0; p2 < psize2; ++p2){
+	      inds[0] = Hvec[ind1][h1];
+	      inds[1] = Hvec[ind2][h2];
+	      inds[2] = Pvec[ind4][p2];
+	      Chan.hhpvec1[i].insert(Chan.hhpvec1[i].end(), inds.begin(), inds.end());
+	    }
+	  }
+	}
+      }
+    }
+  }
 
   double memory = 0.0;
   std::vector<int> mem1(Chan.size1, 0.0);
@@ -987,36 +878,33 @@ Channels CART_Setup_Channels(const Model_Space &Space)
   Chan.pp.resize(Chan.size1);
   memory += (7.0 * Chan.size1 + 1) * 24.0;
   #pragma omp parallel for
-  for(int i = 0; i < Chan.size1; ++i)
-    {
-      Chan.hh[i] = int(Chan.hhvec1[i].size()/2);
-      Chan.pp[i] = int(Chan.ppvec1[i].size()/2);
-      mem1[i] = 8.0 * (2.0 * Chan.hh[i]*Chan.hh[i] + Chan.pp[i]*Chan.pp[i] + 3.0 * Chan.hh[i]*Chan.pp[i]) + 4.0 * (15.0 * Chan.hh[i]*Chan.pp[i]);
-    }
+  for(int i = 0; i < Chan.size1; ++i){
+    Chan.hh[i] = int(Chan.hhvec1[i].size()/2);
+    Chan.pp[i] = int(Chan.ppvec1[i].size()/2);
+    mem1[i] = 8.0 * (2.0 * Chan.hh[i]*Chan.hh[i] + Chan.pp[i]*Chan.pp[i] + 3.0 * Chan.hh[i]*Chan.pp[i]) + 4.0 * (15.0 * Chan.hh[i]*Chan.pp[i]);
+  }
   Chan.hp1.resize(Chan.size2);
   Chan.hp2.resize(Chan.size2);
   memory += (9.0 * Chan.size2 + 1) * 24.0;
   #pragma omp parallel for
-  for(int i = 0; i < Chan.size2; ++i)
-    {
-      Chan.hp1[i] = int(Chan.hp1vec1[i].size()/2);
-      Chan.hp2[i] = int(Chan.hp2vec1[i].size()/2);
-      mem2[i] = 8.0 * (5.0 * Chan.hp1[i]*Chan.hp2[i] + 3.0 * Chan.hp1[i]*Chan.hp1[i] + Chan.hp2[i]*Chan.hp2[i]);
-    }
+  for(int i = 0; i < Chan.size2; ++i){
+    Chan.hp1[i] = int(Chan.hp1vec1[i].size()/2);
+    Chan.hp2[i] = int(Chan.hp2vec1[i].size()/2);
+    mem2[i] = 8.0 * (5.0 * Chan.hp1[i]*Chan.hp2[i] + 3.0 * Chan.hp1[i]*Chan.hp1[i] + Chan.hp2[i]*Chan.hp2[i]);
+  }
   Chan.h.resize(Chan.size3);
   Chan.hpp.resize(Chan.size3);
   Chan.p.resize(Chan.size3);
   Chan.hhp.resize(Chan.size3);
   memory += (8.0 * Chan.size3 + 1) * 24.0;
   #pragma omp parallel for
-  for(int i = 0; i < Chan.size3; ++i)
-    {
-      Chan.h[i] = int(Chan.hvec1[i].size());
-      Chan.hpp[i] = int(Chan.hppvec1[i].size()/3);
-      Chan.p[i] = int(Chan.pvec1[i].size());
-      Chan.hhp[i] = int(Chan.hhpvec1[i].size()/3);
-      mem3[i] = 8.0 * (Chan.h[i]*Chan.h[i] + 3.0 * Chan.h[i]*Chan.hpp[i] + Chan.p[i]*Chan.p[i] + 3.0 * Chan.p[i]*Chan.hhp[i]);
-    }
+  for(int i = 0; i < Chan.size3; ++i){
+    Chan.h[i] = int(Chan.hvec1[i].size());
+    Chan.hpp[i] = int(Chan.hppvec1[i].size()/3);
+    Chan.p[i] = int(Chan.pvec1[i].size());
+    Chan.hhp[i] = int(Chan.hhpvec1[i].size()/3);
+    mem3[i] = 8.0 * (Chan.h[i]*Chan.h[i] + 3.0 * Chan.h[i]*Chan.hpp[i] + Chan.p[i]*Chan.p[i] + 3.0 * Chan.p[i]*Chan.hhp[i]);
+  }
   
   for(int i = 0; i < Chan.size1; ++i){ memory += mem1[i]; }
   for(int i = 0; i < Chan.size2; ++i){ memory += mem2[i]; }
@@ -1042,31 +930,52 @@ CC_Matrix_Elements::CC_Matrix_Elements(Channels Chan)
   HHPP4.resize(Chan.size2);
   HHPP4T.resize(Chan.size2);
   #pragma omp parallel for
-  for(int i = 0; i < Chan.size1; ++i)
-    {
-      HHHH[i].assign(Chan.hh[i] * Chan.hh[i], 0.0);
-      PPPP[i].assign(Chan.pp[i] * Chan.pp[i], 0.0);
-      HHPP1[i].assign(Chan.pp[i] * Chan.hh[i], 0.0);
-    }
+  for(int i = 0; i < Chan.size1; ++i){
+    HHHH[i].assign(Chan.hh[i] * Chan.hh[i], 0.0);
+    PPPP[i].assign(Chan.pp[i] * Chan.pp[i], 0.0);
+    HHPP1[i].assign(Chan.pp[i] * Chan.hh[i], 0.0);
+  }
   #pragma omp parallel for
-  for(int i = 0; i < Chan.size3; ++i)
-    {
-      HHPP2[i].assign(Chan.p[i] * Chan.hhp[i], 0.0);
-    }
+  for(int i = 0; i < Chan.size3; ++i){
+    HHPP2[i].assign(Chan.p[i] * Chan.hhp[i], 0.0);
+  }
   #pragma omp parallel for
-  for(int i = 0; i < Chan.size3; ++i)
-    {
-      HHPP3[i].assign(Chan.h[i] * Chan.hpp[i], 0.0);
-    }
+  for(int i = 0; i < Chan.size3; ++i){
+    HHPP3[i].assign(Chan.h[i] * Chan.hpp[i], 0.0);
+  }
   #pragma omp parallel for
-  for(int i = 0; i < Chan.size2; ++i)
-    {
-      HPHP1[i].assign(Chan.hp2[i] * Chan.hp2[i], 0.0);
-      HPHP2[i].assign(Chan.hp1[i] * Chan.hp1[i], 0.0);
-      HHPP4[i].assign(Chan.hp1[i] * Chan.hp2[i], 0.0);
-      HHPP4T[i].assign(Chan.hp2[i] * Chan.hp1[i], 0.0);
-    }
+  for(int i = 0; i < Chan.size2; ++i){
+    HPHP1[i].assign(Chan.hp2[i] * Chan.hp2[i], 0.0);
+    HPHP2[i].assign(Chan.hp1[i] * Chan.hp1[i], 0.0);
+    HHPP4[i].assign(Chan.hp1[i] * Chan.hp2[i], 0.0);
+    HHPP4T[i].assign(Chan.hp2[i] * Chan.hp1[i], 0.0);
+  }
 }
+
+
+CC_Eff::CC_Eff(Channels Chan)
+{
+  V1.resize(Chan.size1);
+  V2.resize(Chan.size1);
+  V3.resize(Chan.size2);
+  V4.resize(Chan.size2);
+  V5.resize(Chan.size1);
+  #pragma omp parallel for
+  for(int i = 0; i < Chan.size3; ++i){
+    V1[i].assign(Chan.p[i] * Chan.p[i], 0.0);
+    V2[i].assign(Chan.h[i] * Chan.h[i], 0.0);
+  }
+  #pragma omp parallel for
+  for(int i = 0; i < Chan.size1; ++i){
+    V3[i].assign(Chan.pp[i] * Chan.pp[i], 0.0);
+    V4[i].assign(Chan.hh[i] * Chan.hh[i], 0.0);
+  }
+  #pragma omp parallel for
+  for(int i = 0; i < Chan.size2; ++i){
+    V5[i].assign(Chan.hp1[i] * Chan.hp1[i], 0.0);
+  }
+}
+
 
 //Initialize program from input file
 Input_Parameters Get_Input_Parameters(std::string &infile)
@@ -1085,41 +994,38 @@ Input_Parameters Get_Input_Parameters(std::string &infile)
 
   //find lines that start with '\*'
   index = 0;
-  while (getline(filestream, line))
-    { 
-      if(line[0] == '\\' && line[1] == '*')
-	{  
-	  ++index;
-	  colon = line.find(':');
-	  if( colon == line.size() - 1 ){ continue; };
-	  substr = line.substr(colon + 2, line.size());
-	  switch(index)
-	    {
-	    case 1:
-	      Input.basis = substr;
-	      break;
-	    case 2:
-	      Input.obstrength = atof(substr.c_str());
-	      break;
-	    case 3:
-	      Input.tbstrength = atof(substr.c_str());
-	      break;
-	    case 4:
-	      Input.P = atoi(substr.c_str());
-	      break;
-	    case 5:
-	      Input.N = atoi(substr.c_str());
-	      break;
-	    case 6:
-	      Input.LevelScheme = substr;
-	      break;
-	    case 7:
-	      Input.MatrixElements = substr;
-	      break;
-	    } 
-	}
-      else{ continue; };
+  while (getline(filestream, line)){ 
+    if(line[0] == '\\' && line[1] == '*'){  
+      ++index;
+      colon = line.find(':');
+      if( colon == line.size() - 1 ){ continue; };
+      substr = line.substr(colon + 2, line.size());
+      switch(index){
+      case 1:
+	Input.basis = substr;
+	break;
+      case 2:
+	Input.obstrength = atof(substr.c_str());
+	break;
+      case 3:
+	Input.tbstrength = atof(substr.c_str());
+	break;
+      case 4:
+	Input.P = atoi(substr.c_str());
+	break;
+      case 5:
+	Input.N = atoi(substr.c_str());
+	break;
+      case 6:
+	Input.LevelScheme = substr;
+	break;
+      case 7:
+	Input.MatrixElements = substr;
+	break;
+      } 
     }
+    else{ continue; };
+  }
   return Input;
 }
 
@@ -1136,7 +1042,7 @@ void Print_Parameters(const Input_Parameters &Parameters)
 }
 
 
-/*Model_Space Build_Model_Space(const Input_Parameters &Parameters)
+Model_Space Build_Model_Space(const Input_Parameters &Parameters)
 {
   Model_Space Space; // Model Space information
   std::string fullpath; // Model Space file path
@@ -1160,12 +1066,14 @@ void Print_Parameters(const Input_Parameters &Parameters)
   Space.levelsen.resize(Space.indtot);
 
   if(Parameters.basis == "HO"){
-  Space.levelsn.resize(Space.indtot);
-  Space.levelsl.resize(Space.indtot); }
+    Space.levelsn.resize(Space.indtot);
+    Space.levelsl.resize(Space.indtot);
+  }
   else if(Parameters.basis == "CART"){
-  Space.levelsnx.resize(Space.indtot);
-  Space.levelsny.resize(Space.indtot);
-  Space.levelsnz.resize(Space.indtot); }
+    Space.levelsnx.resize(Space.indtot);
+    Space.levelsny.resize(Space.indtot);
+    Space.levelsnz.resize(Space.indtot);
+  }
 
   pcount = 0;
   ncount = 0;
@@ -1177,103 +1085,157 @@ void Print_Parameters(const Input_Parameters &Parameters)
   int Nxmin = 1000, Nymin = 1000, Nzmin = 1000;
   int Nxmax = -1000, Nymax = -1000, Nzmax = -1000;
 
-  for(int i = 0; i < Space.indtot; ++i)
-    {
-      if(Parameters.basis == "HO")
-	{
-	  getline(splevels, phline);
-	  std::stringstream(phline) >> ind >> n >> l >> m >> tz >> energy;
-	  Space.levelsind[i] = ind;
-	  Space.levelsn[i] = n;
-	  Space.levelsl[i] = l;
-	  Space.levelsm[i] = m;
-	  Space.levelst[i] = tz;
-	  Space.levelsen[i] = energy * Parameters.obstrength;
-	  if(m < Mmin){ Mmin = m; }
-	  if(tz < Tmin){ Tmin = tz; }
-	  if(std::pow(-1.0, l) < Pmin){ Pmin = std::pow(-1.0, l); }
-	  if(m > Mmax){ Mmax = m; }
-	  if(tz > Tmax){ Tmax = tz; }
-	  if(std::pow(-1.0, l) > Pmax){ Pmax = std::pow(-1.0, l); }
-	}
-      else if(Parameters.basis == "CART")
-	{
-	  getline(splevels, phline);
-	  std::stringstream(phline) >> ind >> nx >> ny >> nz >> m >> tz >> energy;
-	  Space.levelsind[i] = ind;
-	  Space.levelsnx[i] = nx;
-	  Space.levelsny[i] = ny;
-	  Space.levelsnz[i] = nz;
-	  Space.levelsm[i] = m;
-	  Space.levelst[i] = tz;
-	  Space.levelsen[i] = energy * Parameters.obstrength;
-	  if(m < Mmin){ Mmin = m; }
-	  if(tz < Tmin){ Tmin = tz; }
-	  if(nx < Nxmin){ Nxmin = nx; }
-	  if(ny < Nymin){ Nymin = ny; }
-	  if(nz < Nzmin){ Nzmin = nz; }
-	  if(m > Mmax){ Mmax = m; }
-	  if(tz > Tmax){ Tmax = tz; }
-	  if(nx > Nxmax){ Nxmax = nx; }
-	  if(ny > Nymax){ Nymax = ny; }
-	  if(nz > Nzmax){ Nzmax = nz; }
-	}
-      if(tz == -1 && pcount < Parameters.P){ Space.levelstype[i] = "hole"; ++pcount; ++holcount; }
-      else if(tz == -1 && pcount >= Parameters.P){ Space.levelstype[i] = "particle"; ++pcount; ++parcount; }
-      if(tz == 1 && ncount < Parameters.N){ Space.levelstype[i] = "hole"; ++ncount; ++holcount; }
-      else if(tz == 1 && ncount >= Parameters.N){ Space.levelstype[i] = "particle"; ++ncount; ++parcount; }
+  for(int i = 0; i < Space.indtot; ++i){
+    if(Parameters.basis == "HO"){
+      getline(splevels, phline);
+      std::stringstream(phline) >> ind >> n >> l >> m >> tz >> energy;
+      Space.levelsind[i] = ind;
+      Space.levelsn[i] = n;
+      Space.levelsl[i] = l;
+      Space.levelsm[i] = m;
+      Space.levelst[i] = tz;
+      Space.levelsen[i] = energy * Parameters.obstrength;
+      if(m < Mmin){ Mmin = m; }
+      if(tz < Tmin){ Tmin = tz; }
+      if(std::pow(-1.0, l) < Pmin){ Pmin = std::pow(-1.0, l); }
+      if(m > Mmax){ Mmax = m; }
+      if(tz > Tmax){ Tmax = tz; }
+      if(std::pow(-1.0, l) > Pmax){ Pmax = std::pow(-1.0, l); }
     }
+    else if(Parameters.basis == "CART"){
+      getline(splevels, phline);
+      std::stringstream(phline) >> ind >> nx >> ny >> nz >> m >> tz >> energy;
+      Space.levelsind[i] = ind;
+      Space.levelsnx[i] = nx;
+      Space.levelsny[i] = ny;
+      Space.levelsnz[i] = nz;
+      Space.levelsm[i] = m;
+      Space.levelst[i] = tz;
+      Space.levelsen[i] = energy * Parameters.obstrength;
+      if(m < Mmin){ Mmin = m; }
+      if(tz < Tmin){ Tmin = tz; }
+      if(nx < Nxmin){ Nxmin = nx; }
+      if(ny < Nymin){ Nymin = ny; }
+      if(nz < Nzmin){ Nzmin = nz; }
+      if(m > Mmax){ Mmax = m; }
+      if(tz > Tmax){ Tmax = tz; }
+      if(nx > Nxmax){ Nxmax = nx; }
+      if(ny > Nymax){ Nymax = ny; }
+      if(nz > Nzmax){ Nzmax = nz; }
+    }
+    if(tz == -1 && pcount < Parameters.P){ Space.levelstype[i] = "hole"; ++pcount; ++holcount; }
+    else if(tz == -1 && pcount >= Parameters.P){ Space.levelstype[i] = "particle"; ++pcount; ++parcount; }
+    if(tz == 1 && ncount < Parameters.N){ Space.levelstype[i] = "hole"; ++ncount; ++holcount; }
+    else if(tz == 1 && ncount >= Parameters.N){ Space.levelstype[i] = "particle"; ++ncount; ++parcount; }
+  }
   Space.indp = pcount;
   Space.indn = ncount;
   Space.indpar = parcount;
   Space.indhol = holcount;
 
-  Space.Mmin = Mmin + Mmin;
-  Space.Mmax = Mmax + Mmax;
-  Space.Msize = int(Mmax - Mmin + 1);
-  Space.Tmin = Tmin + Tmin;
-  Space.Tmax = Tmax + Tmax;
-  Space.Tsize = int(Tmax - Tmin + 1);
-  Space.M2min = Mmin - Mmax;
-  Space.M2max = Mmax - Mmin;
-  Space.M2size = int(Mmax - Mmin + 1);
-  Space.T2min = Tmin - Tmax;
-  Space.T2max = Tmax - Tmin;
-  Space.T2size = int(Tmax - Tmin + 1);
-  if(Parameters.basis == "HO")
-    {
-      Space.Pmin = Pmin;
-      Space.Pmax = Pmax;
-      Space.Psize = int(Pmax - Pmin);
-      Space.P2min = Pmin;
-      Space.P2max = Pmax;
-      Space.P2size = int(Pmax - Pmin);
+  if(Parameters.basis == "HO"){
+    int count1 = 0;
+    int Psize = int((Pmax - Pmin)/2) + 1;
+    Space.Pmin = Pmin;
+    Space.HO_tb1Indvec.resize(Psize);
+    for(int i = 0; i < Psize; ++i){
+      Space.HO_tb1Indvec[i] = count1;
+      ++count1;
     }
-  else if(Parameters.basis == "CART")
-    {
-      Space.Nxmin = Nxmin + Nxmin;
-      Space.Nxmax = Nxmax + Nxmax;
-      Space.Nxsize = int(2.0 * (Nxmax - Nxmin) + 1);
-      Space.Nymin = Nymin + Nymin;
-      Space.Nymax = Nymax + Nymax;
-      Space.Nysize = int(2.0 * (Nymax - Nymin) + 1);
-      Space.Nzmin = Nzmin + Nzmin;
-      Space.Nzmax = Nzmax + Nzmax;
-      Space.Nzsize = int(2.0 * (Nzmax - Nzmin) + 1);
-      Space.Nx2min = Nxmin - Nxmax;
-      Space.Nx2max = Nxmax - Nxmin;
-      Space.Nx2size = int(2.0 * (Nxmax - Nxmin) + 1);
-      Space.Ny2min = Nymin - Nymax;
-      Space.Ny2max = Nymax - Nymin;
-      Space.Ny2size = int(2.0 * (Nymax - Nymin) + 1);
-      Space.Nz2min = Nzmin - Nzmax;
-      Space.Nz2max = Nzmax - Nzmin;
-      Space.Nz2size = int(2.0 * (Nzmax - Nzmin) + 1);
+    Space.HO_tb1Indsize = count1;
+    int count2 = 0;
+    int P2size = int((Pmax - Pmin)/2) + 1;
+    Space.P2min = Pmin;
+    Space.HO_tb2Indvec.resize(P2size);
+    for(int i = 0; i < P2size; ++i){
+      Space.HO_tb2Indvec[i] = count2;
+      ++count2;
     }
-  splevels.close();
+    Space.HO_tb2Indsize = count2;
+  }
+  else if(Parameters.basis == "CART"){
+    int count1 = 0;
+    int Nxsize = int(2.0 * (Nxmax - Nxmin) + 1);
+    int Nysize, Nzsize;
+    Space.Nxmin = Nxmin + Nxmin;
+    Space.Nymin.resize(Nxsize);
+    Space.Nzmin.resize(Nxsize);
+    Space.CART_tb1Indvec.resize(Nxsize);
+    for(int i = 0; i < Nxsize; ++i){
+      Space.Nymin[i] = Nymin + Nymin;
+      Nysize = int(2.0 * (Nymax - Nymin) + 1);
+      Space.Nzmin[i].resize(Nysize);
+      Space.CART_tb1Indvec[i].resize(Nysize);
+      for(int j = 0; j < Nysize; ++j){
+	Space.Nzmin[i][j] = Nzmin + Nzmin;
+	Nzsize = int(2.0 * (Nzmax - Nzmin) + 1);
+	Space.CART_tb1Indvec[i][j].resize(Nzsize);
+	for(int k = 0; k < Nzsize; ++k){
+	  Space.CART_tb1Indvec[i][j][k] = count1;
+	  ++count1;
+	}
+      }
+    }
+    Space.CART_tb1Indsize = count1;
+    int count2 = 0;
+    int Nx2size = int(2.0 * (Nxmax - Nxmin) + 1);
+    int Ny2size, Nz2size;
+    Space.Nx2min = Nxmin - Nxmax;
+    Space.Ny2min.resize(Nx2size);
+    Space.Nz2min.resize(Nx2size);
+    Space.CART_tb2Indvec.resize(Nx2size);
+    for(int i = 0; i < Nx2size; ++i){
+      Space.Ny2min[i] = Nymin - Nymax;
+      Ny2size = int(2.0 * (Nymax - Nymin) + 1);
+      Space.Nz2min[i].resize(Ny2size);
+      Space.CART_tb2Indvec[i].resize(Ny2size);
+      for(int j = 0; j < Ny2size; ++j){
+	Space.Nz2min[i][j] = Nzmin - Nzmax;
+	Nz2size = int(2.0 * (Nzmax - Nzmin) + 1);
+	Space.CART_tb2Indvec[i][j].resize(Nz2size);
+	for(int k = 0; k < Nz2size; ++k){
+	  Space.CART_tb2Indvec[i][j][k] = count2;
+	  ++count2;
+	}
+      }
+    }
+    Space.CART_tb2Indsize = count2;
+  }
 
+  Space.Mmin = Mmin + Mmin;
+  Space.Msize = int(Mmax - Mmin + 1);
+  if(Parameters.P != 0 && Parameters.N != 0){
+    Space.Tmin = -2;
+    Space.Tsize = 3;
+  }
+  else if(Parameters.P != 0 && Parameters.N == 0){
+    Space.Tmin = -2;
+    Space.Tsize = 1;
+  }
+  else if(Parameters.P == 0 && Parameters.N != 0){
+    Space.Tmin = 2;
+    Space.Tsize = 1;
+  }
+
+  Space.M2min = Mmin - Mmax;
+  Space.M2size = int(Mmax - Mmin + 1);
+  if(Parameters.P != 0 && Parameters.N != 0){
+    Space.T2min = -2;
+    Space.T2size = 3;
+  }
+  else if(Parameters.P != 0 && Parameters.N == 0){
+    Space.T2min = 0;
+    Space.T2size = 1;
+  }
+  else if(Parameters.P == 0 && Parameters.N != 0){
+    Space.T2min = 0;
+    Space.T2size = 1;
+  }
+
+  splevels.close();
+  
   return Space;
-}*/
+}
 
 
 Model_Space CART_Build_Model_Space(const Input_Parameters &Parameters)
@@ -1310,56 +1272,46 @@ Model_Space CART_Build_Model_Space(const Input_Parameters &Parameters)
   holcount = 0;
 
   int shellMax = 3*Parameters.Nmax*Parameters.Nmax;
-  for(int shell = 0; shell <= shellMax; ++shell)
-    {
-      for(int nx = -Parameters.Nmax; nx <= Parameters.Nmax; ++nx)
-	{    
-	  for(int ny = -Parameters.Nmax; ny <= Parameters.Nmax; ++ny)
-	    {	
-	      for(int nz = -Parameters.Nmax; nz <= Parameters.Nmax; ++nz)
-		{	  
-		  //if(shell != nx*nx + ny*ny + nz*nz){ continue; }
-		  if(shell != nx*nx + ny*ny + nz*nz || Parameters.Nmax < nx*nx + ny*ny + nz*nz){ continue; }
-		  for(int sz = -1; sz <= 1; sz = sz+2)
-		    {
-		      for( int tz = -1; tz <= 1; tz = tz+2)
-			{
-			  if(tz == -1)
-			    {
-			      if(Parameters.P == 0){ continue; }
-			      E = (proton_prefac*4*M_PI*M_PI/(L*L)) * (nx*nx + ny*ny + nz*nz);
-			      Space.levelsen[count] = E;
-			      if(pcount < Parameters.P){ Space.levelstype[count] = "hole"; ++pcount; ++holcount; }
-			      else{ Space.levelstype[count] = "particle"; ++pcount; ++parcount; }
-			    }
-			  if(tz == 1)
-			    {
-			      if(Parameters.N == 0){ continue; }
-			      E = (neutron_prefac*4*M_PI*M_PI/(L*L)) * (nx*nx + ny*ny + nz*nz);
-			      Space.levelsen[count] = E;
-			      if(ncount < Parameters.N){ Space.levelstype[count] = "hole"; ++ncount; ++holcount; }
-			      else{ Space.levelstype[count] = "particle"; ++ncount; ++parcount; }
-			    }
-			  //std::cout << count+1 << " " << nx << " " << ny << " " << nz << " " << double(sz) << " " << double(tz) << " " << Space.levelstype[count] << std::endl;
-			  Space.levelsind[count] = count + 1;
-			  Space.levelsnx[count] = nx;
-			  Space.levelsny[count] = ny;
-			  Space.levelsnz[count] = nz;
-			  Space.levelsm[count] = double(sz);
-			  Space.levelst[count] = double(tz);
-			  count++;
-			}
-		    }   
-		} 
+  for(int shell = 0; shell <= shellMax; ++shell){
+    for(int nx = -Parameters.Nmax; nx <= Parameters.Nmax; ++nx){    
+      for(int ny = -Parameters.Nmax; ny <= Parameters.Nmax; ++ny){	
+	for(int nz = -Parameters.Nmax; nz <= Parameters.Nmax; ++nz){	  
+	  if(shell != nx*nx + ny*ny + nz*nz || Parameters.Nmax < nx*nx + ny*ny + nz*nz){ continue; }
+	  for(int sz = -1; sz <= 1; sz = sz+2){
+	    for( int tz = -1; tz <= 1; tz = tz+2){
+	      if(tz == -1){
+		if(Parameters.P == 0){ continue; }
+		E = (proton_prefac*4*M_PI*M_PI/(L*L)) * (nx*nx + ny*ny + nz*nz);
+		Space.levelsen[count] = E;
+		if(pcount < Parameters.P){ Space.levelstype[count] = "hole"; ++pcount; ++holcount; }
+		else{ Space.levelstype[count] = "particle"; ++pcount; ++parcount; }
+	      }
+	      if(tz == 1){
+		if(Parameters.N == 0){ continue; }
+		E = (neutron_prefac*4*M_PI*M_PI/(L*L)) * (nx*nx + ny*ny + nz*nz);
+		Space.levelsen[count] = E;
+		if(ncount < Parameters.N){ Space.levelstype[count] = "hole"; ++ncount; ++holcount; }
+		else{ Space.levelstype[count] = "particle"; ++ncount; ++parcount; }
+	      }
+	      //std::cout << count+1 << " " << nx << " " << ny << " " << nz << " " << double(sz) << " " << double(tz) << " " << Space.levelstype[count] << std::endl;
+	      Space.levelsind[count] = count + 1;
+	      Space.levelsnx[count] = nx;
+	      Space.levelsny[count] = ny;
+	      Space.levelsnz[count] = nz;
+	      Space.levelsm[count] = double(sz);
+	      Space.levelst[count] = double(tz);
+	      count++;
 	    }
-	}
+	  }   
+	} 
+      }
     }
+  }
   Space.indp = pcount;
   Space.indn = ncount;
   Space.indpar = parcount;
   Space.indhol = holcount;
 
-  //for spherical model space
   Space.levelsind.resize(count);
   Space.levelsm.resize(count);
   Space.levelst.resize(count);
@@ -1378,26 +1330,23 @@ Model_Space CART_Build_Model_Space(const Input_Parameters &Parameters)
   Space.Nxmin = -2*Space.nmax;
   Space.Nymin.resize(Nxsize);
   Space.Nzmin.resize(Nxsize);
-  Space.tb1Indvec.resize(Nxsize);
-  for(int i = 0; i < Nxsize; ++i)
-    {
-      Space.Nymin[i] = -int(std::ceil(std::sqrt(4*Parameters.Nmax - (Space.Nxmin+i)*(Space.Nxmin+i))));
-      Nysize = 2*int(std::ceil(std::sqrt(4*Parameters.Nmax - (Space.Nxmin+i)*(Space.Nxmin+i)))) + 1;
-      Space.Nzmin[i].resize(Nysize);
-      Space.tb1Indvec[i].resize(Nysize);
-      for(int j = 0; j < Nysize; ++j)
-	{
-	  Space.Nzmin[i][j] = -int(std::ceil(std::sqrt(4*Parameters.Nmax - (Space.Nxmin+i)*(Space.Nxmin+i) - (Space.Nymin[i]+j)*(Space.Nymin[i]+j))));
-	  Nzsize = 2*int(std::ceil(std::sqrt(4*Parameters.Nmax - (Space.Nxmin+i)*(Space.Nxmin+i) - (Space.Nymin[i]+j)*(Space.Nymin[i]+j)))) + 1;
-	  Space.tb1Indvec[i][j].resize(Nzsize);
-	  for(int k = 0; k < Nzsize; ++k)
-	    {
-	      Space.tb1Indvec[i][j][k] = count1;
-	      ++count1;
-	    }
-	}
+  Space.CART_tb1Indvec.resize(Nxsize);
+  for(int i = 0; i < Nxsize; ++i){
+    Space.Nymin[i] = -int(std::ceil(std::sqrt(4*Parameters.Nmax - (Space.Nxmin+i)*(Space.Nxmin+i))));
+    Nysize = 2*int(std::ceil(std::sqrt(4*Parameters.Nmax - (Space.Nxmin+i)*(Space.Nxmin+i)))) + 1;
+    Space.Nzmin[i].resize(Nysize);
+    Space.CART_tb1Indvec[i].resize(Nysize);
+    for(int j = 0; j < Nysize; ++j){
+      Space.Nzmin[i][j] = -int(std::ceil(std::sqrt(4*Parameters.Nmax - (Space.Nxmin+i)*(Space.Nxmin+i) - (Space.Nymin[i]+j)*(Space.Nymin[i]+j))));
+      Nzsize = 2*int(std::ceil(std::sqrt(4*Parameters.Nmax - (Space.Nxmin+i)*(Space.Nxmin+i) - (Space.Nymin[i]+j)*(Space.Nymin[i]+j)))) + 1;
+      Space.CART_tb1Indvec[i][j].resize(Nzsize);
+      for(int k = 0; k < Nzsize; ++k){
+	Space.CART_tb1Indvec[i][j][k] = count1;
+	++count1;
+      }
     }
-  Space.tb1Indsize = count1;
+  }
+  Space.CART_tb1Indsize = count1;
   
   int count2 = 0;
   int Nx2size = 4*Space.nmax + 1;
@@ -1405,147 +1354,81 @@ Model_Space CART_Build_Model_Space(const Input_Parameters &Parameters)
   Space.Nx2min = -2*Space.nmax;
   Space.Ny2min.resize(Nx2size);
   Space.Nz2min.resize(Nx2size);
-  Space.tb2Indvec.resize(Nx2size);
-  for(int i = 0; i < Nx2size; ++i)
-    {
-      Space.Ny2min[i] = -int(std::ceil(std::sqrt(4*Parameters.Nmax - (Space.Nx2min+i)*(Space.Nx2min+i))));
-      Ny2size = 2*int(std::ceil(std::sqrt(4*Parameters.Nmax - (Space.Nx2min+i)*(Space.Nx2min+i)))) + 1;
-      Space.Nz2min[i].resize(Ny2size);
-      Space.tb2Indvec[i].resize(Ny2size);
-      for(int j = 0; j < Ny2size; ++j)
-	{
-	  Space.Nz2min[i][j] = -int(std::ceil(std::sqrt(4*Parameters.Nmax - (Space.Nx2min+i)*(Space.Nx2min+i) - (Space.Ny2min[i]+j)*(Space.Ny2min[i]+j))));
-	  Nz2size = 2*int(std::ceil(std::sqrt(4*Parameters.Nmax - (Space.Nx2min+i)*(Space.Nx2min+i) - (Space.Ny2min[i]+j)*(Space.Ny2min[i]+j)))) + 1;
-	  Space.tb2Indvec[i][j].resize(Nz2size);
-	  for(int k = 0; k < Nz2size; ++k)
-	    {
-	      Space.tb2Indvec[i][j][k] = count2;
-	      ++count2;
-	    }
-	}
+  Space.CART_tb2Indvec.resize(Nx2size);
+  for(int i = 0; i < Nx2size; ++i){
+    Space.Ny2min[i] = -int(std::ceil(std::sqrt(4*Parameters.Nmax - (Space.Nx2min+i)*(Space.Nx2min+i))));
+    Ny2size = 2*int(std::ceil(std::sqrt(4*Parameters.Nmax - (Space.Nx2min+i)*(Space.Nx2min+i)))) + 1;
+    Space.Nz2min[i].resize(Ny2size);
+    Space.CART_tb2Indvec[i].resize(Ny2size);
+    for(int j = 0; j < Ny2size; ++j){
+      Space.Nz2min[i][j] = -int(std::ceil(std::sqrt(4*Parameters.Nmax - (Space.Nx2min+i)*(Space.Nx2min+i) - (Space.Ny2min[i]+j)*(Space.Ny2min[i]+j))));
+      Nz2size = 2*int(std::ceil(std::sqrt(4*Parameters.Nmax - (Space.Nx2min+i)*(Space.Nx2min+i) - (Space.Ny2min[i]+j)*(Space.Ny2min[i]+j)))) + 1;
+      Space.CART_tb2Indvec[i][j].resize(Nz2size);
+      for(int k = 0; k < Nz2size; ++k){
+	Space.CART_tb2Indvec[i][j][k] = count2;
+	++count2;
+      }
     }
-  Space.tb2Indsize = count2;
+  }
+  Space.CART_tb2Indsize = count2;
 
-  /*Space.Nxmin = -2*nmax;
-  Space.Nxmax = 2*nmax;
-  Space.Nxsize = 4*nmax + 1;
-  Space.Nymin = -2*nmax;
-  Space.Nymax = 2*nmax;
-  Space.Nysize = 4*nmax + 1;
-  Space.Nzmin = -2*nmax;
-  Space.Nzmax = 2*nmax;
-  Space.Nzsize = 4*nmax + 1;*/
   Space.Mmin = -2;
-  Space.Mmax = 2;
   Space.Msize = 3;
-  if(Parameters.P != 0 && Parameters.N != 0)
-    {
-      Space.Tmin = -2;
-      Space.Tmax = 2;
-      Space.Tsize = 3;
-    }
-  else if(Parameters.P != 0 && Parameters.N == 0)
-    {
-      Space.Tmin = -2;
-      Space.Tmax = -2;
-      Space.Tsize = 1;
-    }
-  else if(Parameters.P == 0 && Parameters.N != 0)
-    {
-      Space.Tmin = 2;
-      Space.Tmax = 2;
-      Space.Tsize = 1;
-    }
-  /*Space.Nx2min = -2*nmax;
-  Space.Nx2max = 2*nmax;
-  Space.Nx2size = 4*nmax + 1;
-  Space.Ny2min = -2*nmax;
-  Space.Ny2max = 2*nmax;
-  Space.Ny2size = 4*nmax + 1;
-  Space.Nz2min = -2*nmax;
-  Space.Nz2max = 2*nmax;
-  Space.Nz2size = 4*nmax + 1;*/
+  if(Parameters.P != 0 && Parameters.N != 0){
+    Space.Tmin = -2;
+    Space.Tsize = 3;
+  }
+  else if(Parameters.P != 0 && Parameters.N == 0){
+    Space.Tmin = -2;
+    Space.Tsize = 1;
+  }
+  else if(Parameters.P == 0 && Parameters.N != 0){
+    Space.Tmin = 2;
+    Space.Tsize = 1;
+  }
+
   Space.M2min = -2;
-  Space.M2max = 2;
   Space.M2size = 3;
-  if(Parameters.P != 0 && Parameters.N != 0)
-    {
-      Space.T2min = -2;
-      Space.T2max = 2;
-      Space.T2size = 3;
-    }
-  else if(Parameters.P != 0 && Parameters.N == 0)
-    {
-      Space.T2min = 0;
-      Space.T2max = 0;
-      Space.T2size = 1;
-    }
-  else if(Parameters.P == 0 && Parameters.N != 0)
-    {
-      Space.T2min = 0;
-      Space.T2max = 0;
-      Space.T2size = 1;
-    }
+  if(Parameters.P != 0 && Parameters.N != 0){
+    Space.T2min = -2;
+    Space.T2size = 3;
+  }
+  else if(Parameters.P != 0 && Parameters.N == 0){
+    Space.T2min = 0;
+    Space.T2size = 1;
+  }
+  else if(Parameters.P == 0 && Parameters.N != 0){
+    Space.T2min = 0;
+    Space.T2size = 1;
+  }
 
   return Space;
 }
 
 
-/*int HO_tbInd1(const Model_Space &Space, const double &P, const double &M, const double &T)
-{
-  return int((P - Space.Pmin)/2) * (Space.Msize * Space.Tsize) +
-    int(M - Space.Mmin) * (Space.Tsize) + int((T - Space.Tmin)/2);
-}
-
-int HO_tbInd2(const Model_Space &Space, const double &P2, const double &M2, const double &T2)
-{
-  return int((P2 - Space.Pmin)/2) * (Space.M2size * Space.T2size) +
-    int(M2 - Space.M2min) * (Space.T2size) + int((T2 - Space.T2min)/2);
-}
-
-int CART_tbInd1(const Model_Space &Space, const int &Nx, const int &Ny, const int &Nz, const double &M, const double &T)
-{
-  return (Nx - Space.Nxmin) * (Space.Nysize * Space.Nzsize * Space.Msize * Space.Tsize) +
-    (Ny - Space.Nymin) * (Space.Nzsize * Space.Msize * Space.Tsize) +
-    (Nz - Space.Nzmin) * (Space.Msize * Space.Tsize) +
-    int((M - Space.Mmin)/2) * (Space.Tsize) + int((T - Space.Tmin)/2);
-}
-
-int CART_tbInd2(const Model_Space &Space, const int &Nx2, const int &Ny2, const int &Nz2, const double &M2, const double &T2)
-{
-  return (Nx2 - Space.Nx2min) * (Space.Ny2size * Space.Nz2size * Space.M2size * Space.T2size) +
-    (Ny2 - Space.Ny2min) * (Space.Nz2size * Space.M2size * Space.T2size) +
-    (Nz2 - Space.Nz2min) * (Space.M2size * Space.T2size) +
-    int((M2 - Space.M2min)/2) * (Space.T2size) + int((T2 - Space.T2min)/2);
-    }*/
-
 
 int HO_tbInd1(const Model_Space &Space, const double &P, const double &M, const double &T)
 {
-  return int((P - Space.Pmin)/2) * (Space.Msize * Space.Tsize) +
-    int(M - Space.Mmin) * (Space.Tsize) + int((T - Space.Tmin)/2);
+  return Space.HO_tb1Indvec[int((P - Space.Pmin)/2)]
+    + Space.HO_tb1Indsize*(int((M - Space.Mmin)/2) * (Space.Tsize) + int((T - Space.Tmin)/2));
 }
 
 int HO_tbInd2(const Model_Space &Space, const double &P2, const double &M2, const double &T2)
 {
-  return int((P2 - Space.Pmin)/2) * (Space.M2size * Space.T2size) +
-    int(M2 - Space.M2min) * (Space.T2size) + int((T2 - Space.T2min)/2);
+  return Space.HO_tb2Indvec[int((P2 - Space.P2min)/2)]
+    + Space.HO_tb2Indsize*(int((M2 - Space.M2min)/2) * (Space.T2size) + int((T2 - Space.T2min)/2));
 }
 
 int CART_tbInd1(const Model_Space &Space, const int &Nx, const int &Ny, const int &Nz, const double &M, const double &T)
 {
-  //std::cout << Nx << " " << Ny << " " << Nz << " " << M << " " << T << std::endl;
-  //std::cout << Space.tb1Indvec.size() << " " << Nx - Space.Nxmin << std::endl;
-  //std::cout << Space.tb1Indvec[Nx - Space.Nxmin].size() << " " << Ny - Space.Nymin[Nx - Space.Nxmin] << std::endl;
-  //std::cout << Space.tb1Indvec[Nx - Space.Nxmin][Ny - Space.Nymin[Nx - Space.Nxmin]].size() << " " << Nz - Space.Nzmin[Nx - Space.Nxmin][Ny - Space.Nymin[Nx - Space.Nxmin]] << std::endl;
-  return Space.tb1Indvec[Nx - Space.Nxmin][Ny - Space.Nymin[Nx - Space.Nxmin]][Nz - Space.Nzmin[Nx - Space.Nxmin][Ny - Space.Nymin[Nx - Space.Nxmin]]]
-    + Space.tb1Indsize*(int((M - Space.Mmin)/2) * (Space.Tsize) + int((T - Space.Tmin)/2));
+  return Space.CART_tb1Indvec[Nx - Space.Nxmin][Ny - Space.Nymin[Nx - Space.Nxmin]][Nz - Space.Nzmin[Nx - Space.Nxmin][Ny - Space.Nymin[Nx - Space.Nxmin]]]
+    + Space.CART_tb1Indsize*(int((M - Space.Mmin)/2) * (Space.Tsize) + int((T - Space.Tmin)/2));
 }
 
 int CART_tbInd2(const Model_Space &Space, const int &Nx2, const int &Ny2, const int &Nz2, const double &M2, const double &T2)
 {
-  return Space.tb2Indvec[Nx2 - Space.Nx2min][Ny2 - Space.Ny2min[Nx2 - Space.Nx2min]][Nz2 - Space.Nz2min[Nx2 - Space.Nx2min][Ny2 - Space.Ny2min[Nx2 - Space.Nx2min]]]
-    + Space.tb2Indsize*(int((M2 - Space.M2min)/2) * (Space.T2size) + int((T2 - Space.T2min)/2));
+  return Space.CART_tb2Indvec[Nx2 - Space.Nx2min][Ny2 - Space.Ny2min[Nx2 - Space.Nx2min]][Nz2 - Space.Nz2min[Nx2 - Space.Nx2min][Ny2 - Space.Ny2min[Nx2 - Space.Nx2min]]]
+    + Space.CART_tb2Indsize*(int((M2 - Space.M2min)/2) * (Space.T2size) + int((T2 - Space.T2min)/2));
 }
 
 
@@ -1573,320 +1456,284 @@ CC_Matrix_Elements Read_Matrix_Elements(const std::string &MEfile, const Input_P
   interactionstream.str(interactionline);
   interactionstream >> NumElements;
  
-  if(Parameters.basis == "HO")
-    {
-      for(int i = 0; i < NumElements; ++i)
-	{
-	  getline(interaction, interactionline);
-	  std::stringstream(interactionline) >> shell1 >> shell2 >> shell3 >> shell4 >> TBME;
-	  if(std::abs(TBME) < 1.0E-10){ continue; }
-	  shell1 -= 1; shell2 -= 1; shell3 -= 1; shell4 -= 1;
-	  TBME *= Parameters.tbstrength;
-	  ptype = Space.levelstype[shell1];
-	  qtype = Space.levelstype[shell2];
-	  rtype = Space.levelstype[shell3];
-	  stype = Space.levelstype[shell4];
-	  
-	  if(ptype == "hole" && qtype == "hole" && rtype == "hole" && stype == "hole")
-	    {
-	      ind1 = HO_tbInd1(Space, std::pow(-1.0, Space.levelsl[shell1]+Space.levelsl[shell2]), Space.levelsm[shell1]+Space.levelsm[shell2], 
-			       Space.levelst[shell1]+Space.levelst[shell2]);
-	      ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell1, shell2, shell3, shell4);
-	      CCME.HHHH[ind1][ind] = TBME;
-	      ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell2, shell1, shell3, shell4);
-	      CCME.HHHH[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell1, shell2, shell4, shell3);
-	      CCME.HHHH[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell2, shell1, shell4, shell3);
-	      CCME.HHHH[ind1][ind] = TBME;
-	      ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell3, shell4, shell1, shell2);
-	      CCME.HHHH[ind1][ind] = TBME;
-	      ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell4, shell3, shell1, shell2);
-	      CCME.HHHH[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell3, shell4, shell2, shell1);
-	      CCME.HHHH[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell4, shell3, shell2, shell1);
-	      CCME.HHHH[ind1][ind] = TBME;
-	    }
-	  else if(ptype == "particle" && qtype == "particle" && rtype == "particle" && stype == "particle")
-	    { 
-	      ind1 = HO_tbInd1(Space, std::pow(-1.0, Space.levelsl[shell1]+Space.levelsl[shell2]), Space.levelsm[shell1]+Space.levelsm[shell2], 
-			       Space.levelst[shell1]+Space.levelst[shell2]);
-	      ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell1, shell2, shell3, shell4);
-	      CCME.PPPP[ind1][ind] = TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell2, shell1, shell3, shell4);
-	      CCME.PPPP[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell1, shell2, shell4, shell3);
-	      CCME.PPPP[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell2, shell1, shell4, shell3);
-	      CCME.PPPP[ind1][ind] = TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell3, shell4, shell1, shell2);
-	      CCME.PPPP[ind1][ind] = TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell4, shell3, shell1, shell2);
-	      CCME.PPPP[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell3, shell4, shell2, shell1);
-	      CCME.PPPP[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell4, shell3, shell2, shell1);
-	      CCME.PPPP[ind1][ind] = TBME;
-	    }
-	  else if(ptype == "hole" && qtype == "particle" && rtype == "hole" && stype == "particle")
-	    {
-	      ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell4]-Space.levelsl[shell1]), Space.levelsm[shell4]-Space.levelsm[shell1], 
-			       Space.levelst[shell4]-Space.levelst[shell1]);
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp2vec1[ind1], Chan.hp2[ind1], Chan.hp2[ind1], shell1, shell4, shell3, shell2);
-	      CCME.HPHP1[ind1][ind] = TBME;
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp2vec1[ind1], Chan.hp2[ind1], Chan.hp2[ind1], shell3, shell2, shell1, shell4);
-	      CCME.HPHP1[ind1][ind] = TBME;
-	      ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell1]-Space.levelsl[shell4]), Space.levelsm[shell1]-Space.levelsm[shell4], 
-			       Space.levelst[shell1]-Space.levelst[shell4]);
-	      ind = Index(Chan.hp1vec1[ind1], Chan.hp1vec1[ind1], Chan.hp1[ind1], Chan.hp1[ind1], shell1, shell4, shell3, shell2);
-	      CCME.HPHP2[ind1][ind] = TBME;
-	      ind = Index(Chan.hp1vec1[ind1], Chan.hp1vec1[ind1], Chan.hp1[ind1], Chan.hp1[ind1], shell3, shell2, shell1, shell4);
-	      CCME.HPHP2[ind1][ind] = TBME;
-	    }
-	  else if(ptype == "hole" && qtype == "hole" && rtype == "particle" && stype == "particle")
-	    {
-	      ind1 = HO_tbInd1(Space, std::pow(-1.0, Space.levelsl[shell1]+Space.levelsl[shell2]), Space.levelsm[shell1]+Space.levelsm[shell2], 
-			       Space.levelst[shell1]+Space.levelst[shell2]);
-	      ind = Index(Chan.ppvec1[ind1], Chan.hhvec1[ind1], Chan.pp[ind1], Chan.hh[ind1], shell3, shell4, shell1, shell2);
-	      CCME.HHPP1[ind1][ind] = TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.hhvec1[ind1], Chan.pp[ind1], Chan.hh[ind1], shell4, shell3, shell1, shell2);
-	      CCME.HHPP1[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.hhvec1[ind1], Chan.pp[ind1], Chan.hh[ind1], shell3, shell4, shell2, shell1);
-	      CCME.HHPP1[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.hhvec1[ind1], Chan.pp[ind1], Chan.hh[ind1], shell4, shell3, shell2, shell1);
-	      CCME.HHPP1[ind1][ind] = TBME;
-	      for(int j = 0; j < Chan.size3; ++j)
-		{
-		  if(Chan.indvec[shell3] == j){ ind2 = j; break; }
-		}
-	      ind = Index2(Chan.pvec1[ind2], Chan.hhpvec1[ind2], Chan.p[ind2], Chan.hhp[ind2], shell3, shell1, shell2, shell4);
-	      CCME.HHPP2[ind2][ind] = TBME;
-	      ind = Index2(Chan.pvec1[ind2], Chan.hhpvec1[ind2], Chan.p[ind2], Chan.hhp[ind2], shell3, shell2, shell1, shell4);
-	      CCME.HHPP2[ind2][ind] = -1.0 * TBME;
-	      for(int j = 0; j < Chan.size3; ++j)
-		{
-		  if(Chan.indvec[shell4] == j){ ind2 = j; break; }
-		}
-	      ind = Index2(Chan.pvec1[ind2], Chan.hhpvec1[ind2], Chan.p[ind2], Chan.hhp[ind2], shell4, shell1, shell2, shell3);
-	      CCME.HHPP2[ind2][ind] = -1.0 * TBME;
-	      ind = Index2(Chan.pvec1[ind2], Chan.hhpvec1[ind2], Chan.p[ind2], Chan.hhp[ind2], shell4, shell2, shell1, shell3);
-	      CCME.HHPP2[ind2][ind] = TBME;
-	      for(int j = 0; j < Chan.size3; ++j)
-		{
-		  if(Chan.indvec[shell1] == j){ ind2 = j; break; }
-		}
-	      ind = Index2(Chan.hvec1[ind2], Chan.hppvec1[ind2], Chan.h[ind2], Chan.hpp[ind2], shell1, shell2, shell3, shell4);
-	      CCME.HHPP3[ind2][ind] = TBME;
-	      ind = Index2(Chan.hvec1[ind2], Chan.hppvec1[ind2], Chan.h[ind2], Chan.hpp[ind2], shell1, shell2, shell4, shell3);
-	      CCME.HHPP3[ind2][ind] = -1.0 * TBME;
-	      for(int j = 0; j < Chan.size3; ++j)
-		{
-		  if(Chan.indvec[shell2] == j){ ind2 = j; break; }
-		}
-	      ind = Index2(Chan.hvec1[ind2], Chan.hppvec1[ind2], Chan.h[ind2], Chan.hpp[ind2], shell2, shell1, shell3, shell4);
-	      CCME.HHPP3[ind2][ind] = -1.0 * TBME;
-	      ind = Index2(Chan.hvec1[ind2], Chan.hppvec1[ind2], Chan.h[ind2], Chan.hpp[ind2], shell2, shell1, shell4, shell3);
-	      CCME.HHPP3[ind2][ind] = TBME;
-	      ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell3]-Space.levelsl[shell1]), Space.levelsm[shell3]-Space.levelsm[shell1], 
-			       Space.levelst[shell3]-Space.levelst[shell1]);
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell1, shell3, shell2, shell4);
-	      CCME.HHPP4[ind1][ind] = TBME;
-	      ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell3]-Space.levelsl[shell2]), Space.levelsm[shell3]-Space.levelsm[shell2], 
-			       Space.levelst[shell3]-Space.levelst[shell2]);
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell2, shell3, shell1, shell4);
-	      CCME.HHPP4[ind1][ind] = -1.0 * TBME;
-	      ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell4]-Space.levelsl[shell1]), Space.levelsm[shell4]-Space.levelsm[shell1], 
-			       Space.levelst[shell4]-Space.levelst[shell1]);
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell1, shell4, shell2, shell3);
-	      CCME.HHPP4[ind1][ind] = -1.0 * TBME;
-	      ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell4]-Space.levelsl[shell2]), Space.levelsm[shell4]-Space.levelsm[shell2], 
-			       Space.levelst[shell4]-Space.levelst[shell2]);
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell2, shell4, shell1, shell3);
-	      CCME.HHPP4[ind1][ind] = TBME;
-	      ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell4]-Space.levelsl[shell2]), Space.levelsm[shell4]-Space.levelsm[shell2], 
-			       Space.levelst[shell4]-Space.levelst[shell2]);
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell2, shell4, shell1, shell3);
-	      CCME.HHPP4T[ind1][ind] = TBME;
-	      ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell4]-Space.levelsl[shell1]), Space.levelsm[shell4]-Space.levelsm[shell1], 
-			       Space.levelst[shell4]-Space.levelst[shell1]);
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell1, shell4, shell2, shell3);
-	      CCME.HHPP4T[ind1][ind] = -1.0 * TBME;
-	      ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell3]-Space.levelsl[shell2]), Space.levelsm[shell3]-Space.levelsm[shell2], 
-			       Space.levelst[shell3]-Space.levelst[shell2]);
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell2, shell3, shell1, shell4);
-	      CCME.HHPP4T[ind1][ind] = -1.0 * TBME;
-	      ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell3]-Space.levelsl[shell1]), Space.levelsm[shell3]-Space.levelsm[shell1], 
-			       Space.levelst[shell3]-Space.levelst[shell1]);
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell1, shell3, shell2, shell4);
-	      CCME.HHPP4T[ind1][ind] = TBME;
-	    }  
-	}
+  if(Parameters.basis == "HO"){
+    for(int i = 0; i < NumElements; ++i){
+      getline(interaction, interactionline);
+      std::stringstream(interactionline) >> shell1 >> shell2 >> shell3 >> shell4 >> TBME;
+      if(std::abs(TBME) < 1.0E-10){ continue; }
+      shell1 -= 1; shell2 -= 1; shell3 -= 1; shell4 -= 1;
+      TBME *= Parameters.tbstrength;
+      ptype = Space.levelstype[shell1];
+      qtype = Space.levelstype[shell2];
+      rtype = Space.levelstype[shell3];
+      stype = Space.levelstype[shell4];
+      
+      if(ptype == "hole" && qtype == "hole" && rtype == "hole" && stype == "hole"){
+	ind1 = HO_tbInd1(Space, std::pow(-1.0, Space.levelsl[shell1]+Space.levelsl[shell2]), Space.levelsm[shell1]+Space.levelsm[shell2], 
+			 Space.levelst[shell1]+Space.levelst[shell2]);
+	ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell1, shell2, shell3, shell4);
+	CCME.HHHH[ind1][ind] = TBME;
+	ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell2, shell1, shell3, shell4);
+	CCME.HHHH[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell1, shell2, shell4, shell3);
+	CCME.HHHH[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell2, shell1, shell4, shell3);
+	CCME.HHHH[ind1][ind] = TBME;
+	ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell3, shell4, shell1, shell2);
+	CCME.HHHH[ind1][ind] = TBME;
+	ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell4, shell3, shell1, shell2);
+	CCME.HHHH[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell3, shell4, shell2, shell1);
+	CCME.HHHH[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell4, shell3, shell2, shell1);
+	CCME.HHHH[ind1][ind] = TBME;
+      }
+      else if(ptype == "particle" && qtype == "particle" && rtype == "particle" && stype == "particle"){ 
+	ind1 = HO_tbInd1(Space, std::pow(-1.0, Space.levelsl[shell1]+Space.levelsl[shell2]), Space.levelsm[shell1]+Space.levelsm[shell2], 
+			 Space.levelst[shell1]+Space.levelst[shell2]);
+	ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell1, shell2, shell3, shell4);
+	CCME.PPPP[ind1][ind] = TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell2, shell1, shell3, shell4);
+	CCME.PPPP[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell1, shell2, shell4, shell3);
+	CCME.PPPP[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell2, shell1, shell4, shell3);
+	CCME.PPPP[ind1][ind] = TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell3, shell4, shell1, shell2);
+	CCME.PPPP[ind1][ind] = TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell4, shell3, shell1, shell2);
+	CCME.PPPP[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell3, shell4, shell2, shell1);
+	CCME.PPPP[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell4, shell3, shell2, shell1);
+	CCME.PPPP[ind1][ind] = TBME;
+      }
+      else if(ptype == "hole" && qtype == "particle" && rtype == "hole" && stype == "particle"){
+	ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell4]-Space.levelsl[shell1]), Space.levelsm[shell4]-Space.levelsm[shell1], 
+			 Space.levelst[shell4]-Space.levelst[shell1]);
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp2vec1[ind1], Chan.hp2[ind1], Chan.hp2[ind1], shell1, shell4, shell3, shell2);
+	CCME.HPHP1[ind1][ind] = TBME;
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp2vec1[ind1], Chan.hp2[ind1], Chan.hp2[ind1], shell3, shell2, shell1, shell4);
+	CCME.HPHP1[ind1][ind] = TBME;
+	ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell1]-Space.levelsl[shell4]), Space.levelsm[shell1]-Space.levelsm[shell4], 
+			 Space.levelst[shell1]-Space.levelst[shell4]);
+	ind = Index(Chan.hp1vec1[ind1], Chan.hp1vec1[ind1], Chan.hp1[ind1], Chan.hp1[ind1], shell1, shell4, shell3, shell2);
+	CCME.HPHP2[ind1][ind] = TBME;
+	ind = Index(Chan.hp1vec1[ind1], Chan.hp1vec1[ind1], Chan.hp1[ind1], Chan.hp1[ind1], shell3, shell2, shell1, shell4);
+	CCME.HPHP2[ind1][ind] = TBME;
+      }
+      else if(ptype == "hole" && qtype == "hole" && rtype == "particle" && stype == "particle"){
+	ind1 = HO_tbInd1(Space, std::pow(-1.0, Space.levelsl[shell1]+Space.levelsl[shell2]), Space.levelsm[shell1]+Space.levelsm[shell2], 
+			 Space.levelst[shell1]+Space.levelst[shell2]);
+	ind = Index(Chan.ppvec1[ind1], Chan.hhvec1[ind1], Chan.pp[ind1], Chan.hh[ind1], shell3, shell4, shell1, shell2);
+	CCME.HHPP1[ind1][ind] = TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.hhvec1[ind1], Chan.pp[ind1], Chan.hh[ind1], shell4, shell3, shell1, shell2);
+	CCME.HHPP1[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.hhvec1[ind1], Chan.pp[ind1], Chan.hh[ind1], shell3, shell4, shell2, shell1);
+	CCME.HHPP1[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.hhvec1[ind1], Chan.pp[ind1], Chan.hh[ind1], shell4, shell3, shell2, shell1);
+	CCME.HHPP1[ind1][ind] = TBME;
+	for(int j = 0; j < Chan.size3; ++j){ if(Chan.indvec[shell3] == j){ ind2 = j; break; }; }
+	ind = Index2(Chan.pvec1[ind2], Chan.hhpvec1[ind2], Chan.p[ind2], Chan.hhp[ind2], shell3, shell1, shell2, shell4);
+	CCME.HHPP2[ind2][ind] = TBME;
+	ind = Index2(Chan.pvec1[ind2], Chan.hhpvec1[ind2], Chan.p[ind2], Chan.hhp[ind2], shell3, shell2, shell1, shell4);
+	CCME.HHPP2[ind2][ind] = -1.0 * TBME;
+	for(int j = 0; j < Chan.size3; ++j){ if(Chan.indvec[shell4] == j){ ind2 = j; break; }; }
+	ind = Index2(Chan.pvec1[ind2], Chan.hhpvec1[ind2], Chan.p[ind2], Chan.hhp[ind2], shell4, shell1, shell2, shell3);
+	CCME.HHPP2[ind2][ind] = -1.0 * TBME;
+	ind = Index2(Chan.pvec1[ind2], Chan.hhpvec1[ind2], Chan.p[ind2], Chan.hhp[ind2], shell4, shell2, shell1, shell3);
+	CCME.HHPP2[ind2][ind] = TBME;
+	for(int j = 0; j < Chan.size3; ++j){ if(Chan.indvec[shell1] == j){ ind2 = j; break; }; }
+	ind = Index2(Chan.hvec1[ind2], Chan.hppvec1[ind2], Chan.h[ind2], Chan.hpp[ind2], shell1, shell2, shell3, shell4);
+	CCME.HHPP3[ind2][ind] = TBME;
+	ind = Index2(Chan.hvec1[ind2], Chan.hppvec1[ind2], Chan.h[ind2], Chan.hpp[ind2], shell1, shell2, shell4, shell3);
+	CCME.HHPP3[ind2][ind] = -1.0 * TBME;
+	for(int j = 0; j < Chan.size3; ++j){ if(Chan.indvec[shell2] == j){ ind2 = j; break; }; }
+	ind = Index2(Chan.hvec1[ind2], Chan.hppvec1[ind2], Chan.h[ind2], Chan.hpp[ind2], shell2, shell1, shell3, shell4);
+	CCME.HHPP3[ind2][ind] = -1.0 * TBME;
+	ind = Index2(Chan.hvec1[ind2], Chan.hppvec1[ind2], Chan.h[ind2], Chan.hpp[ind2], shell2, shell1, shell4, shell3);
+	CCME.HHPP3[ind2][ind] = TBME;
+	ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell3]-Space.levelsl[shell1]), Space.levelsm[shell3]-Space.levelsm[shell1], 
+			 Space.levelst[shell3]-Space.levelst[shell1]);
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell1, shell3, shell2, shell4);
+	CCME.HHPP4[ind1][ind] = TBME;
+	ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell3]-Space.levelsl[shell2]), Space.levelsm[shell3]-Space.levelsm[shell2], 
+			 Space.levelst[shell3]-Space.levelst[shell2]);
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell2, shell3, shell1, shell4);
+	CCME.HHPP4[ind1][ind] = -1.0 * TBME;
+	ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell4]-Space.levelsl[shell1]), Space.levelsm[shell4]-Space.levelsm[shell1], 
+			 Space.levelst[shell4]-Space.levelst[shell1]);
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell1, shell4, shell2, shell3);
+	CCME.HHPP4[ind1][ind] = -1.0 * TBME;
+	ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell4]-Space.levelsl[shell2]), Space.levelsm[shell4]-Space.levelsm[shell2], 
+			 Space.levelst[shell4]-Space.levelst[shell2]);
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell2, shell4, shell1, shell3);
+	CCME.HHPP4[ind1][ind] = TBME;
+	ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell4]-Space.levelsl[shell2]), Space.levelsm[shell4]-Space.levelsm[shell2], 
+			 Space.levelst[shell4]-Space.levelst[shell2]);
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell2, shell4, shell1, shell3);
+	CCME.HHPP4T[ind1][ind] = TBME;
+	ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell4]-Space.levelsl[shell1]), Space.levelsm[shell4]-Space.levelsm[shell1], 
+			 Space.levelst[shell4]-Space.levelst[shell1]);
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell1, shell4, shell2, shell3);
+	CCME.HHPP4T[ind1][ind] = -1.0 * TBME;
+	ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell3]-Space.levelsl[shell2]), Space.levelsm[shell3]-Space.levelsm[shell2], 
+			 Space.levelst[shell3]-Space.levelst[shell2]);
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell2, shell3, shell1, shell4);
+	CCME.HHPP4T[ind1][ind] = -1.0 * TBME;
+	ind1 = HO_tbInd2(Space, std::pow(-1.0, Space.levelsl[shell3]-Space.levelsl[shell1]), Space.levelsm[shell3]-Space.levelsm[shell1], 
+			 Space.levelst[shell3]-Space.levelst[shell1]);
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell1, shell3, shell2, shell4);
+	CCME.HHPP4T[ind1][ind] = TBME;
+      }  
     }
-  else if(Parameters.basis == "CART")
-    {
-      for(int i = 0; i < NumElements; ++i)
-	{
-	  getline(interaction, interactionline);
-	  std::stringstream(interactionline) >> shell1 >> shell2 >> shell3 >> shell4 >> TBME;
-	  if(std::abs(TBME) < 1.0E-10){ continue; }
-	  shell1 -= 1; shell2 -= 1; shell3 -= 1; shell4 -= 1;
-	  TBME *= Parameters.tbstrength;
-	  ptype = Space.levelstype[shell1];
-	  qtype = Space.levelstype[shell2];
-	  rtype = Space.levelstype[shell3];
-	  stype = Space.levelstype[shell4];
-	  
-	  if(ptype == "hole" && qtype == "hole" && rtype == "hole" && stype == "hole")
-	    {
-	      ind1 = CART_tbInd1(Space, Space.levelsnx[shell1]+Space.levelsnx[shell2], Space.levelsny[shell1]+Space.levelsny[shell2], 
-			       Space.levelsnz[shell1]+Space.levelsnz[shell2], Space.levelsm[shell1]+Space.levelsm[shell2], 
-			       Space.levelst[shell1]+Space.levelst[shell2]);
-	      ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell1, shell2, shell3, shell4);
-	      CCME.HHHH[ind1][ind] = TBME;
-	      ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell2, shell1, shell3, shell4);
-	      CCME.HHHH[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell1, shell2, shell4, shell3);
-	      CCME.HHHH[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell2, shell1, shell4, shell3);
-	      CCME.HHHH[ind1][ind] = TBME;
-	      ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell3, shell4, shell1, shell2);
-	      CCME.HHHH[ind1][ind] = TBME;
-	      ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell4, shell3, shell1, shell2);
-	      CCME.HHHH[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell3, shell4, shell2, shell1);
-	      CCME.HHHH[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell4, shell3, shell2, shell1);
-	      CCME.HHHH[ind1][ind] = TBME;
-	    }
-	  else if(ptype == "particle" && qtype == "particle" && rtype == "particle" && stype == "particle")
-	    {
-	      ind1 = CART_tbInd1(Space, Space.levelsnx[shell1]+Space.levelsnx[shell2], Space.levelsny[shell1]+Space.levelsny[shell2], 
-			       Space.levelsnz[shell1]+Space.levelsnz[shell2], Space.levelsm[shell1]+Space.levelsm[shell2], 
-			       Space.levelst[shell1]+Space.levelst[shell2]);
-	      ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell1, shell2, shell3, shell4);
-	      CCME.PPPP[ind1][ind] = TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell2, shell1, shell3, shell4);
-	      CCME.PPPP[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell1, shell2, shell4, shell3);
-	      CCME.PPPP[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell2, shell1, shell4, shell3);
-	      CCME.PPPP[ind1][ind] = TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell3, shell4, shell1, shell2);
-	      CCME.PPPP[ind1][ind] = TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell4, shell3, shell1, shell2);
-	      CCME.PPPP[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell3, shell4, shell2, shell1);
-	      CCME.PPPP[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell4, shell3, shell2, shell1);
-	      CCME.PPPP[ind1][ind] = TBME;
-	    }
-	  else if(ptype == "hole" && qtype == "particle" && rtype == "hole" && stype == "particle")
-	    {
-	      ind1 = CART_tbInd2(Space, Space.levelsnx[shell4]-Space.levelsnx[shell1], Space.levelsny[shell4]-Space.levelsny[shell1], 
-			       Space.levelsnz[shell4]-Space.levelsnz[shell1], Space.levelsm[shell4]-Space.levelsm[shell1], 
-			       Space.levelst[shell4]-Space.levelst[shell1]);
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp2vec1[ind1], Chan.hp2[ind1], Chan.hp2[ind1], shell1, shell4, shell3, shell2);
-	      CCME.HPHP1[ind1][ind] = TBME;
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp2vec1[ind1], Chan.hp2[ind1], Chan.hp2[ind1], shell3, shell2, shell1, shell4);
-	      CCME.HPHP1[ind1][ind] = TBME;
-	      ind1 = CART_tbInd2(Space, Space.levelsnx[shell1]-Space.levelsnx[shell4], Space.levelsny[shell1]-Space.levelsny[shell4], 
-			       Space.levelsnz[shell1]-Space.levelsnz[shell4], Space.levelsm[shell1]-Space.levelsm[shell4], 
-			       Space.levelst[shell1]-Space.levelst[shell4]);
-	      ind = Index(Chan.hp1vec1[ind1], Chan.hp1vec1[ind1], Chan.hp1[ind1], Chan.hp1[ind1], shell1, shell4, shell3, shell2);
-	      CCME.HPHP2[ind1][ind] = TBME;
-	      ind = Index(Chan.hp1vec1[ind1], Chan.hp1vec1[ind1], Chan.hp1[ind1], Chan.hp1[ind1], shell3, shell2, shell1, shell4);
-	      CCME.HPHP2[ind1][ind] = TBME;
-	    }
-	  else if(ptype == "hole" && qtype == "hole" && rtype == "particle" && stype == "particle")
-	    {
-	      ind1 = CART_tbInd1(Space, Space.levelsnx[shell1]+Space.levelsnx[shell2], Space.levelsny[shell1]+Space.levelsny[shell2], 
-			       Space.levelsnz[shell1]+Space.levelsnz[shell2], Space.levelsm[shell1]+Space.levelsm[shell2], 
-			       Space.levelst[shell1]+Space.levelst[shell2]);
-	      ind = Index(Chan.ppvec1[ind1], Chan.hhvec1[ind1], Chan.pp[ind1], Chan.hh[ind1], shell3, shell4, shell1, shell2);
-	      CCME.HHPP1[ind1][ind] = TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.hhvec1[ind1], Chan.pp[ind1], Chan.hh[ind1], shell4, shell3, shell1, shell2);
-	      CCME.HHPP1[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.hhvec1[ind1], Chan.pp[ind1], Chan.hh[ind1], shell3, shell4, shell2, shell1);
-	      CCME.HHPP1[ind1][ind] = -1.0 * TBME;
-	      ind = Index(Chan.ppvec1[ind1], Chan.hhvec1[ind1], Chan.pp[ind1], Chan.hh[ind1], shell4, shell3, shell2, shell1);
-	      CCME.HHPP1[ind1][ind] = TBME;
-	      for(int j = 0; j < Chan.size3; ++j)
-		{
-		  if(Chan.indvec[shell3] == j){ ind2 = j; break; }
-		}
-	      ind = Index2(Chan.pvec1[ind2], Chan.hhpvec1[ind2], Chan.p[ind2], Chan.hhp[ind2], shell3, shell1, shell2, shell4);
-	      CCME.HHPP2[ind2][ind] = TBME;
-	      ind = Index2(Chan.pvec1[ind2], Chan.hhpvec1[ind2], Chan.p[ind2], Chan.hhp[ind2], shell3, shell2, shell1, shell4);
-	      CCME.HHPP2[ind2][ind] = -1.0 * TBME;
-	      for(int j = 0; j < Chan.size3; ++j)
-		{
-		  if(Chan.indvec[shell4] == j){ ind2 = j; break; }
-		}
-	      ind = Index2(Chan.pvec1[ind2], Chan.hhpvec1[ind2], Chan.p[ind2], Chan.hhp[ind2], shell4, shell1, shell2, shell3);
-	      CCME.HHPP2[ind2][ind] = -1.0 * TBME;
-	      ind = Index2(Chan.pvec1[ind2], Chan.hhpvec1[ind2], Chan.p[ind2], Chan.hhp[ind2], shell4, shell2, shell1, shell3);
-	      CCME.HHPP2[ind2][ind] = TBME;
-	      for(int j = 0; j < Chan.size3; ++j)
-		{
-		  if(Chan.indvec[shell1] == j){ ind2 = j; break; }
-		}
-	      ind = Index2(Chan.hvec1[ind2], Chan.hppvec1[ind2], Chan.h[ind2], Chan.hpp[ind2], shell1, shell2, shell3, shell4);
-	      CCME.HHPP3[ind2][ind] = TBME;
-	      ind = Index2(Chan.hvec1[ind2], Chan.hppvec1[ind2], Chan.h[ind2], Chan.hpp[ind2], shell1, shell2, shell4, shell3);
-	      CCME.HHPP3[ind2][ind] = -1.0 * TBME;
-	      for(int j = 0; j < Chan.size3; ++j)
-		{
-		  if(Chan.indvec[shell2] == j){ ind2 = j; break; }
-		}
-	      ind = Index2(Chan.hvec1[ind2], Chan.hppvec1[ind2], Chan.h[ind2], Chan.hpp[ind2], shell2, shell1, shell3, shell4);
-	      CCME.HHPP3[ind2][ind] = -1.0 * TBME;
-	      ind = Index2(Chan.hvec1[ind2], Chan.hppvec1[ind2], Chan.h[ind2], Chan.hpp[ind2], shell2, shell1, shell4, shell3);
-	      CCME.HHPP3[ind2][ind] = TBME;
-	      ind1 = CART_tbInd2(Space, Space.levelsnx[shell3]-Space.levelsnx[shell1], Space.levelsny[shell3]-Space.levelsny[shell1], 
-			       Space.levelsnz[shell3]-Space.levelsnz[shell1], Space.levelsm[shell3]-Space.levelsm[shell1], 
-			       Space.levelst[shell3]-Space.levelst[shell1]);
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell1, shell3, shell2, shell4);
-	      CCME.HHPP4[ind1][ind] = TBME;
-	      ind1 = CART_tbInd2(Space, Space.levelsnx[shell3]-Space.levelsnx[shell2], Space.levelsny[shell3]-Space.levelsny[shell2], 
-			       Space.levelsnz[shell3]-Space.levelsnz[shell2], Space.levelsm[shell3]-Space.levelsm[shell2], 
-			       Space.levelst[shell3]-Space.levelst[shell2]);
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell2, shell3, shell1, shell4);
-	      CCME.HHPP4[ind1][ind] = -1.0 * TBME;
-	      ind1 = CART_tbInd2(Space, Space.levelsnx[shell4]-Space.levelsnx[shell1], Space.levelsny[shell4]-Space.levelsny[shell1], 
-			       Space.levelsnz[shell4]-Space.levelsnz[shell1], Space.levelsm[shell4]-Space.levelsm[shell1], 
-			       Space.levelst[shell4]-Space.levelst[shell1]);
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell1, shell4, shell2, shell3);
-	      CCME.HHPP4[ind1][ind] = -1.0 * TBME;
-	      ind1 = CART_tbInd2(Space, Space.levelsnx[shell4]-Space.levelsnx[shell2], Space.levelsny[shell4]-Space.levelsny[shell2], 
-			       Space.levelsnz[shell4]-Space.levelsnz[shell2], Space.levelsm[shell4]-Space.levelsm[shell2], 
-			       Space.levelst[shell4]-Space.levelst[shell2]);
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell2, shell4, shell1, shell3);
-	      CCME.HHPP4[ind1][ind] = TBME;
-	      ind1 = CART_tbInd2(Space, Space.levelsnx[shell4]-Space.levelsnx[shell2], Space.levelsny[shell4]-Space.levelsny[shell2], 
-			       Space.levelsnz[shell4]-Space.levelsnz[shell2], Space.levelsm[shell4]-Space.levelsm[shell2], 
-			       Space.levelst[shell4]-Space.levelst[shell2]);
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell2, shell4, shell1, shell3);
-	      CCME.HHPP4T[ind1][ind] = TBME;
-	      ind1 = CART_tbInd2(Space, Space.levelsnx[shell4]-Space.levelsnx[shell1], Space.levelsny[shell4]-Space.levelsny[shell1], 
-			       Space.levelsnz[shell4]-Space.levelsnz[shell1], Space.levelsm[shell4]-Space.levelsm[shell1], 
-			       Space.levelst[shell4]-Space.levelst[shell1]);
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell1, shell4, shell2, shell3);
-	      CCME.HHPP4T[ind1][ind] = -1.0 * TBME;
-	      ind1 = CART_tbInd2(Space, Space.levelsnx[shell3]-Space.levelsnx[shell2], Space.levelsny[shell3]-Space.levelsny[shell2], 
-			       Space.levelsnz[shell3]-Space.levelsnz[shell2], Space.levelsm[shell3]-Space.levelsm[shell2], 
-			       Space.levelst[shell3]-Space.levelst[shell2]);
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell2, shell3, shell1, shell4);
-	      CCME.HHPP4T[ind1][ind] = -1.0 * TBME;
-	      ind1 = CART_tbInd2(Space, Space.levelsnx[shell3]-Space.levelsnx[shell1], Space.levelsny[shell3]-Space.levelsny[shell1], 
-			       Space.levelsnz[shell3]-Space.levelsnz[shell1], Space.levelsm[shell3]-Space.levelsm[shell1], 
-			       Space.levelst[shell3]-Space.levelst[shell1]);
-	      ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell1, shell3, shell2, shell4);
-	      CCME.HHPP4T[ind1][ind] = TBME;
-	    }
-	}
+  }
+  else if(Parameters.basis == "CART"){
+    for(int i = 0; i < NumElements; ++i){
+      getline(interaction, interactionline);
+      std::stringstream(interactionline) >> shell1 >> shell2 >> shell3 >> shell4 >> TBME;
+      if(std::abs(TBME) < 1.0E-10){ continue; }
+      shell1 -= 1; shell2 -= 1; shell3 -= 1; shell4 -= 1;
+      TBME *= Parameters.tbstrength;
+      ptype = Space.levelstype[shell1];
+      qtype = Space.levelstype[shell2];
+      rtype = Space.levelstype[shell3];
+      stype = Space.levelstype[shell4];
+      
+      if(ptype == "hole" && qtype == "hole" && rtype == "hole" && stype == "hole"){
+	ind1 = CART_tbInd1(Space, Space.levelsnx[shell1]+Space.levelsnx[shell2], Space.levelsny[shell1]+Space.levelsny[shell2], 
+			   Space.levelsnz[shell1]+Space.levelsnz[shell2], Space.levelsm[shell1]+Space.levelsm[shell2], 
+			   Space.levelst[shell1]+Space.levelst[shell2]);
+	ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell1, shell2, shell3, shell4);
+	CCME.HHHH[ind1][ind] = TBME;
+	ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell2, shell1, shell3, shell4);
+	CCME.HHHH[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell1, shell2, shell4, shell3);
+	CCME.HHHH[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell2, shell1, shell4, shell3);
+	CCME.HHHH[ind1][ind] = TBME;
+	ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell3, shell4, shell1, shell2);
+	CCME.HHHH[ind1][ind] = TBME;
+	ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell4, shell3, shell1, shell2);
+	CCME.HHHH[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell3, shell4, shell2, shell1);
+	CCME.HHHH[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.hhvec1[ind1], Chan.hhvec1[ind1], Chan.hh[ind1], Chan.hh[ind1], shell4, shell3, shell2, shell1);
+	CCME.HHHH[ind1][ind] = TBME;
+      }
+      else if(ptype == "particle" && qtype == "particle" && rtype == "particle" && stype == "particle"){
+	ind1 = CART_tbInd1(Space, Space.levelsnx[shell1]+Space.levelsnx[shell2], Space.levelsny[shell1]+Space.levelsny[shell2], 
+			   Space.levelsnz[shell1]+Space.levelsnz[shell2], Space.levelsm[shell1]+Space.levelsm[shell2], 
+			   Space.levelst[shell1]+Space.levelst[shell2]);
+	ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell1, shell2, shell3, shell4);
+	CCME.PPPP[ind1][ind] = TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell2, shell1, shell3, shell4);
+	CCME.PPPP[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell1, shell2, shell4, shell3);
+	CCME.PPPP[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell2, shell1, shell4, shell3);
+	CCME.PPPP[ind1][ind] = TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell3, shell4, shell1, shell2);
+	CCME.PPPP[ind1][ind] = TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell4, shell3, shell1, shell2);
+	CCME.PPPP[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell3, shell4, shell2, shell1);
+	CCME.PPPP[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.ppvec1[ind1], Chan.pp[ind1], Chan.pp[ind1], shell4, shell3, shell2, shell1);
+	CCME.PPPP[ind1][ind] = TBME;
+      }
+      else if(ptype == "hole" && qtype == "particle" && rtype == "hole" && stype == "particle"){
+	ind1 = CART_tbInd2(Space, Space.levelsnx[shell4]-Space.levelsnx[shell1], Space.levelsny[shell4]-Space.levelsny[shell1], 
+			   Space.levelsnz[shell4]-Space.levelsnz[shell1], Space.levelsm[shell4]-Space.levelsm[shell1], 
+			   Space.levelst[shell4]-Space.levelst[shell1]);
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp2vec1[ind1], Chan.hp2[ind1], Chan.hp2[ind1], shell1, shell4, shell3, shell2);
+	CCME.HPHP1[ind1][ind] = TBME;
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp2vec1[ind1], Chan.hp2[ind1], Chan.hp2[ind1], shell3, shell2, shell1, shell4);
+	CCME.HPHP1[ind1][ind] = TBME;
+	ind1 = CART_tbInd2(Space, Space.levelsnx[shell1]-Space.levelsnx[shell4], Space.levelsny[shell1]-Space.levelsny[shell4], 
+			   Space.levelsnz[shell1]-Space.levelsnz[shell4], Space.levelsm[shell1]-Space.levelsm[shell4], 
+			   Space.levelst[shell1]-Space.levelst[shell4]);
+	ind = Index(Chan.hp1vec1[ind1], Chan.hp1vec1[ind1], Chan.hp1[ind1], Chan.hp1[ind1], shell1, shell4, shell3, shell2);
+	CCME.HPHP2[ind1][ind] = TBME;
+	ind = Index(Chan.hp1vec1[ind1], Chan.hp1vec1[ind1], Chan.hp1[ind1], Chan.hp1[ind1], shell3, shell2, shell1, shell4);
+	CCME.HPHP2[ind1][ind] = TBME;
+      }
+      else if(ptype == "hole" && qtype == "hole" && rtype == "particle" && stype == "particle"){
+	ind1 = CART_tbInd1(Space, Space.levelsnx[shell1]+Space.levelsnx[shell2], Space.levelsny[shell1]+Space.levelsny[shell2], 
+			   Space.levelsnz[shell1]+Space.levelsnz[shell2], Space.levelsm[shell1]+Space.levelsm[shell2], 
+			   Space.levelst[shell1]+Space.levelst[shell2]);
+	ind = Index(Chan.ppvec1[ind1], Chan.hhvec1[ind1], Chan.pp[ind1], Chan.hh[ind1], shell3, shell4, shell1, shell2);
+	CCME.HHPP1[ind1][ind] = TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.hhvec1[ind1], Chan.pp[ind1], Chan.hh[ind1], shell4, shell3, shell1, shell2);
+	CCME.HHPP1[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.hhvec1[ind1], Chan.pp[ind1], Chan.hh[ind1], shell3, shell4, shell2, shell1);
+	CCME.HHPP1[ind1][ind] = -1.0 * TBME;
+	ind = Index(Chan.ppvec1[ind1], Chan.hhvec1[ind1], Chan.pp[ind1], Chan.hh[ind1], shell4, shell3, shell2, shell1);
+	CCME.HHPP1[ind1][ind] = TBME;
+	for(int j = 0; j < Chan.size3; ++j){ if(Chan.indvec[shell3] == j){ ind2 = j; break; }; }
+	ind = Index2(Chan.pvec1[ind2], Chan.hhpvec1[ind2], Chan.p[ind2], Chan.hhp[ind2], shell3, shell1, shell2, shell4);
+	CCME.HHPP2[ind2][ind] = TBME;
+	ind = Index2(Chan.pvec1[ind2], Chan.hhpvec1[ind2], Chan.p[ind2], Chan.hhp[ind2], shell3, shell2, shell1, shell4);
+	CCME.HHPP2[ind2][ind] = -1.0 * TBME;
+	for(int j = 0; j < Chan.size3; ++j){ if(Chan.indvec[shell4] == j){ ind2 = j; break; }; }
+	ind = Index2(Chan.pvec1[ind2], Chan.hhpvec1[ind2], Chan.p[ind2], Chan.hhp[ind2], shell4, shell1, shell2, shell3);
+	CCME.HHPP2[ind2][ind] = -1.0 * TBME;
+	ind = Index2(Chan.pvec1[ind2], Chan.hhpvec1[ind2], Chan.p[ind2], Chan.hhp[ind2], shell4, shell2, shell1, shell3);
+	CCME.HHPP2[ind2][ind] = TBME;
+	for(int j = 0; j < Chan.size3; ++j){ if(Chan.indvec[shell1] == j){ ind2 = j; break; }; }
+	ind = Index2(Chan.hvec1[ind2], Chan.hppvec1[ind2], Chan.h[ind2], Chan.hpp[ind2], shell1, shell2, shell3, shell4);
+	CCME.HHPP3[ind2][ind] = TBME;
+	ind = Index2(Chan.hvec1[ind2], Chan.hppvec1[ind2], Chan.h[ind2], Chan.hpp[ind2], shell1, shell2, shell4, shell3);
+	CCME.HHPP3[ind2][ind] = -1.0 * TBME;
+	for(int j = 0; j < Chan.size3; ++j){ if(Chan.indvec[shell2] == j){ ind2 = j; break; }; }
+	ind = Index2(Chan.hvec1[ind2], Chan.hppvec1[ind2], Chan.h[ind2], Chan.hpp[ind2], shell2, shell1, shell3, shell4);
+	CCME.HHPP3[ind2][ind] = -1.0 * TBME;
+	ind = Index2(Chan.hvec1[ind2], Chan.hppvec1[ind2], Chan.h[ind2], Chan.hpp[ind2], shell2, shell1, shell4, shell3);
+	CCME.HHPP3[ind2][ind] = TBME;
+	ind1 = CART_tbInd2(Space, Space.levelsnx[shell3]-Space.levelsnx[shell1], Space.levelsny[shell3]-Space.levelsny[shell1], 
+			   Space.levelsnz[shell3]-Space.levelsnz[shell1], Space.levelsm[shell3]-Space.levelsm[shell1], 
+			   Space.levelst[shell3]-Space.levelst[shell1]);
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell1, shell3, shell2, shell4);
+	CCME.HHPP4[ind1][ind] = TBME;
+	ind1 = CART_tbInd2(Space, Space.levelsnx[shell3]-Space.levelsnx[shell2], Space.levelsny[shell3]-Space.levelsny[shell2], 
+			   Space.levelsnz[shell3]-Space.levelsnz[shell2], Space.levelsm[shell3]-Space.levelsm[shell2], 
+			   Space.levelst[shell3]-Space.levelst[shell2]);
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell2, shell3, shell1, shell4);
+	CCME.HHPP4[ind1][ind] = -1.0 * TBME;
+	ind1 = CART_tbInd2(Space, Space.levelsnx[shell4]-Space.levelsnx[shell1], Space.levelsny[shell4]-Space.levelsny[shell1], 
+			   Space.levelsnz[shell4]-Space.levelsnz[shell1], Space.levelsm[shell4]-Space.levelsm[shell1], 
+			   Space.levelst[shell4]-Space.levelst[shell1]);
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell1, shell4, shell2, shell3);
+	CCME.HHPP4[ind1][ind] = -1.0 * TBME;
+	ind1 = CART_tbInd2(Space, Space.levelsnx[shell4]-Space.levelsnx[shell2], Space.levelsny[shell4]-Space.levelsny[shell2], 
+			   Space.levelsnz[shell4]-Space.levelsnz[shell2], Space.levelsm[shell4]-Space.levelsm[shell2], 
+			   Space.levelst[shell4]-Space.levelst[shell2]);
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell2, shell4, shell1, shell3);
+	CCME.HHPP4[ind1][ind] = TBME;
+	ind1 = CART_tbInd2(Space, Space.levelsnx[shell4]-Space.levelsnx[shell2], Space.levelsny[shell4]-Space.levelsny[shell2], 
+			   Space.levelsnz[shell4]-Space.levelsnz[shell2], Space.levelsm[shell4]-Space.levelsm[shell2], 
+			   Space.levelst[shell4]-Space.levelst[shell2]);
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell2, shell4, shell1, shell3);
+	CCME.HHPP4T[ind1][ind] = TBME;
+	ind1 = CART_tbInd2(Space, Space.levelsnx[shell4]-Space.levelsnx[shell1], Space.levelsny[shell4]-Space.levelsny[shell1], 
+			   Space.levelsnz[shell4]-Space.levelsnz[shell1], Space.levelsm[shell4]-Space.levelsm[shell1], 
+			   Space.levelst[shell4]-Space.levelst[shell1]);
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell1, shell4, shell2, shell3);
+	CCME.HHPP4T[ind1][ind] = -1.0 * TBME;
+	ind1 = CART_tbInd2(Space, Space.levelsnx[shell3]-Space.levelsnx[shell2], Space.levelsny[shell3]-Space.levelsny[shell2], 
+			   Space.levelsnz[shell3]-Space.levelsnz[shell2], Space.levelsm[shell3]-Space.levelsm[shell2], 
+			   Space.levelst[shell3]-Space.levelst[shell2]);
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell2, shell3, shell1, shell4);
+	CCME.HHPP4T[ind1][ind] = -1.0 * TBME;
+	ind1 = CART_tbInd2(Space, Space.levelsnx[shell3]-Space.levelsnx[shell1], Space.levelsny[shell3]-Space.levelsny[shell1], 
+			   Space.levelsnz[shell3]-Space.levelsnz[shell1], Space.levelsm[shell3]-Space.levelsm[shell1], 
+			   Space.levelst[shell3]-Space.levelst[shell1]);
+	ind = Index(Chan.hp2vec1[ind1], Chan.hp1vec1[ind1], Chan.hp2[ind1], Chan.hp1[ind1], shell1, shell3, shell2, shell4);
+	CCME.HHPP4T[ind1][ind] = TBME;
+      }
     }
-
+  }
+  
   interaction.close();
   
   return CCME;
@@ -2140,7 +1987,7 @@ CCD Perform_CCD(const Model_Space &Space, const Input_Parameters &Parameters, CC
   int ind = 0;
 
   CCD CCin(Chan, Parameters, Space);
-  CCD CCout(Chan, Parameters, Space);
+  CCD CCout = CCin;
 
   /*std::vector<std::vector<std::vector<double> > > p(2);
   std::vector<std::vector<std::vector<double> > > delp(1);
@@ -2344,7 +2191,9 @@ CCD Perform_CCD(const Model_Space &Space, const Input_Parameters &Parameters, CC
     }
     std::cout << std::endl << std::endl;*/
 
-  std::vector<std::vector<std::vector<double> > > Vin(3); // 0 and V/E
+  ////////////////////////////////////////
+
+  /*std::vector<std::vector<std::vector<double> > > Vin(3); // 0 and V/E
   std::vector<std::vector<std::vector<double> > > F(2); // Vout - Vin
   std::vector<std::vector<std::vector<double> > > delV(1);
   std::vector<std::vector<std::vector<double> > > delF(1);
@@ -2512,24 +2361,8 @@ CCD Perform_CCD(const Model_Space &Space, const Input_Parameters &Parameters, CC
       work.resize(sizeof(double) * P);
       B = a;
 
-      for(int i = 0; i < P; ++i){
-	for(int j = 0; j < P; ++j){
-	  std::cout << B[P * i + j] << " ";
-	}
-	std::cout << std::endl;
-      }
-      std::cout << std::endl;
-
       dgetrf_(&P, &P, & *B.begin(), &P, & *ipiv.begin(), &info);
       dgetri_(&P, & *B.begin(), &P, & *ipiv.begin(), & *work.begin(), &lwork, &info);
-
-      for(int i = 0; i < P; ++i){
-	for(int j = 0; j < P; ++j){
-	  std::cout << B[P * i + j] << " ";
-	}
-	std::cout << std::endl;
-      }
-      std::cout << std::endl;
 
       for(int chan = 0; chan < Chan.size1; ++chan){
 	for(int hind = 0; hind < Chan.hh[chan]; ++hind){
@@ -2546,6 +2379,51 @@ CCD Perform_CCD(const Model_Space &Space, const Input_Parameters &Parameters, CC
 	}
       }
       Vin[N] = CCin.T1;
+      
+      std::cout << "Iteration Number = " << ind << ", CCD Energy = " << CCout.CCDE << ", error = " << error << std::endl;
+      ++ind;
+    }
+  std::cout << std::endl << std::endl;
+    
+  return CCout;*/
+
+  double tempen, tempt;
+  for(int chan = 0; chan < Chan.size1; ++chan){
+    int ind1, ind2, ind3, ind4;
+    for(int hind = 0; hind < Chan.hh[chan]; ++hind){
+      for(int pind = 0; pind < Chan.pp[chan]; ++pind){
+	ind1 = Chan.hhvec1[chan][2*hind];
+	ind2 = Chan.hhvec1[chan][2*hind + 1];
+	ind3 = Chan.ppvec1[chan][2*pind];
+	ind4 = Chan.ppvec1[chan][2*pind + 1];
+	tempen = Space.levelsen[ind1] + Space.levelsen[ind2] - Space.levelsen[ind3] - Space.levelsen[ind4];
+	tempt = CCME.HHPP1[chan][pind * Chan.hh[chan] + hind] / tempen;
+	CCin.Evec[chan][hind * Chan.pp[chan] + pind] = tempen;
+	CCin.set_T(chan, hind * Chan.pp[chan] + pind, tempt);
+      }
+    }
+  }
+  CCout.Evec = CCin.Evec;
+  
+  while((error > 10e-6 && ind < 1000) || ind < 10)
+    {
+      Doubles_Step(Space, Chan, CCME, CCin, CCout);
+
+      CCout.CCDE = 0.0;
+      for(int chan = 0; chan < Chan.size1; ++chan){
+	for(int hind = 0; hind < Chan.hh[chan]; ++hind){
+	  for(int pind = 0; pind < Chan.pp[chan]; ++pind){
+	    tempt = CCout.get_T(chan, hind * Chan.pp[chan] + pind);
+	    tempt += CCME.HHPP1[chan][pind * Chan.hh[chan] + hind];
+	    tempt /= CCout.Evec[chan][hind * Chan.pp[chan] + pind];
+	    CCin.set_T(chan, hind * Chan.pp[chan] + pind, tempt);
+	    CCout.CCDE += 0.25 * tempt * CCME.HHPP1[chan][pind * Chan.hh[chan] + hind];
+	  }
+	}
+      }
+      std::cout << CCin.CCDE << " " << CCout.CCDE << std::endl;
+      error = std::abs((CCout.CCDE - CCin.CCDE)/CCout.CCDE);
+      CCin.CCDE = CCout.CCDE;
       
       std::cout << "Iteration Number = " << ind << ", CCD Energy = " << CCout.CCDE << ", error = " << error << std::endl;
       ++ind;
@@ -2737,4 +2615,48 @@ void Doubles_Step(const Model_Space &Space, const Channels &Chan, CC_Matrix_Elem
       //T6 = -0.5*T6*S3  &  T7
       RM_dgemm(&N,&N,&hpp,&h,&h,&fac6,& *CC.T6[chan].begin(),&hpp,& *CC2.S3[chan].begin(),&h,&fac2,& *CC2.T6[chan].begin(),&hpp);
     }
+}
+
+
+CC_Eff Build_CC_Eff(const Model_Space &Space, const Input_Parameters &Parameters, CC_Matrix_Elements &CCME, CCD &CC, const Channels &Chan)
+{
+  CC_Eff V_Eff(Chan);
+  double fac1 = 1.0, fac2 = 0.0;
+  char N = 'N';
+
+  for(int chan = 0; chan < Chan.size3; ++chan)
+    {
+      int p = Chan.p[chan];
+      int hhp = Chan.hhp[chan];
+      if(p == 0 || hhp == 0){ continue; }
+      RM_dgemm(&N,&N,&p,&p,&hhp,&fac1,& *CCME.HHPP2[chan].begin(),&p,& *CC.T5[chan].begin(),&hhp,&fac2,& *V_Eff.V1[chan].begin(),&p);
+    }
+
+  for(int chan = 0; chan < Chan.size3; ++chan)
+    {
+      int h = Chan.h[chan];
+      int hpp = Chan.hpp[chan];
+      if(h == 0 || hpp == 0){ continue; }
+      RM_dgemm(&N,&N,&h,&h,&hpp,&fac1,& *CCME.HHPP3[chan].begin(),&h,& *CC.T7[chan].begin(),&hpp,&fac2,& *V_Eff.V2[chan].begin(),&h);
+    }
+
+  for(int chan = 0; chan < Chan.size1; ++chan)
+    {
+      int hh = Chan.hh[chan];
+      int pp = Chan.pp[chan];
+      if(hh == 0 || pp == 0){ continue; }
+      RM_dgemm(&N,&N,&pp,&pp,&hh,&fac1,& *CCME.HHPP1[chan].begin(),&pp,& *CC.T1[chan].begin(),&hh,&fac2,& *V_Eff.V3[chan].begin(),&pp);
+      RM_dgemm(&N,&N,&hh,&hh,&pp,&fac1,& *CC.T1[chan].begin(),&hh,& *CCME.HHPP1[chan].begin(),&pp,&fac2,& *V_Eff.V4[chan].begin(),&hh);
+    }
+  
+  for(int chan = 0; chan < Chan.size2; ++chan)
+    {
+      int hp1 = Chan.hp1[chan];
+      int hp2 = Chan.hp2[chan];
+      if(hp1 == 0 || hp2 == 0){ continue; }
+      RM_dgemm(&N,&N,&hp1,&hp1,&hp2,&fac1,& *CC.T3[chan].begin(),&hp1,& *CCME.HHPP4[chan].begin(),&hp2,&fac2,& *V_Eff.V5[chan].begin(),&hp1);
+    }
+
+  return V_Eff;
+
 }
