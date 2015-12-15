@@ -2630,6 +2630,9 @@ CC_Eff Build_CC_Eff(const Model_Space &Space, const Input_Parameters &Parameters
       int hhp = Chan.hhp[chan];
       if(p == 0 || hhp == 0){ continue; }
       RM_dgemm(&N,&N,&p,&p,&hhp,&fac1,& *CCME.HHPP2[chan].begin(),&p,& *CC.T5[chan].begin(),&hhp,&fac2,& *V_Eff.V1[chan].begin(),&p);
+      for(int i = 0; i < p; ++i){
+	V_Eff.V1[chan][p * i + i] += Space.levelsen[Chan.pvec1[chan][i]];
+      }
     }
 
   for(int chan = 0; chan < Chan.size3; ++chan)
@@ -2638,6 +2641,9 @@ CC_Eff Build_CC_Eff(const Model_Space &Space, const Input_Parameters &Parameters
       int hpp = Chan.hpp[chan];
       if(h == 0 || hpp == 0){ continue; }
       RM_dgemm(&N,&N,&h,&h,&hpp,&fac1,& *CCME.HHPP3[chan].begin(),&h,& *CC.T7[chan].begin(),&hpp,&fac2,& *V_Eff.V2[chan].begin(),&h);
+      for(int i = 0; i < h; ++i){
+	V_Eff.V2[chan][h * i + i] += Space.levelsen[Chan.hvec1[chan][i]];
+      }
     }
 
   for(int chan = 0; chan < Chan.size1; ++chan)
@@ -2645,16 +2651,19 @@ CC_Eff Build_CC_Eff(const Model_Space &Space, const Input_Parameters &Parameters
       int hh = Chan.hh[chan];
       int pp = Chan.pp[chan];
       if(hh == 0 || pp == 0){ continue; }
-      RM_dgemm(&N,&N,&pp,&pp,&hh,&fac1,& *CCME.HHPP1[chan].begin(),&pp,& *CC.T1[chan].begin(),&hh,&fac2,& *V_Eff.V3[chan].begin(),&pp);
-      RM_dgemm(&N,&N,&hh,&hh,&pp,&fac1,& *CC.T1[chan].begin(),&hh,& *CCME.HHPP1[chan].begin(),&pp,&fac2,& *V_Eff.V4[chan].begin(),&hh);
+      V_Eff.V3[chan] = CCME.PPPP[chan];
+      V_Eff.V4[chan] = CCME.HHHH[chan];
+      RM_dgemm(&N,&N,&pp,&pp,&hh,&fac1,& *CCME.HHPP1[chan].begin(),&pp,& *CC.T1[chan].begin(),&hh,&fac1,& *V_Eff.V3[chan].begin(),&pp);
+      RM_dgemm(&N,&N,&hh,&hh,&pp,&fac1,& *CC.T1[chan].begin(),&hh,& *CCME.HHPP1[chan].begin(),&pp,&fac1,& *V_Eff.V4[chan].begin(),&hh);
     }
   
   for(int chan = 0; chan < Chan.size2; ++chan)
     {
       int hp1 = Chan.hp1[chan];
       int hp2 = Chan.hp2[chan];
+      V_Eff.V5[chan] = CCME.HPHP2[chan];
       if(hp1 == 0 || hp2 == 0){ continue; }
-      RM_dgemm(&N,&N,&hp1,&hp1,&hp2,&fac1,& *CC.T3[chan].begin(),&hp1,& *CCME.HHPP4[chan].begin(),&hp2,&fac2,& *V_Eff.V5[chan].begin(),&hp1);
+      RM_dgemm(&N,&N,&hp1,&hp1,&hp2,&fac1,& *CC.T3[chan].begin(),&hp1,& *CCME.HHPP4[chan].begin(),&hp2,&fac1,& *V_Eff.V5[chan].begin(),&hp1);
     }
 
   return V_Eff;
