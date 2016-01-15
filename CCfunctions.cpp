@@ -1,4 +1,5 @@
 #include "CCfunctions.hpp"
+#include "MATHfunctions.hpp"
 
 //Function to Search for index
 int Index(const std::vector<int> &vec1, const std::vector<int> &vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s)
@@ -2668,4 +2669,108 @@ CC_Eff Build_CC_Eff(const Model_Space &Space, const Input_Parameters &Parameters
 
   return V_Eff;
 
+}
+
+
+
+void EE_EOM(const Model_Space &Space, const Input_Parameters &Parameters, const CC_Eff &V_Eff, const CCD &CC, const Channels &Chan)
+{
+  int Nx = Parameters.Nx;
+  int Ny = Parameters.Ny;
+  int Nz = Parameters.Nz;
+  double M = Parameters.M;
+  double T = Parameters.T;
+  int ind1 = CART_tbInd1(Space, Nx, Ny, Nz, M, T);
+  int count = Chan.hh[ind1] * Chan.pp[ind1];
+  double memory = 24.0 + 8.0 * count * count;
+  std::cout <<"Matrix for Excited State: "<< Nx <<" "<< Ny <<" "<< Nz <<" "<< M <<" "<< T <<": "<< count <<" = "<< memory/1000000.0 <<" MB"<< std::endl;
+
+  //std::cout << std::endl << factorial(5) << " " << factorial(6.0) << " " << CGC(1.0,0.0,1.5,-0.5,0.5,-0.5) << " " << CGC(0.5,0.5,0.5,-0.5,1.0,0.0) << std::endl;
+  //std::cout << std::endl << factorial2(9) << " " << factorial2(10.0) << " " << Legendre(0.25, 4, 3) << " " << Legendre(0.75, 3, -2) << std::endl;
+
+  std::cout << SphericalY(0.5, 0.5, 4, 3) << std::endl;
+
+}
+
+
+std::vector<int> bitconfigsetup(const std::vector<int> &newconfigs, const int &N)
+{
+  int blength1 = int(newconfigs.size()) / N;
+  std::vector<int> bconfigs;
+  int btemp, bocc, shift, bsd;
+  
+  for(int i = 0; i < blength1; i++){
+    bsd = 0;
+    for(int j = 0; j < N; j++){
+      bocc = newconfigs[N*i + j]; shift = bocc - 1; btemp = 1 << shift; bsd = bsd + btemp;
+    }
+    bconfigs.push_back(bsd);
+  }
+  return bconfigs;
+}
+
+
+double matrixe(const int &testflag, const double &strength1, const double &strength2, const std::vector<int> &indvec, const unsigned long long &bra, const unsigned long long &ket, const std::vector<double> &onebody, const std::vector<std::vector<std::vector<std::vector<int> > > > &twobodybraket, const std::vector<std::vector<std::vector<double> > > &twobody)
+{
+  int size = int(indvec.size());
+  double temp = 0.0;
+  unsigned long long one = 1, zero = 0;
+  std::vector<double> tempvec(twobodybraket.size());
+  
+  if(bra == ket){
+    for(int i = 0; i < size; ++i){
+      if(((one << i) & ket) != 0){ temp = temp + onebody[indvec[i] - 1]; }
+    }
+  }
+  
+  #pragma omp parallel for
+  for(int i = 0; i < int(twobodybraket.size()); ++i){
+    int m, n, l, k;
+    unsigned long long mbit, nbit, lbit, kbit;
+    double temp2, phase;
+    unsigned long long tempket;
+    int flag;
+    int bcount;
+    unsigned long long comp;
+    temp2 = 0.0;
+    for(int j = 0; j < int(twobodybraket[i].size()); ++j){
+      for(int q = 0; q < int(twobodybraket[i][j].size()); ++q){
+	m = i + 1;
+	n = i + j + 2;
+	l = twobodybraket[i][j][q][0];
+	k = twobodybraket[i][j][q][1];
+	mbit = one << (m - 1);
+	nbit = one << (n - 1);
+	lbit = one << (l - 1);
+	kbit = one << (k - 1);
+	phase = 1.0;
+	tempket = ket;
+	flag = 0;
+	if( (lbit & ket) != 0 && (kbit & ket) != 0 && (nbit & bra) != 0 && (mbit & bra) != 0 &&
+	    ((mbit & ket) == 0 || (mbit == lbit || mbit == kbit)) && ((nbit & ket) == 0 || (nbit == lbit || nbit == kbit)) )
+	  { flag = 1; }
+	else if( (mbit & ket) != 0 && (nbit & ket) != 0 && (kbit & bra) != 0 && (lbit & bra) != 0 &&
+		 ((lbit & ket) == 0 || (lbit == mbit || lbit == nbit)) && ((kbit & ket) == 0 || (kbit == mbit || kbit == nbit)) )
+	  { flag = 1; std::swap(mbit,lbit); std::swap(m,l); std::swap(nbit,kbit); std::swap(n,k); }
+	if(flag == 1){
+	  comp = tempket & ~(~zero << (l - 1));
+	  for(bcount = 0; comp; ++bcount){ comp ^= comp & -comp; }
+	  phase = phase*pow(-1, bcount); tempket = tempket^lbit;
+	  comp = tempket & ~(~zero << (k - 1));
+	  for(bcount = 0; comp; ++bcount){ comp ^= comp & -comp; }
+	  phase = phase*pow(-1, bcount); tempket = tempket^kbit;
+	  comp = tempket & ~(~zero << (n - 1));
+	  for(bcount = 0; comp; ++bcount){ comp ^= comp & -comp; }
+	  phase = phase*pow(-1, bcount); tempket = tempket^nbit;
+	  comp = tempket & ~(~zero << (m - 1));
+	  for(bcount = 0; comp; ++bcount){ comp ^= comp & -comp; }
+	  phase = phase*pow(-1, bcount); tempket = tempket^mbit;
+	  if(tempket == bra){ temp2 += phase*strength2*twobody[i][j][q]; }
+	}
+      }
+    }
+    tempvec[i] = temp2;
+  }
+  temp = std::accumulate(tempvec.begin(),tempvec.end(),temp);
+  return temp;
 }

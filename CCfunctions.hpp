@@ -1,5 +1,5 @@
-#ifndef COUPLEDCLUSTER_H
-#define COUPLEDCLUSTER_H
+#ifndef CCFUNCTIONS_H
+#define CCFUNCTIONS_H
 
 #include <iostream>
 #include <math.h>
@@ -14,7 +14,8 @@
 #include <cmath>
 #include <algorithm>
 #include <time.h>
-#include "omp.h"
+#include <numeric>
+#include <omp.h>
 
 //LAPACK functions
 extern "C" void dgemm_(char* ta,char* tb,int* m,int* n,int* k,double* al,double* a,int* la,double* b,int* lb,double* be,double* c,int* lc);
@@ -53,7 +54,9 @@ int HO_tbInd1(const Model_Space &Space, const double &P, const double &M, const 
 int HO_tbInd2(const Model_Space &Space, const double &P2, const double &M2, const double &T2);
 void Print_Parameters(const Input_Parameters &Parameters);
 CC_Eff Build_CC_Eff(const Model_Space &Space, const Input_Parameters &Parameters, CC_Matrix_Elements &CCME, CCD &CC, const Channels &Chan);
-
+void EE_EOM(const Model_Space &Space, const Input_Parameters &Parameters, const CC_Eff &V_Eff, const CCD &CC, const Channels &Chan);
+std::vector<int> bitconfigsetup(const std::vector<int> &newconfigs, const int &N);
+double matrixe(const int &testflag, const double &strength1, const double &strength2, const std::vector<int> &indvec, const unsigned long long &bra, const unsigned long long &ket, const std::vector<double> &onebody, const std::vector<std::vector<std::vector<std::vector<int> > > > &twobodybraket, const std::vector<std::vector<std::vector<double> > > &twobody);
 
 //Structure for holding Input parameters
 struct Input_Parameters{
@@ -66,6 +69,9 @@ struct Input_Parameters{
   int Nmax;
   std::string LevelScheme; //level scheme path
   std::string MatrixElements; //matrix elements path
+  //For Excited States
+  int Nx, Ny, Nz;
+  double M, T;
 };
 
 //Structure for holding all model space info

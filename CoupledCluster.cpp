@@ -1,4 +1,5 @@
 #include "CCfunctions.hpp"
+#include "MATHfunctions.hpp"
 
 int main(int argc, char * argv[])
 {
@@ -73,6 +74,48 @@ int main(int argc, char * argv[])
     
     CC_Eff H_Eff = Build_CC_Eff(Space, Parameters, CCME, CC, Chan);
     
+    /*std::ofstream results;
+    results.open("run3.txt", std::ios_base::app);
+    results << Parameters.Nmax << "\t" << Parameters.P << "\t" << Parameters.N << "\t";
+    results << Parameters.density << "\t" << EperA << "\n";*/
+  }
+ else if(argc == 10){  
+    Input_Parameters Parameters;
+    Parameters.density = atof(argv[1]);
+    Parameters.Nmax = atoi(argv[2]);
+    Parameters.P = atoi(argv[3]);
+    Parameters.N = atoi(argv[4]);
+    //For Excited States
+    Parameters.Nx = atoi(argv[5]);
+    Parameters.Ny = atoi(argv[6]);
+    Parameters.Nz = atoi(argv[7]);
+    Parameters.M = atof(argv[8]);
+    Parameters.T = atof(argv[9]);
+    //////
+    Parameters.basis = "CART";
+    Parameters.obstrength = 1.0;
+    Parameters.tbstrength = 1.0;
+    Print_Parameters(Parameters);
+    
+    Model_Space Space = CART_Build_Model_Space(Parameters);
+    
+    Channels Chan = CART_Setup_Channels(Space);
+    
+    CC_Matrix_Elements CCME = Minnesota_Matrix_Elements(Parameters, Space, Chan);
+    
+    HF(Parameters, Space, Chan, CCME);
+    
+    CCD CC = Perform_CCD(Space, Parameters, CCME, Chan);
+    
+    double EperA = E_Ref(Parameters, Space, Chan, CCME);
+    EperA += CC.CCDE;
+    EperA /= (Parameters.P + Parameters.N);
+    std::cout << "E/A = " << EperA << std::endl << std::endl;
+    
+    CC_Eff H_Eff = Build_CC_Eff(Space, Parameters, CCME, CC, Chan);
+    
+    EE_EOM(Space, Parameters, H_Eff, CC, Chan);
+
     /*std::ofstream results;
     results.open("run3.txt", std::ios_base::app);
     results << Parameters.Nmax << "\t" << Parameters.P << "\t" << Parameters.N << "\t";
