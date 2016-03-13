@@ -26,10 +26,8 @@ extern "C" void dgeev_(char* jobvl,char* jobvr,int* N,double* A,int* lda,double*
 #define RM_dgemm(A, B, C, m, n, k, alpha, beta, transf_A, transf_B) dgemm_(transf_B, transf_A, n, m, k, alpha, B, n, A, k, beta, C, n)
 #define RM_dgemm2(A, B, C, m, n, k, alpha, beta, transf_A, transf_B) dgemm_(transf_A, transf_B, m, n, k, alpha, A, k, B, n, beta, C, n)
 
-
 #define min(a,b) (a <= b ? a : b)
 #define max(a,b) (a >= b ? a : b)
-
 
 const std::string PATH = "inputs/";
 
@@ -42,10 +40,9 @@ struct CC_Matrix_Elements;
 struct CC_Eff;
 struct V_Conv;
 
-int Index(const std::vector<std::vector<int> > &vec1, const std::vector<std::vector<int> > &vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s);
-int Index2(const std::vector<int> &vec1, const std::vector<std::vector<int> > &vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s);
-Channels HO_Setup_Channels(const Model_Space &Space);
-Channels CART_Setup_Channels(const Model_Space &Space);
+int Index(const std::vector<int> &vec1, const std::vector<int> &vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s);
+int Index2(const std::vector<int> &vec1, const std::vector<int> &vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s);
+Channels Setup_Channels(const Input_Parameters &Parameters, const Model_Space &Space);
 Input_Parameters Get_Input_Parameters(std::string &infile);
 Model_Space Build_Model_Space(Input_Parameters &Parameters);
 Model_Space_J Build_Model_Space_J1(Input_Parameters &Parameters);
@@ -54,6 +51,7 @@ Model_Space CART_Build_Model_Space(Input_Parameters &Parameters);
 Model_Space CART_Build_Model_Space_Twist(Input_Parameters &Parameters, const double &tx, const double &ty, const double &tz);
 CC_Matrix_Elements Read_Matrix_Elements(const std::string &MEfile, const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan);
 CC_Matrix_Elements Read_Matrix_Elements_J(const std::string &MEfile, const Input_Parameters &Parameters, const Model_Space &Space, const Model_Space_J &Space_J, const Channels &Chan);
+
 CCD Perform_CCD(const Model_Space &Space, const Input_Parameters &Parameters, CC_Matrix_Elements &CCME, const Channels &Chan);
 void HF(const Input_Parameters &Parameters, Model_Space &Space, const Channels &Chan, const CC_Matrix_Elements &ME);
 double E_Ref(const Input_Parameters &Parameters, Model_Space &Space, const Channels &Chan, const CC_Matrix_Elements &ME);
@@ -62,24 +60,30 @@ double vint_Minnesota_Momentum(const Model_Space &Space, const int &qi, const in
 int kron_del(const int &i, const int &j);
 int spinExchangeMtxEle(const int &i, const int &j, const int &k, const int &l);
 CC_Matrix_Elements Minnesota_Matrix_Elements(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan);
-int CART_tbInd1(const Model_Space &Space, const int &Nx, const int &Ny, const int &Nz, const double &M, const double &T);
-int CART_tbInd2(const Model_Space &Space, const int &Nx2, const int &Ny2, const int &Nz2, const double &M2, const double &T2);
-int HO_tbInd1(const Model_Space &Space, const double &P, const double &M, const double &T);
-int HO_tbInd2(const Model_Space &Space, const double &P2, const double &M2, const double &T2);
-int CART_tbInd2_rel(const Model_Space &Space, const int &Nx2, const int &Ny2, const int &Nz2, const double &m1, const double &m2);
+
+int ChanInd_2b_dir(const std::string &basis, const Model_Space &Space, const int &ind1, const int &ind2);
+int ChanInd_2b_cross(const std::string &basis, const Model_Space &Space, const int &ind1, const int &ind2);
+
 void Print_Parameters(const Input_Parameters &Parameters);
 CC_Eff Build_CC_Eff(const Model_Space &Space, const Input_Parameters &Parameters, CC_Matrix_Elements &CCME, CCD &CC, const Channels &Chan);
 void EE_EOM(const Model_Space &Space, const Input_Parameters &Parameters, const CC_Eff &V_Eff, const CCD &CC, const Channels &Chan);
 void EE_EOM_HO(const Model_Space &Space, const Input_Parameters &Parameters, const CC_Eff &V_Eff, const CCD &CC, const Channels &Chan);
 std::vector<unsigned long long> bitsetup(const int &i, const int &j, const int &a, const int &b, const int &Nbit);
+
 double matrixe1(const std::vector<unsigned long long> &bra, const std::vector<unsigned long long> &ket, const int &p, const int &q, const double &ME, const int &test);
 double matrixe2(const std::vector<unsigned long long> &bra, const std::vector<unsigned long long> &ket, const int &p, const int &q, const int &r, const int &s, const double &ME);
 double matrixe3(const std::vector<unsigned long long> &bra, const std::vector<unsigned long long> &ket, const int &p, const int &q, const int &r, const int &t, const int &u, const int &v, const double &ME);
 double vint_Conversion(const Model_Space &Space, const std::vector<std::vector<double> > &ME, const int &qi, const int &qj, const int &qk, const int &ql);
 
+Model_Space EG_Build_Model_Space(Input_Parameters &Parameters);
+CC_Matrix_Elements Coulomb_Matrix_Elements(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan);
+double Coulomb(const Model_Space &Space, const int &qi, const int &qj, const int &qk, const int &ql, const double &L);
+
+
 //Structure for holding Input parameters
 struct Input_Parameters{
-  std::string basis; //HO or CART
+  std::string calc_case; //nuclear or electronic
+  std::string basis; //infinite, finite (HO), or finite_J (HO_J)
   double obstrength; //one-body multiplication strength
   double tbstrength; //two-body multiplication strength
   int Nshells; //number of neutrons shells
@@ -111,31 +115,23 @@ struct Model_Space{
   std::vector<int> levelsn; //list of single particle state principal quantum numbers
   std::vector<int> levelsl; //list of single particle state orbital angular momentum
   std::vector<double> levelsj; //list of single particle state orbital angular momentum
-  int Pmin;
-  int HO_tb1Indsize;
-  std::vector<int> HO_tb1Indvec;
-  int P2min;
-  int HO_tb2Indsize;
-  std::vector<int> HO_tb2Indvec;
+  int Pmin, Pmax, Psize, P2size;
   
   //for CART
   std::vector<int> levelsnx; //list of single particle state x-momeuntum quantum number
   std::vector<int> levelsny; //list of single particle state y-momeuntum quantum number
   std::vector<int> levelsnz; //list of single particle state z-momeuntum quantum number
   int nmax;
-  int Nxmin;
-  int CART_tb1Indsize;
-  std::vector<int> Nymin;
-  std::vector<std::vector<int> > Nzmin;
-  std::vector<std::vector<std::vector<int> > > CART_tb1Indvec;
-  int Nx2min;
-  int CART_tb2Indsize;
-  std::vector<int> Ny2min;
-  std::vector<std::vector<int> > Nz2min;
-  std::vector<std::vector<std::vector<int> > > CART_tb2Indvec;
+  int Nxmin, Nxmax, Nxsize, Nx2size;
+  int Nymin, Nymax, Nysize, Ny2size;
+  int Nzmin, Nzmax, Nzsize, Nz2size;
 
-  int Mmin, Msize, M2min, M2size;
-  int Tmin, Tsize, T2min, T2size;
+  int Mmin, Mmax, Msize, M2size;
+  int Tmin, Tmax, Tsize, T2size;
+  std::vector<int> map_2b_dir;
+  std::vector<int> map_2b_cross;
+  int Chansize_2b_dir;
+  int Chansize_2b_cross;
 };
 
 //Structure for holding all model space info
@@ -224,16 +220,7 @@ struct CC_Eff{
   CC_Eff(Channels);
 };
 
-struct V_Conv{
-  /*std::vector<double> JME;
-  std::vector<std::vector<int> > LmlS;
-  std::vector<std::vector<int> > JJz;
-  std::vector<std::vector<double> > sigmak;
-  std::vector<std::vector<std::complex<double> > > C1;
-  std::vector<std::vector<std::complex<double> > > C2;
-  std::vector<std::vector<std::complex<double> > > Y1;
-  std::vector<std::vector<std::complex<double> > > Y2;*/
-  
+struct V_Conv{  
   std::vector<double> JME;
   std::vector<std::vector<int> > JL;
   std::vector<std::vector<int> > SzTz;
