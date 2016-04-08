@@ -5,60 +5,58 @@ int main(int argc, char * argv[])
 {
   // basis = "infinite", "finite", "finite_J"
   // case = "nuclear", "electronic"
+  // approx = "doubles", "singles", "triples"
 
+  Input_Parameters Parameters;
+  Model_Space Space;
+  Channels Chan;
+  Amplitudes Amps;
+  Interactions Ints;
+  double EperA;
   omp_set_num_threads(4);
+
   if(argc == 1 || argc == 2){
     std::string inputfile;
     if(argc == 1){ inputfile = "input.dat"; }
     else{ inputfile = argv[1]; }
-    Input_Parameters Parameters = Get_Input_Parameters(inputfile);
-    Model_Space Space;
-    Channels Chan;
-    double EperA;
+    Get_Input_Parameters(inputfile, Parameters);
     if(Parameters.basis != "finite_J"){
-      Space = Build_Model_Space(Parameters);
+      if(Parameters.basis == "infinite"){ Parameters.approx == "doubles"; }
+      Build_Model_Space(Parameters, Space);
       Print_Parameters(Parameters);
-      Chan = Setup_Channels(Parameters, Space);
-      CC_Matrix_Elements CCME(Chan);
-      CCME = Read_Matrix_Elements(Parameters.MatrixElements, Parameters, Space, Chan);
-      HF(Parameters, Space, Chan, CCME);
-      CCD CC = Perform_CCD(Space, Parameters, CCME, Chan);    
-      EperA = E_Ref(Parameters, Space, Chan, CCME);
-      std::cout << "Eref = " << EperA << ", dCCD = " << CC.CCDE << std::endl;
-      EperA += CC.CCDE;
-      EperA /= (Parameters.P + Parameters.N);
-      std::cout << "E/A = " << EperA << std::endl << std::endl;
+      Setup_Channels(Parameters, Space, Chan);
+      Setup_Amps(Parameters, Space, Chan, Amps);
+      Setup_Ints(Parameters, Chan, Ints);
+      Read_Matrix_Elements(Parameters, Space, Chan, Ints);
+      HF(Parameters, Space, Chan, Ints);
+      Perform_CC(Parameters, Space, Chan, Ints, Amps);
+      EperA = E_Ref(Parameters, Space, Chan, Ints);
     }
     else if(Parameters.basis == "finite_J"){
-      Model_Space_J Space_J = Build_Model_Space_J1(Parameters);
-      Space = Build_Model_Space_J2(Parameters, Space_J);
+      Model_Space_J Space_J;
+      Build_Model_Space_J1(Parameters, Space_J);
+      Build_Model_Space_J2(Parameters, Space_J, Space);
       Print_Parameters(Parameters);
-      Chan = Setup_Channels(Parameters, Space);
-      CC_Matrix_Elements CCME(Chan);
-      CCME = Read_Matrix_Elements_J(Parameters.MatrixElements, Parameters, Space, Space_J, Chan);
-      CCD CC = Perform_CCD(Space, Parameters, CCME, Chan);    
-      EperA = E_Ref(Parameters, Space, Chan, CCME);
-      std::cout << "Eref = " << EperA << ", dCCD = " << CC.CCDE << std::endl;
-      EperA += CC.CCDE;
-      EperA /= (Parameters.P + Parameters.N);
-      std::cout << "E/A = " << EperA << std::endl << std::endl;
+      Setup_Channels(Parameters, Space, Chan);
+      Setup_Amps(Parameters, Space, Chan, Amps);
+      Setup_Ints(Parameters, Chan, Ints);
+      Read_Matrix_Elements_J(Parameters, Space, Space_J, Chan, Ints);
+      Perform_CC(Parameters, Space, Chan, Ints, Amps);
+      EperA = E_Ref(Parameters, Space, Chan, Ints);
     }
     /*CC_Eff H_Eff = Build_CC_Eff(Space, Parameters, CCME, CC, Chan);
       EE_EOM_HO(Space, Parameters, H_Eff, CC, Chan);*/
   }
   else if(argc == 6){
-    Input_Parameters Parameters;
     Parameters.calc_case = argv[1];
     Parameters.density = atof(argv[2]);
     Parameters.Nmax = atoi(argv[3]);
     Parameters.Pshells = atoi(argv[4]);
     Parameters.Nshells = atoi(argv[5]);
     Parameters.basis = "infinite";
+    Parameters.approx = "doubles";
     Parameters.obstrength = 1.0;
     Parameters.tbstrength = 1.0;
-    Model_Space Space;
-    Channels Chan;
-    double EperA;
     double hbarc = 0.1973269788; // eV um
     double eVs_in_Hartree = 27.21138505; // eV
     hbarc *= 10000/eVs_in_Hartree; // Hartree Angstrom
@@ -67,27 +65,23 @@ int main(int argc, char * argv[])
     double fine_struct = 1.0/137.035999139;
     double r_b = hbarc/(massc2*fine_struct);
     
-    if(Parameters.calc_case == "nuclear"){ Space = CART_Build_Model_Space(Parameters); }
+    if(Parameters.calc_case == "nuclear"){
+      CART_Build_Model_Space(Parameters, Space);
+    }
     else if(Parameters.calc_case == "electronic"){
       Parameters.density = 3.0/(4.0*M_PI*pow(Parameters.density*r_b, 3));
-      Space = EG_Build_Model_Space(Parameters);
+      EG_Build_Model_Space(Parameters, Space);
     }
+
     Print_Parameters(Parameters);
-    std::cout << "TEST0 !!" << std::endl;
-    Chan = Setup_Channels(Parameters, Space);
-    std::cout << "TEST1 !!" << std::endl;
-    CC_Matrix_Elements CCME(Chan);
-    std::cout << "TEST2 !!" << std::endl;
-    if(Parameters.calc_case == "nuclear"){ CCME = Minnesota_Matrix_Elements(Parameters, Space, Chan); }
-    else if(Parameters.calc_case == "electronic"){ std::cout << "TEST3 !!" << std::endl; CCME = Coulomb_Matrix_Elements(Parameters, Space, Chan); }
-    std::cout << "TEST4 !!" << std::endl;
-    HF(Parameters, Space, Chan, CCME);
-    CCD CC = Perform_CCD(Space, Parameters, CCME, Chan);
-    EperA = E_Ref(Parameters, Space, Chan, CCME);
-    std::cout << std::setprecision(16) << "Eref = " << EperA << ", dCCD = " << CC.CCDE << std::endl;
-    EperA += CC.CCDE;
-    EperA /= (Parameters.P + Parameters.N);
-    std::cout << std::setprecision(16) << "E/A = " << EperA << std::endl << std::endl;
+    Setup_Channels(Parameters, Space, Chan);
+    Setup_Amps(Parameters, Space, Chan, Amps);
+    Setup_Ints(Parameters, Chan, Ints);
+    if(Parameters.calc_case == "nuclear"){ Minnesota_Matrix_Elements(Parameters, Space, Chan, Ints); }
+    else if(Parameters.calc_case == "electronic"){ Coulomb_Matrix_Elements(Parameters, Space, Chan, Ints); }
+    HF(Parameters, Space, Chan, Ints);
+    Perform_CC(Parameters, Space, Chan, Ints, Amps);
+    EperA = E_Ref(Parameters, Space, Chan, Ints);
   }
 
   /*Model_Space Space = CART_Build_Model_Space(Parameters);
@@ -184,6 +178,12 @@ int main(int argc, char * argv[])
     results.open("output_particlesHF.txt", std::ios_base::app);
     results << Parameters.Nmax << "\t" << Parameters.P << "\t" << Parameters.N << "\t";
     results << Parameters.density << "\t" << 1 - Etot/energyi << "\n";*/
+
+  double en = Amps.get_energy(Parameters, Chan, Ints);
+  std::cout << "Eref = " << EperA << ", dCCD = " << en << std::endl;
+  EperA += en;
+  EperA /= (Parameters.P + Parameters.N);
+  std::cout << std::setprecision(10) << "E/A = " << EperA << std::endl << std::endl;
   
   return 0;
 }
