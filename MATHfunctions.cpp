@@ -17,6 +17,14 @@ long long factorial(const double &n)
   return intfactorial;
 }
 
+double logfac(const int &n)
+{
+  if(n < 0){ std::cerr << n << " : LogFactorial intput should be >= 0" << std::endl; exit(1); }
+  double fac = 0.0;
+  for(int a = 2; a < n+1; a++){ fac += log(a); }
+  return fac;
+}
+
 long long factorial2(const int &n)
 {
   if(n < 0){ std::cerr << n << " : Factorial2 intput should be >= 0" << std::endl; exit(1); }
@@ -37,6 +45,80 @@ long long factorial2(const double &n)
   return intfactorial;
 }
 
+int choose(const int &int1, const int &int2)
+{
+  return factorial(int1) / (factorial(int2) * factorial(int1 - int2));
+}
+
+double logratio1(const int &int1, const int &int2, const int &int3, const int &int4)
+{
+  return -logfac(int1) - logfac(int2) - logfac(int3) - logfac(int4);
+}
+
+double logratio2(const int &G)
+{
+  return -0.5 * (G + 1) * log(2);
+}
+
+double product1(const int &n1, const int &m1, const int &n2, const int &m2, const int &n3, const int &m3, const int &n4, const int &m4)
+{
+  double prod = logfac(n1) + logfac(n2) + logfac(n3) + logfac(n4);
+  prod -= (logfac(n1 + abs(m1)) + logfac(n2 + abs(m2)) + logfac(n3 + abs(m3)) + logfac(n4 + abs(m4)));
+  prod *= 0.5;
+  return exp(prod);
+}
+
+double logproduct2(const int &n1, const int &m1, const int &n2, const int &m2, const int &n3, const int &m3, const int &n4, const int &m4, const int &j1, const int &j2, const int &j3, const int &j4)
+{
+  double prod = logfac(n1 + abs(m1)) + logfac(n2 + abs(m2)) + logfac(n3 + abs(m3)) + logfac(n4 + abs(m4));
+  prod -= (logfac(n1 - j1) + logfac(n2 - j2) + logfac(n3 - j3) + logfac(n4 - j4));
+  prod -= (logfac(j1 + abs(m1)) + logfac(j2 + abs(m2)) + logfac(j3 + abs(m3)) + logfac(j4 + abs(m4)));
+  return prod;
+}
+
+double logproduct3(const int &l1, const int &l2, const int &l3, const int &l4, const int &g1, const int &g2, const int &g3, const int &g4)
+{
+  //std::cout << "$$ " << g1 << " " << g2 << " " << g3 << " " << g4 << std::endl;
+  //std::cout << "$$ " << l1 << " " << l2 << " " << l3 << " " << l4 << std::endl; 
+  //std::cout << "$$ " << g1-l1 << " " << g2-l2 << " " << g3-l3 << " " << g4-l4 << std::endl; 
+  double prod = logfac(g1) + logfac(g2) + logfac(g3) + logfac(g4);
+  prod -= (logfac(l1) + logfac(l2) + logfac(l3) + logfac(l4));
+  prod -= (logfac(g1 - l1) + logfac(g2 - l2) + logfac(g3 - l3) + logfac(g4 - l4));
+  return prod;
+}
+
+double loggamma(const double &x){
+  if(x <= 0.0){ std::cerr << x << " : LogGamma intput should be >= 0" << std::endl; exit(1); }  
+  else if(x == 1.0 || x == 2.0){ return 0.0; }
+  double x0, x2, xp, gl0, gl;
+  int n;
+  x0 = x;
+  if(x <= 7.0){
+    n = int(7 - x);
+    x0 = x + n;
+  }
+  x2 = 1.0 / (x0 * x0);
+  xp = 2.0 * PI;
+  gl0 = -1.39243221690590;
+  gl0 = gl0 * x2 + 1.796443723688307e-01;
+  gl0 = gl0 * x2 - 2.955065359477124e-02;
+  gl0 = gl0 * x2 + 6.410256410256410e-03;
+  gl0 = gl0 * x2 - 1.917526917526918e-03;
+  gl0 = gl0 * x2 + 8.417508417508418e-04;
+  gl0 = gl0 * x2 - 5.952380952380952e-04;
+  gl0 = gl0 * x2 + 7.936507936507937e-04;
+  gl0 = gl0 * x2 - 2.777777777777778e-03;
+  gl0 = gl0 * x2 + 8.333333333333333e-02;
+  gl = gl0/x0 + 0.5*log(xp) + (x0 - 0.5)*log(x0) - x0;
+  if(x <= 7.0){
+    for(int i = 1; i <= n; ++i){
+      gl -= log(x0 - 1.0);
+      x0 -= 1.0;
+    }
+  }
+  return gl;
+}
+
 double CGC(double j1, double m1, double j2, double m2, double jtot, double mtot)
 {
   //std::cout << "! " << j1 << " " << m1 << " " << j2 << " " << m2 << " " << jtot << " " << mtot << std::endl;
@@ -54,11 +136,11 @@ double CGC(double j1, double m1, double j2, double m2, double jtot, double mtot)
   mtot = fabs(mtot);
   num1 = (2 * jtot + 1) * factorial(jtot + j1 - j2) * factorial(jtot - j1 + j2) * factorial(j1 + j2 - jtot);
   den1 = double(factorial(j1 + j2 + jtot + 1));
-  fac1 = sqrt(num1 / den1);
+  fac1 = std::sqrt(num1 / den1);
   num2_1 = double(factorial(jtot + mtot) * factorial(jtot - mtot));
   num2_2 = double(factorial(j1 - m1) * factorial(j1 + m1));
   num2_3 = double(factorial(j2 - m2) * factorial(j2 + m2));
-  fac2 = sqrt(num2_1 * num2_2 * num2_3);
+  fac2 = std::sqrt(num2_1 * num2_2 * num2_3);
 
   maxk1 = std::min(j1 + j2 - jtot, j1 - m1);
   maxk2 = std::min(maxk1, j2 + m2);
@@ -178,3 +260,71 @@ double Erf(const double &z)
   return tau;
 }
 
+double Laguerre(const int &k, const double &alpha, const double &x)
+{
+  if(k == 0){ return 1.0; }
+  else if(k == 1){ return 1.0 + alpha - x; }
+  else{
+    int k0 = 1;
+    double L0 = 1.0;
+    double L1 = 1.0 + alpha - x;
+    double L2 = ((2*k0 + 1.0 + alpha - x)*L1 - (k0 + alpha)*L0)/(k0 + 1);
+    L0 = L1;
+    L1 = L2;
+    ++k0;
+    while(k0 < k){
+      L2 = ((2*k0 + 1.0 + alpha - x)*L1 - (k0 + alpha)*L0)/(k0 + 1);
+      L0 = L1;
+      L1 = L2;
+      ++k0;
+    }
+    return L2;
+  }
+}
+
+double HOfunction(const double &hw, const int &k, const int &l, const int &m, const double &r, const double &theta, const double &phi){
+  double nu = 1000000 * m_electronc2 * hw / (2 * hbarc_eVum * hbarc_eVum);
+  double N = std::sqrt(std::sqrt(2 * nu * nu * nu / PI) * (std::pow(2, k + 2*l + 3) * factorial(k) * std::pow(nu, l)) / factorial2(2*k + 2*l + 1));
+  return N * std::pow(r, l) * std::pow(e, -1.0 * nu * r * r) * Laguerre(k, l+0.5, 2 * nu * r * r) * SphericalY(theta, phi, l, m);
+}
+
+//Gives negative projection of v onto u
+std::vector<double> projection(const std::vector<double> &u, const std::vector<double> &v)
+{
+  double innerprod;
+  double norm;
+  std::vector<double> proj;
+  innerprod = 0.0;
+  norm = 0.0;
+  proj.resize(u.size());
+  for(int i = 0; i < int(u.size()); ++i){ innerprod += v[i]*u[i]; norm += u[i]*u[i]; }
+  for(int i = 0; i < int(u.size()); ++i){ proj[i] = -1.0 * (innerprod/norm)*u[i]; }
+  
+  return proj;
+}
+
+void GramSchmidt(std::vector<std::vector<double> > &Vectors)
+{
+  if(Vectors.size() == 0){ return; }
+  std::vector<double> tempvec;
+  double norm;
+  int N = int(Vectors.size());
+  int NN = int(Vectors[0].size());
+  for(int i = 0; i < N; ++i){
+    norm = 0;
+    for(int j = 0; j < NN; ++j){ norm += pow(Vectors[i][j], 2); }
+    for(int j = 0; j < NN; ++j){ Vectors[i][j] /= sqrt(norm); }
+    for(int j = i + 1; j < N; ++j){
+      tempvec = projection(Vectors[i], Vectors[j]);
+      for(int k = 0; k < NN; ++k){ Vectors[j][k] += tempvec[k]; }
+    }
+  }
+  for(int i = 0; i < N; ++i){
+    norm = 0.0;
+    for(int j = 0; j < NN; ++j){ norm += pow(Vectors[i][j], 2); }
+    for(int j = 0; j < NN; ++j){ 
+      if(fabs(Vectors[i][j]/sqrt(norm)) < 0.0000001){ norm -= pow(Vectors[i][j], 2); Vectors[i][j] = 0.0; }
+    }
+    for(int j = 0; j < NN; ++j){ Vectors[i][j] /= sqrt(norm); }
+  }
+}

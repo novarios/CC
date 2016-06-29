@@ -1,5 +1,6 @@
 #include "CCfunctions.hpp"
 #include "MATHfunctions.hpp"
+#include "HFfunctions.hpp"
 
 int main(int argc, char * argv[])
 {
@@ -12,76 +13,98 @@ int main(int argc, char * argv[])
   Channels Chan;
   Amplitudes Amps;
   Interactions Ints;
+  HF_Channels HF_Chan;
+  HF_Matrix_Elements HF_ME;
+  Single_Particle_States States;
   double EperA;
   omp_set_num_threads(4);
+  std::cout << std::setprecision(12);
 
   if(argc == 1 || argc == 2){
     std::string inputfile;
     if(argc == 1){ inputfile = "input.dat"; }
     else{ inputfile = argv[1]; }
     Get_Input_Parameters(inputfile, Parameters);
-    if(Parameters.basis != "finite_J"){
-      if(Parameters.basis == "infinite"){ Parameters.approx == "doubles"; }
-      Build_Model_Space(Parameters, Space);
-      Print_Parameters(Parameters);
-      Setup_Channels(Parameters, Space, Chan);
-      Setup_Amps(Parameters, Space, Chan, Amps);
-      Setup_Ints(Parameters, Chan, Ints);
-      Read_Matrix_Elements(Parameters, Space, Chan, Ints);
-      HF(Parameters, Space, Chan, Ints);
-      Perform_CC(Parameters, Space, Chan, Ints, Amps);
-      EperA = E_Ref(Parameters, Space, Chan, Ints);
+    if(Parameters.basis == "infinite"){ Parameters.approx == "doubles"; }
+    Build_Model_Space(Parameters, Space);
+    Print_Parameters(Parameters);
+    Setup_Channels_HF(Parameters, Space, HF_Chan);
+    Build_Single_Particle_States(Parameters, Space, HF_Chan, States);
+    Read_Matrix_Elements_M(Parameters, Space, HF_Chan, HF_ME);
+    Hartree_Fock_States(Parameters, Space, HF_Chan, States, HF_ME);
+    Convert_To_HF_Matrix_Elements(HF_Chan, States, HF_ME);
+    Setup_Channels(Parameters, Space, Chan);
+    Setup_Amps(Parameters, Space, Chan, Amps);
+    Setup_Ints(Parameters, Chan, Ints);
+    Get_Matrix_Elements(Parameters, HF_Chan, HF_ME, Space, Chan, Ints);
+    Perform_CC(Parameters, Space, Chan, Ints, Amps);
+    EperA = E_Ref(Parameters, Space, Chan, Ints);
+    if(Parameters.extra == 0){
+      CC_Eff V_Eff(Parameters, Space, Chan);
+      Build_CC_Eff(Parameters, Space, Chan, Ints, Amps, V_Eff);
+      EE_EOM(Parameters, Space, Chan, V_Eff);
     }
-    else if(Parameters.basis == "finite_J"){
-      Model_Space_J Space_J;
-      Build_Model_Space_J1(Parameters, Space_J);
-      Build_Model_Space_J2(Parameters, Space_J, Space);
-      Print_Parameters(Parameters);
-      Setup_Channels(Parameters, Space, Chan);
-      Setup_Amps(Parameters, Space, Chan, Amps);
-      Setup_Ints(Parameters, Chan, Ints);
-      Read_Matrix_Elements_J(Parameters, Space, Space_J, Chan, Ints);
-      Perform_CC(Parameters, Space, Chan, Ints, Amps);
-      EperA = E_Ref(Parameters, Space, Chan, Ints);
-    }
-    /*CC_Eff H_Eff = Build_CC_Eff(Space, Parameters, CCME, CC, Chan);
-      EE_EOM_HO(Space, Parameters, H_Eff, CC, Chan);*/
   }
-  else if(argc == 6){
+  else if(argc == 6 || argc == 7){
     Parameters.calc_case = argv[1];
     Parameters.density = atof(argv[2]);
     Parameters.Nmax = atoi(argv[3]);
     Parameters.Pshells = atoi(argv[4]);
     Parameters.Nshells = atoi(argv[5]);
-    Parameters.basis = "infinite";
-    Parameters.approx = "doubles";
     Parameters.obstrength = 1.0;
     Parameters.tbstrength = 1.0;
-    double hbarc = 0.1973269788; // eV um
-    double eVs_in_Hartree = 27.21138505; // eV
-    hbarc *= 10000/eVs_in_Hartree; // Hartree Angstrom
-    double massc2 = 0.5109989461; // MeV
-    massc2 *= 1000000/eVs_in_Hartree; // Hartree    
-    double fine_struct = 1.0/137.035999139;
-    double r_b = hbarc/(massc2*fine_struct);
     
     if(Parameters.calc_case == "nuclear"){
+      Parameters.basis = "infinite";
+      Parameters.approx = "doubles";
       CART_Build_Model_Space(Parameters, Space);
+      Print_Parameters(Parameters);
+      Setup_Channels(Parameters, Space, Chan);
+      Setup_Amps(Parameters, Space, Chan, Amps);
+      Setup_Ints(Parameters, Chan, Ints);
+      Minnesota_Matrix_Elements(Parameters, Space, Chan, Ints);
+      Perform_CC(Parameters, Space, Chan, Ints, Amps);
+      EperA = E_Ref(Parameters, Space, Chan, Ints);
     }
     else if(Parameters.calc_case == "electronic"){
-      Parameters.density = 3.0/(4.0*M_PI*pow(Parameters.density*r_b, 3));
+      Parameters.basis = "infinite";
+      Parameters.approx = "doubles";
       EG_Build_Model_Space(Parameters, Space);
+      Print_Parameters(Parameters);
+      Setup_Channels(Parameters, Space, Chan);
+      Setup_Amps(Parameters, Space, Chan, Amps);
+      Setup_Ints(Parameters, Chan, Ints);
+      Coulomb_Inf_Matrix_Elements(Parameters, Space, Chan, Ints);
+      Perform_CC(Parameters, Space, Chan, Ints, Amps);
+      EperA = E_Ref(Parameters, Space, Chan, Ints);
     }
-
-    Print_Parameters(Parameters);
-    Setup_Channels(Parameters, Space, Chan);
-    Setup_Amps(Parameters, Space, Chan, Amps);
-    Setup_Ints(Parameters, Chan, Ints);
-    if(Parameters.calc_case == "nuclear"){ Minnesota_Matrix_Elements(Parameters, Space, Chan, Ints); }
-    else if(Parameters.calc_case == "electronic"){ Coulomb_Matrix_Elements(Parameters, Space, Chan, Ints); }
-    HF(Parameters, Space, Chan, Ints);
-    Perform_CC(Parameters, Space, Chan, Ints, Amps);
-    EperA = E_Ref(Parameters, Space, Chan, Ints);
+    else if(Parameters.calc_case == "quantum_dot"){
+      Parameters.basis = "finite_HO";
+      Parameters.approx = "singles";
+      QD_Build_Model_Space(Parameters, Space);
+      Print_Parameters(Parameters);
+      Setup_Channels_HF(Parameters, Space, HF_Chan);
+      Build_Single_Particle_States(Parameters, Space, HF_Chan, States);
+      Read_Matrix_Elements_HO(Parameters, Space, HF_Chan, HF_ME);
+      Hartree_Fock_States(Parameters, Space, HF_Chan, States, HF_ME);
+      Convert_To_HF_Matrix_Elements(HF_Chan, States, HF_ME);
+      Setup_Channels(Parameters, Space, Chan);
+      Setup_Amps(Parameters, Space, Chan, Amps);
+      Setup_Ints(Parameters, Chan, Ints);
+      Get_Matrix_Elements(Parameters, HF_Chan, HF_ME, Space, Chan, Ints);
+      Perform_CC(Parameters, Space, Chan, Ints, Amps);
+      EperA = E_Ref(Parameters, Space, Chan, Ints);
+    }
+    if(argc == 7){
+      std::cout << "test1 !!" << std::endl;
+      Parameters.extra = atoi(argv[6]);
+      if(Parameters.extra == 0){
+	std::cout << "test2 !!" << std::endl;
+	CC_Eff V_Eff(Parameters, Space, Chan);
+	Build_CC_Eff(Parameters, Space, Chan, Ints, Amps, V_Eff);
+	std::cout << "test3 !!" << std::endl;
+      }
+    }
   }
 
   /*Model_Space Space = CART_Build_Model_Space(Parameters);
@@ -182,8 +205,7 @@ int main(int argc, char * argv[])
   double en = Amps.get_energy(Parameters, Chan, Ints);
   std::cout << "Eref = " << EperA << ", dCCD = " << en << std::endl;
   EperA += en;
-  EperA /= (Parameters.P + Parameters.N);
-  std::cout << std::setprecision(10) << "E/A = " << EperA << std::endl << std::endl;
+  std::cout << "E = " << EperA << ", E/A = " << EperA/(Parameters.P + Parameters.N) << std::endl << std::endl;
   
   return 0;
 }
