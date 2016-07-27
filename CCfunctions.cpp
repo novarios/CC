@@ -1,6 +1,184 @@
 #include "CCfunctions.hpp"
 #include "MATHfunctions.hpp"
 
+void Perform_MBPT_0(const Input_Parameters &Parameters, const Model_Space2 &Space)
+{
+  double L = pow((Parameters.P + Parameters.N)/Parameters.density, 1./3.);
+  double energy0;
+  double energy = 0.0;
+  for(int i = 0; i < Space.indhol; ++i){
+    for(int j = 0; j < Space.indhol; ++j){
+      if(i == j){ continue; }
+      for(int a = Space.indhol; a < Space.indtot; ++a){
+	for(int b = Space.indhol; b < Space.indtot; ++b){
+	  if(a == b){ continue; }
+	  energy0 = vint_Minnesota_Momentum2(Space, i, j, a, b, L);
+	  energy0 *= energy0;
+	  energy0 /= (Space.qnums[i].energy + Space.qnums[j].energy - Space.qnums[a].energy - Space.qnums[b].energy);
+	  energy += 0.25 * energy0;
+	}
+      }
+    }
+  }
+  std::cout << "DeltaE for MBPT(2)_0 = " << energy << std::endl;
+}
+
+void Perform_MBPT_1(const Input_Parameters &Parameters, const Model_Space2 &Space)
+{
+  double L = pow((Parameters.P + Parameters.N)/Parameters.density, 1./3.);
+  double energy = 0.0;
+  #pragma omp parallel for reduction(+:energy) schedule(static)
+  for(int a = Space.indhol; a < Space.indtot; ++a){
+    double energy0;
+    for(int i = 0; i < Space.indhol; ++i){
+      for(int j = 0; j < Space.indhol; ++j){
+	if(i == j){ continue; }
+	for(int b = Space.indhol; b < Space.indtot; ++b){
+	  if(a == b){ continue; }
+	  energy0 = vint_Minnesota_Momentum2(Space, i, j, a, b, L);
+	  energy0 *= energy0;
+	  energy0 /= (Space.qnums[i].energy + Space.qnums[j].energy - Space.qnums[a].energy - Space.qnums[b].energy);
+	  energy += 0.25 * energy0;
+	}
+      }
+    }
+  }
+  std::cout << "DeltaE for MBPT(2)_0 = " << energy << std::endl;
+}
+
+void Perform_MBPT_2(const Input_Parameters &Parameters, const Model_Space2 &Space, const Channels2 &Chan)
+{
+  double L = pow((Parameters.P + Parameters.N)/Parameters.density, 1./3.);
+  double energy0;
+  int p, q, r, s;
+  double energy = 0.0;
+  for(int chan = 0; chan < Chan.size1; ++chan){
+    if(Chan.hh[chan] == 0 || Chan.pp[chan] == 0){ continue; }
+    for(int hh = 0; hh < Chan.hh[chan]; ++hh){
+      r = Chan.hhvec1[chan][2*hh];
+      s = Chan.hhvec1[chan][2*hh + 1];
+      for(int pp = 0; pp < Chan.pp[chan]; ++pp){
+	p = Chan.ppvec1[chan][2*pp];
+	q = Chan.ppvec1[chan][2*pp + 1];
+	energy0 = vint_Minnesota_Momentum2(Space, p, q, r, s, L);
+	energy0 *= energy0;
+	energy0 /= (Space.qnums[r].energy + Space.qnums[s].energy - Space.qnums[p].energy - Space.qnums[q].energy);
+	energy += 0.25 * energy0;
+      }
+    }
+  }
+  std::cout << "DeltaE for MBPT(2)_0 = " << energy << std::endl;
+}
+
+void Perform_MBPT_3(const Input_Parameters &Parameters, const Model_Space2 &Space, const Channels2 &Chan)
+{
+  double L = pow((Parameters.P + Parameters.N)/Parameters.density, 1./3.);
+  double energy = 0.0;
+  #pragma omp parallel for reduction(+:energy) schedule(guided)
+  for(int chan = 0; chan < Chan.size1; ++chan){
+    if(Chan.hh[chan] == 0 || Chan.pp[chan] == 0){ continue; }
+    double energy0;
+    int p, q, r, s;
+    for(int hh = 0; hh < Chan.hh[chan]; ++hh){
+      r = Chan.hhvec1[chan][2*hh];
+      s = Chan.hhvec1[chan][2*hh + 1];
+      for(int pp = 0; pp < Chan.pp[chan]; ++pp){
+	p = Chan.ppvec1[chan][2*pp];
+	q = Chan.ppvec1[chan][2*pp + 1];
+	energy0 = vint_Minnesota_Momentum2(Space, p, q, r, s, L);
+	energy0 *= energy0;
+	energy0 /= (Space.qnums[r].energy + Space.qnums[s].energy - Space.qnums[p].energy - Space.qnums[q].energy);
+	energy += 0.25 * energy0;
+      }
+    }
+  }
+  std::cout << "DeltaE for MBPT(2)_0 = " << energy << std::endl;
+}
+
+void Perform_MBPT_4(const Input_Parameters &Parameters, const Model_Space2 &Space, const Channels2 &Chan)
+{
+  double L = pow((Parameters.P + Parameters.N)/Parameters.density, 1./3.);
+  double energy = 0.0;
+  #pragma omp parallel for reduction(+:energy) schedule(guided)
+  for(int chan = 0; chan < Chan.size1; ++chan){
+    if(Chan.hh[chan] == 0 || Chan.pp[chan] == 0){ continue; }
+    double energy0, energy1;
+    int i, j, a, b, c, d;
+    for(int hh = 0; hh < Chan.hh[chan]; ++hh){
+      i = Chan.hhvec1[chan][2*hh];
+      j = Chan.hhvec1[chan][2*hh + 1];
+      for(int pp = 0; pp < Chan.pp[chan]; ++pp){
+	a = Chan.ppvec1[chan][2*pp];
+	b = Chan.ppvec1[chan][2*pp + 1];
+	energy0 = vint_Minnesota_Momentum2(Space, i, j, a, b, L);
+	energy0 /= (Space.qnums[i].energy + Space.qnums[j].energy - Space.qnums[a].energy - Space.qnums[b].energy);
+	for(int pp1 = 0; pp1 < Chan.pp[chan]; ++pp1){
+	  c = Chan.ppvec1[chan][2*pp1];
+	  d = Chan.ppvec1[chan][2*pp1 + 1];
+	  energy1 = vint_Minnesota_Momentum2(Space, a, b, c, d, L);
+	  energy1 *= vint_Minnesota_Momentum2(Space, c, d, i, j, L);
+	  energy1 /= (Space.qnums[i].energy + Space.qnums[j].energy - Space.qnums[c].energy - Space.qnums[d].energy);
+	  energy += 0.125 * energy0 * energy1;
+	}
+      }
+    }
+  }
+  std::cout << "DeltaE for MBPT(3)_0 = " << energy << std::endl;
+}
+
+void Perform_MBPT_5(const Input_Parameters &Parameters, const Model_Space2 &Space, const Channels2 &Chan)
+{
+  double L = pow((Parameters.P + Parameters.N)/Parameters.density, 1./3.);
+  double energy = 0.0;
+  std::vector<std::vector<double> > V1(Chan.size1);
+  std::vector<std::vector<double> > S1(Chan.size1);
+  std::vector<std::vector<double> > V2(Chan.size1);
+  std::vector<std::vector<double> > V3(Chan.size1);
+  std::vector<std::vector<double> > S2(Chan.size1);
+  #pragma omp parallel for schedule(guided)
+  for(int chan = 0; chan < Chan.size1; ++chan){
+    if(Chan.hh[chan] == 0 || Chan.pp[chan] == 0){ continue; }
+    double energy0;
+    int i, j, a, b, c, d;
+    V1[chan].assign(Chan.hh[chan] * Chan.pp[chan], 0.0);
+    S1[chan].assign(Chan.hh[chan] * Chan.pp[chan], 0.0);
+    V2[chan].assign(Chan.pp[chan] * Chan.pp[chan], 0.0);
+    V3[chan].assign(Chan.pp[chan] * Chan.hh[chan], 0.0);
+    S2[chan].assign(Chan.hh[chan] * Chan.hh[chan], 0.0);
+    for(int pp = 0; pp < Chan.pp[chan]; ++pp){
+      a = Chan.ppvec1[chan][2*pp];
+      b = Chan.ppvec1[chan][2*pp + 1];
+      for(int hh = 0; hh < Chan.hh[chan]; ++hh){
+	i = Chan.hhvec1[chan][2*hh];
+	j = Chan.hhvec1[chan][2*hh + 1];
+	energy0 = vint_Minnesota_Momentum2(Space, i, j, a, b, L);
+	energy0 /= (Space.qnums[i].energy + Space.qnums[j].energy - Space.qnums[a].energy - Space.qnums[b].energy);
+	V1[chan][hh*Chan.pp[chan] + pp] = energy0;
+	V3[chan][pp*Chan.hh[chan] + hh] = energy0;
+      }
+      for(int pp1 = 0; pp1 < Chan.pp[chan]; ++pp1){
+	c = Chan.ppvec1[chan][2*pp1];
+	d = Chan.ppvec1[chan][2*pp1 + 1];
+	energy0 = vint_Minnesota_Momentum2(Space, a, b, c, d, L);
+	V2[chan][pp*Chan.pp[chan] + pp1] = energy0;
+      }
+    }
+  }
+  char N = 'N';
+  double fac0 = 0.0;
+  double fac1 = 1.0;
+  int hh, pp;
+  for(int chan = 0; chan < Chan.size1; ++chan){
+    if(Chan.hh[chan] == 0 || Chan.pp[chan] == 0){ continue; }
+    hh = Chan.hh[chan];
+    pp = Chan.pp[chan];
+    RM_dgemm(& *V1[chan].begin(), & *V2[chan].begin(), & *S1[chan].begin(), &hh, &pp, &pp, &fac1, &fac0, &N, &N);
+    RM_dgemm(& *S1[chan].begin(), & *V3[chan].begin(), & *S2[chan].begin(), &hh, &hh, &pp, &fac1, &fac0, &N, &N);
+    for(int i = 0; i < hh; ++i){ energy += 0.125 * S2[chan][hh*i + i]; }
+  }
+  std::cout << "DeltaE for MBPT(3)_1 = " << energy << std::endl;
+}
+
 //   Function to search for index1 of p in vec1 (size num1) and index2 of q in vec2 (size num2)
 //   Returns index of pq in matrix <p|q>. Index = index1*num2 + index2.
 int Index11(const std::vector<int> &vec1, const std::vector<int> &vec2, const int &num1, const int &num2, const int &p, const int &q)
@@ -983,6 +1161,56 @@ Singles_ME1::Singles_ME1(const Channels &Chan)
     V16[i].assign(Chan.pp1[i] * Chan.hp1[i], 0.0);
     V15[i].assign(Chan.hh1[i] * Chan.hp1[i], 0.0);
   }
+}
+
+//Function to setup Channels for MBPT
+void Setup_Channels_MBPT(const Input_Parameters &Parameters, const Model_Space2 &Space, Channels2 &Chan)
+{
+  State state0;
+  int ind1;
+  Chan.size3 = Space.indtot;
+  Chan.size1 = Space.Chansize_2b;
+
+  int** hhvec = new int*[Chan.size1];
+  int** ppvec = new int*[Chan.size1];
+  Chan.hh = new int[Chan.size1];
+  Chan.pp = new int[Chan.size1];
+  for(int i = 0; i < Chan.size1; ++i){
+    Chan.hh[i] = 0;
+    Chan.pp[i] = 0;
+    hhvec[i] = new int[Space.indhol * (Space.indhol - 1)];
+    ppvec[i] = new int[Space.indpar * (Space.indpar - 1)];
+  }
+  for(int i = 0; i < Space.indhol; ++i){
+    for(int j = 0; j < Space.indhol; ++j){
+      if(i == j){ continue; }
+      plus(state0, Space.qnums[i], Space.qnums[j]);
+      ind1 = ChanInd_2b_dir2(Space, state0);
+      hhvec[ind1][2*Chan.hh[ind1]] = i;
+      hhvec[ind1][2*Chan.hh[ind1] + 1] = j;
+      ++Chan.hh[ind1];
+    }
+  }
+  for(int i = Space.indhol; i < Chan.size3; ++i){
+    for(int j = Space.indhol; j < Chan.size3; ++j){
+      if(i == j){ continue; }
+      plus(state0, Space.qnums[i], Space.qnums[j]);
+      ind1 = ChanInd_2b_dir2(Space, state0);
+      ppvec[ind1][2*Chan.pp[ind1]] = i;
+      ppvec[ind1][2*Chan.pp[ind1] + 1] = j;
+      ++Chan.pp[ind1];
+    }
+  }
+  Chan.hhvec1 = new int*[Chan.size1];
+  Chan.ppvec1 = new int*[Chan.size1];
+  for(int i = 0; i < Chan.size1; ++i){
+    Chan.hhvec1[i] = new int[2 * Chan.hh[i]];
+    Chan.ppvec1[i] = new int[2 * Chan.pp[i]];
+    std::copy(hhvec[i], hhvec[i] + 2*Chan.hh[i], Chan.hhvec1[i]);
+    std::copy(ppvec[i], ppvec[i] + 2*Chan.pp[i], Chan.ppvec1[i]);
+  }
+  delete[] hhvec;
+  delete[] ppvec;
 }
 
 
@@ -2573,6 +2801,14 @@ void CART_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space)
 {
   double E;
   int count = 0, pcount = 0, ncount = 0, holcount = 0, parcount = 0, phcount = 0, nhcount = 0;
+  Space.qmins.nx = 0;
+  Space.qmaxs.nx = 0;
+  Space.qmins.ny = 0;
+  Space.qmaxs.ny = 0;
+  Space.qmins.nz = 0;
+  Space.qmaxs.nz = 0;
+  Space.qmins.m = 0;
+  Space.qmaxs.m = 0;
 
   double neutron_prefac = hbarc_MeVfm * hbarc_MeVfm / (2.0 * m_neutronc2);
   double proton_prefac = hbarc_MeVfm * hbarc_MeVfm / (2.0 * m_protonc2);
@@ -2624,6 +2860,7 @@ void CART_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space)
 	      if(Space.qnums[count].m < Space.qmins.m){ Space.qmins.m = Space.qnums[count].m; }
 	      if(Space.qnums[count].m > Space.qmaxs.m){ Space.qmaxs.m = Space.qnums[count].m; }
 	      count++;
+	      //std::cout << count << ": " << nx << " " << ny << " " << nz << ", " << sz << " " << tz << ", " << E << std::endl;
 	    }
 	  }   
 	} 
@@ -2651,8 +2888,8 @@ void CART_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space)
       Etemp_N = Space.qnums[i].energy;
     }
   }
-  if(Parameters.Pshells >= int(ShellInd_P.size())){ std::cerr << "Pshells too big for space!" << std::endl; exit(1); }
-  if(Parameters.Nshells >= int(ShellInd_N.size())){ std::cerr << "Nshells too big for space!" << std::endl; exit(1); }
+  if(Parameters.Pshells > int(ShellInd_P.size())){ std::cerr << "Pshells too big for space!" << std::endl; exit(1); }
+  if(Parameters.Nshells > int(ShellInd_N.size())){ std::cerr << "Nshells too big for space!" << std::endl; exit(1); }
   for(int i = 0; i < Space.indtot; ++i){
     if(Space.qnums[i].t == -1){
       if(i < ShellInd_P[Parameters.Pshells]){ Space.qnums[i].type = "hole"; ++pcount; ++holcount; ++phcount; }
@@ -2676,9 +2913,145 @@ void CART_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space)
     else if(Space.qnums[i].t == 1){ Space.qnums[i].energy *= neutron_prefac*M_PI*M_PI/(L*L); }
   }
 
+  /*for(int i = 0; i < Space.indtot; ++i){
+    std::cout << i << ": " << Space.qnums[i].nx << " " << Space.qnums[i].ny << " " << Space.qnums[i].nz << ", " << Space.qnums[i].m << " " << Space.qnums[i].t << ", " << Space.qnums[i].energy << " " << Space.qnums[i].type << std::endl;
+    }*/
+
+  //Hartree Fock States
+  for(int i = 0; i < Space.indtot; ++i){
+    for(int j = 0; j < Space.indtot; ++j){
+      if(Space.qnums[j].type != "hole"){ continue; }
+      if(i == j){ continue; }
+      Space.qnums[i].energy += 2*vint_Minnesota_Momentum(Space, i, j, i, j, L);
+    }
+  }
+
   int count1 = 0;
   int N2max = 4*Parameters.Nmax;
   Space.map_2b.assign(Space.qsizes.nx * Space.qsizes.ny * Space.qsizes.nz, -1);
+  for(int nx = 2*Space.qmins.nx; nx <= 2*Space.qmaxs.nx; ++nx){
+    for(int ny = 2*Space.qmins.ny; ny <= 2*Space.qmaxs.ny; ++ny){
+      for(int nz = 2*Space.qmins.nz; nz <= 2*Space.qmaxs.nz; ++nz){
+	if(nx*nx + ny*ny + nz*nz <= N2max){
+	  Space.map_2b[(nx - 2*Space.qmins.nx)*Space.qsizes.ny*Space.qsizes.nz + (ny - 2*Space.qmins.ny)*Space.qsizes.nz + (nz - 2*Space.qmins.nz)] = count1;
+	  ++count1;
+	}
+      }
+    }
+  }
+  Space.Chansize_2b = count1 * Space.qsizes.t * Space.qsizes.m;
+}
+
+
+void CART_Build_Model_Space2(Input_Parameters &Parameters, Model_Space2 &Space)
+{
+  double E;
+  int count = 0, pcount = 0, ncount = 0, holcount = 0, parcount = 0, phcount = 0, nhcount = 0;
+  Space.qmins.nx = 0;
+  Space.qmaxs.nx = 0;
+  Space.qmins.ny = 0;
+  Space.qmaxs.ny = 0;
+  Space.qmins.nz = 0;
+  Space.qmaxs.nz = 0;
+  Space.qmins.m = 0;
+  Space.qmaxs.m = 0;
+
+  double neutron_prefac = hbarc_MeVfm * hbarc_MeVfm / (2.0 * m_neutronc2);
+  double proton_prefac = hbarc_MeVfm * hbarc_MeVfm / (2.0 * m_protonc2);
+
+  if(Parameters.Pshells != 0 && Parameters.Nshells != 0){ 
+    Space.indtot = (2*Parameters.Nmax+1)*(2*Parameters.Nmax+1)*(2*Parameters.Nmax+1)*2*2;
+    Space.qmins.t = -1, Space.qmaxs.t = 1, Space.qsizes.t = 2;
+  }
+  else if(Parameters.Pshells != 0 && Parameters.Nshells == 0){
+    Space.indtot = (2*Parameters.Nmax+1)*(2*Parameters.Nmax+1)*(2*Parameters.Nmax+1)*2;
+    Space.qmins.t = -1, Space.qmaxs.t = -1, Space.qsizes.t = 1;
+  }
+  else if(Parameters.Pshells == 0 && Parameters.Nshells != 0){
+    Space.indtot = (2*Parameters.Nmax+1)*(2*Parameters.Nmax+1)*(2*Parameters.Nmax+1)*2;
+    Space.qmins.t = 1, Space.qmaxs.t = 1, Space.qsizes.t = 1;
+  }
+  else{ std::cerr << "No Protons or Neutrons Entered!!!" << std::endl; exit(1); }
+
+  Space.qnums = new State[Space.indtot];
+  int nmax = std::floor(std::sqrt(Parameters.Nmax));
+  for(int shell = 0; shell <= Parameters.Nmax; ++shell){
+    for(int nx = -nmax; nx <= nmax; ++nx){    
+      for(int ny = -nmax; ny <= nmax; ++ny){	
+	for(int nz = -nmax; nz <= nmax; ++nz){	  
+	  if(shell != nx*nx + ny*ny + nz*nz || Parameters.Nmax <= nx*nx + ny*ny + nz*nz){ continue; }
+	  for(int sz = -1; sz <= 1; sz = sz+2){
+	    for( int tz = -1; tz <= 1; tz = tz+2){
+	      if(tz == -1){
+		++pcount;
+		if(Parameters.Pshells == 0){ continue; }
+		E = 4.0*(nx*nx + ny*ny + nz*nz);
+		Space.qnums[count].energy = E;
+		if(shell < Parameters.Pshells){ Space.qnums[count].type = "hole"; ++holcount; ++phcount; }
+		else{ Space.qnums[count].type = "particle"; ++parcount; }
+	      }
+	      else if(tz == 1){
+		++ncount;
+		if(Parameters.Nshells == 0){ continue; }
+		E = 4.0*(nx*nx + ny*ny + nz*nz);
+		Space.qnums[count].energy = E;
+		if(shell < Parameters.Nshells){ Space.qnums[count].type = "hole"; ++holcount; ++nhcount; }
+		else{ Space.qnums[count].type = "particle"; ++parcount; }
+	      }
+	      Space.qnums[count].nx = nx;
+	      Space.qnums[count].ny = ny;
+	      Space.qnums[count].nz = nz;
+	      Space.qnums[count].m = sz;
+	      Space.qnums[count].t = tz;
+	      if(Space.qnums[count].nx < Space.qmins.nx){ Space.qmins.nx = Space.qnums[count].nx; }
+	      if(Space.qnums[count].nx > Space.qmaxs.nx){ Space.qmaxs.nx = Space.qnums[count].nx; }
+	      if(Space.qnums[count].ny < Space.qmins.ny){ Space.qmins.ny = Space.qnums[count].ny; }
+	      if(Space.qnums[count].ny > Space.qmaxs.ny){ Space.qmaxs.ny = Space.qnums[count].ny; }
+	      if(Space.qnums[count].nz < Space.qmins.nz){ Space.qmins.nz = Space.qnums[count].nz; }
+	      if(Space.qnums[count].nz > Space.qmaxs.nz){ Space.qmaxs.nz = Space.qnums[count].nz; }
+	      if(Space.qnums[count].m < Space.qmins.m){ Space.qmins.m = Space.qnums[count].m; }
+	      if(Space.qnums[count].m > Space.qmaxs.m){ Space.qmaxs.m = Space.qnums[count].m; }
+	      count++;
+	    }
+	  }   
+	} 
+      }
+    }
+  }
+  Space.indtot = count;
+  Space.qsizes.m = Space.qmaxs.m - Space.qmins.m + 1;
+  Space.qsizes.nx = 2*(Space.qmaxs.nx - Space.qmins.nx) + 1;
+  Space.qsizes.ny = 2*(Space.qmaxs.ny - Space.qmins.ny) + 1;
+  Space.qsizes.nz = 2*(Space.qmaxs.nz - Space.qmins.nz) + 1;
+  Space.indp = pcount;
+  Space.indn = ncount;
+  Space.indpar = parcount;
+  Space.indhol = holcount;
+  Parameters.P = phcount;
+  Parameters.N = nhcount;
+
+  double L = pow(holcount/Parameters.density, 1.0/3.0);
+  for(int i = 0; i < Space.indtot; ++i){
+    if(Space.qnums[i].t == -1){ Space.qnums[i].energy *= proton_prefac*M_PI*M_PI/(L*L); }
+    else if(Space.qnums[i].t == 1){ Space.qnums[i].energy *= neutron_prefac*M_PI*M_PI/(L*L); }
+  }
+
+  /*for(int i = 0; i < Space.indtot; ++i){
+    std::cout << i << ": " << Space.qnums[i].nx << " " << Space.qnums[i].ny << " " << Space.qnums[i].nz << ", " << Space.qnums[i].m << " " << Space.qnums[i].t << ", " << Space.qnums[i].energy << " " << Space.qnums[i].type << std::endl;
+    }*/
+
+  //Hartree Fock States
+  for(int i = 0; i < Space.indtot; ++i){
+    for(int j = 0; j < Space.indtot; ++j){
+      if(Space.qnums[j].type != "hole"){ continue; }
+      if(i == j){ continue; }
+      Space.qnums[i].energy += 2*vint_Minnesota_Momentum2(Space, i, j, i, j, L);
+    }
+  }
+
+  int count1 = 0;
+  int N2max = 4*Parameters.Nmax;
+  Space.map_2b = new int[Space.qsizes.nx * Space.qsizes.ny * Space.qsizes.nz]; // initialize to -1?
   for(int nx = 2*Space.qmins.nx; nx <= 2*Space.qmaxs.nx; ++nx){
     for(int ny = 2*Space.qmins.ny; ny <= 2*Space.qmaxs.ny; ++ny){
       for(int nz = 2*Space.qmins.nz; nz <= 2*Space.qmaxs.nz; ++nz){
@@ -2855,10 +3228,6 @@ void QD_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space)
   Space.indhol = holcount;
   Parameters.P = phcount;
   Parameters.N = 0;
-
-  for(int i = 0; i < Space.indtot; ++i){
-    std::cout << Space.qnums[i].par << " " << Space.qnums[i].m << " " << Space.qnums[i].t << " " << Space.qnums[i].energy << " " << Space.qnums[i].type << std::endl;
-  }
 
   Space.qsizes.t = Space.qmaxs.t - Space.qmins.t + 1;
   Space.qsizes.m = Space.qmaxs.m - Space.qmins.m + 1;
@@ -3097,6 +3466,12 @@ void QD_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space)
   return Space;
 }*/
 
+int ChanInd_2b_dir2(const Model_Space2 &Space, const State &State)
+{
+  return Space.map_2b[(State.nx - 2*Space.qmins.nx)*Space.qsizes.ny*Space.qsizes.nz + (State.ny - 2*Space.qmins.ny)*Space.qsizes.nz +
+		      (State.nz - 2*Space.qmins.nz)]*Space.qsizes.m*Space.qsizes.t + int((State.m - 2*Space.qmins.m)/2)*Space.qsizes.t + 
+                      int((State.t - 2*Space.qmins.t)/2);
+}
 
 int ChanInd_2b_dir(const std::string &basis, const Model_Space &Space, const State &State)
 {
@@ -3318,42 +3693,27 @@ double Coulomb_HO(const Input_Parameters &Parameters, const Model_Space &Space, 
 	    g3 = int(j3 + j2 + 0.5*(abs(m3) + m3) + 0.5*(abs(m2) - m2));
 	    g4 = int(j4 + j1 + 0.5*(abs(m4) + m4) + 0.5*(abs(m1) - m1));
 	    G = g1 + g2 + g3 + g4;
-	    //std::cout << "n:m:j:g = " << n1 << " " << n2 << " " << n3 << " " << n4 << " : " << m1 << " " << m2 << " " << m3 << " " << m4 << " : " << j1 << " " << j2 << " " << j3 << " " << j4 << " : " << g1 << " " << g2 << " " << g3 << " " << g4 << std::endl;
 	    double LogRatio1 = logratio1(j1, j2, j3, j4);
-	    //std::cout << "logratio1(j1,j2,j3,j4) = " << LogRatio1 << std::endl;
 	    double LogProd2 = logproduct2(n1, m1, n2, m2, n3, m3, n4, m4, j1, j2, j3, j4);
-	    //std::cout << "logprod2(n1,m1,n2,m2,n3,m3,n4,m4,j1,j2,j3,j4) = " << LogProd2 << std::endl;
 	    double LogRatio2 = logratio2(G);
-	    //std::cout << "G, logratio2(G) = " << G << " " << LogRatio2 << std::endl;
-	    //std::cout << "1: " << j1 << " " << j2 << " " << j3 << " " << j4 << ", " << LogRatio1 << " " << LogProd2 << " " << LogRatio2 << std::endl;
 	    double temp = 0.0;
 	    for(int l1 = 0; l1 <= g1; ++l1){
 	      for(int l2 = 0; l2 <= g2; ++l2){
 		for(int l3 = 0; l3 <= g3; ++l3){
 		  for(int l4 = 0; l4 <= g4; ++l4){
-		    //if(l1 != l2 || l3 != l4){ continue; }
 		    if(l1 + l2 != l3 + l4){ continue; }
 		    L = l1 + l2 + l3 + l4;
-		    //std::cout << "l = " << l1 << " " << l2 << " " << l3 << " " << l4 << std::endl;
 		    temp += (-2*((g2 + g3 - l2 - l3)%2) + 1) * exp(logproduct3(l1, l2, l3, l4, g1, g2, g3, g4) + lgamma(1.0 + 0.5*L) + lgamma(0.5*(G - L + 1.0)));
-		    //std::cout << "logproduct3(l1,l2,l3,l4,g1,g2,g3,g4) = " << logproduct3(l1, l2, l3, l4, g1, g2, g3, g4) << std::endl;
-		    //std::cout << "lgamma(1 + L/2) = " << lgamma(1.0 + 0.5*L) << std::endl;
-		    //std::cout << "lgamma((G - L + 1)/2) = " << lgamma(0.5*(G - L + 1.0)) << std::endl;
-		    //std::cout << "temp = " << temp << std::endl;
-		    //std::cout << "g2,g3,l2,l3 = " << g2 << " " << g3 << " " << l2 << " " << l3 << ", " << g2+g3-l2-l3 << " " << (-2*((g2 + g3 - l2 - l3)%2) + 1) << std::endl;
-		    //std::cout << "2: " << l1 << " " << l2 << " " << l3 << " " << l4 << ", " << logproduct3(l1, l2, l3, l4, g1, g2, g3, g4) << " " << lgamma(1.0 + 0.5*L) << " " << lgamma(0.5*(G - L + 1.0)) << " " << (-2*((g2 + g3 - l2 - l3)%2) + 1) * exp(logproduct3(l1, l2, l3, l4, g1, g2, g3, g4) + lgamma(1.0 + 0.5*L) + lgamma(0.5*(G - L + 1.0))) << std::endl;
 		  }
 		}
 	      }
 	    }
 	    dir += (-2*((j1 + j2 + j3 + j4)%2) + 1) * exp(LogRatio1 + LogProd2 + LogRatio2) * temp;
-	    //std::cout << "3: " << (-2*((j1 + j2 + j3 + j4)%2) + 1) * exp(LogRatio1 + LogProd2 + LogRatio2) * temp << std::endl;
 	  }
 	}
       }
     }
     dir *= product1(n1, m1, n2, m2, n3, m3, n4, m4);
-    //std::cout << "! " << product1(n1, m1, n2, m2, n3, m3, n4, m4) << ", " << dir << std::endl;
   }
 
   n1 = Space.qnums[qi].n; //1
@@ -3374,35 +3734,28 @@ double Coulomb_HO(const Input_Parameters &Parameters, const Model_Space &Space, 
 	    g3 = int(j3 + j2 + 0.5*(abs(m3) + m3) + 0.5*(abs(m2) - m2));
 	    g4 = int(j4 + j1 + 0.5*(abs(m4) + m4) + 0.5*(abs(m1) - m1));
 	    G = g1 + g2 + g3 + g4;
-	    //std::cout << n1 << " " << m1 << ", " << n2 << " " << m2 << ", " << n3 << " " << m3 << " : " << j1 << " " << j2 << " " << j3 << " " << j4 << " : " << g1 << " " << g2 << " " << g3 << " " << g4 << std::endl;
 	    double LogRatio1 = logratio1(j1, j2, j3, j4);
 	    double LogProd2 = logproduct2(n1, m1, n2, m2, n3, m3, n4, m4, j1, j2, j3, j4);
 	    double LogRatio2 = logratio2(G);
-	    //std::cout << "4: " << j1 << " " << j2 << " " << j3 << " " << j4 << ", " << LogRatio1 << " " << LogProd2 << " " << LogRatio2 << std::endl;
 	    double temp = 0.0;
 	    for(int l1 = 0; l1 <= g1; ++l1){
 	      for(int l2 = 0; l2 <= g2; ++l2){
 		for(int l3 = 0; l3 <= g3; ++l3){
 		  for(int l4 = 0; l4 <= g4; ++l4){
-		    //if(l1 != l2 || l3 != l4){ continue; }
 		    if(l1 + l2 != l3 + l4){ continue; }
 		    L = l1 + l2 + l3 + l4;
 		    temp += (-2*((g2 + g3 - l2 - l3)%2) + 1) * exp(logproduct3(l1, l2, l3, l4, g1, g2, g3, g4) + lgamma(1.0 + 0.5*L) + lgamma(0.5*(G - L + 1.0)));
-		    //std::cout << "5: " << l1 << " " << l2 << " " << l3 << " " << l4 << ", " << logproduct3(l1, l2, l3, l4, g1, g2, g3, g4) << " " << lgamma(1.0 + 0.5*L) << " " << lgamma(0.5*(G - L + 1.0)) << " " << (-2*((g2 + g3 - l2 - l3)%2) + 1) * exp(logproduct3(l1, l2, l3, l4, g1, g2, g3, g4) + lgamma(1.0 + 0.5*L) + lgamma(0.5*(G - L + 1.0))) << std::endl;
 		  }
 		}
 	      }
 	    }
 	    exch += (-2*((j1 + j2 + j3 + j4)%2) + 1) * exp(LogRatio1 + LogProd2 + LogRatio2) * temp;
-	    //std::cout << "6: " << (-2*((j1 + j2 + j3 + j4)%2) + 1) * exp(LogRatio1 + LogProd2 + LogRatio2) * temp << std::endl;
 	  }
 	}
       }
     }
     exch *= product1(n1, m1, n2, m2, n3, m3, n4, m4);
-    //std::cout << "! " << product1(n1, m1, n2, m2, n3, m3, n4, m4) << ", " << dir << std::endl;
   }
-  //std::cout << "dir,exch = " << dir << " " << exch << std::endl;
   return dir - exch;
 }
 
@@ -3546,6 +3899,82 @@ double vint_Minnesota_Momentum(const Model_Space &Space, const int &qi, const in
   kappa_T = 0.639; //fm^-2
   kappa_S = 0.465; //fm^-2
 
+  if(Space.qnums[qi].nx + Space.qnums[qj].nx != Space.qnums[qk].nx + Space.qnums[ql].nx){ return 0.0; }
+  if(Space.qnums[qi].ny + Space.qnums[qj].ny != Space.qnums[qk].ny + Space.qnums[ql].ny){ return 0.0; }
+  if(Space.qnums[qi].nz + Space.qnums[qj].nz != Space.qnums[qk].nz + Space.qnums[ql].nz){ return 0.0; }
+  if(Space.qnums[qi].m + Space.qnums[qj].m != Space.qnums[qk].m + Space.qnums[ql].m){ return 0.0; }
+  if(Space.qnums[qi].t + Space.qnums[qj].t != Space.qnums[qk].t + Space.qnums[ql].t){ return 0.0; }
+
+  kX1 = (M_PI/L) * (Space.qnums[qi].nx - Space.qnums[qj].nx - Space.qnums[qk].nx + Space.qnums[ql].nx);
+  kY1 = (M_PI/L) * (Space.qnums[qi].ny - Space.qnums[qj].ny - Space.qnums[qk].ny + Space.qnums[ql].ny);
+  kZ1 = (M_PI/L) * (Space.qnums[qi].nz - Space.qnums[qj].nz - Space.qnums[qk].nz + Space.qnums[ql].nz);
+
+  kX2 = (M_PI/L) * (Space.qnums[qi].nx - Space.qnums[qj].nx - Space.qnums[ql].nx + Space.qnums[qk].nx);
+  kY2 = (M_PI/L) * (Space.qnums[qi].ny - Space.qnums[qj].ny - Space.qnums[ql].ny + Space.qnums[qk].ny);
+  kZ2 = (M_PI/L) * (Space.qnums[qi].nz - Space.qnums[qj].nz - Space.qnums[ql].nz + Space.qnums[qk].nz);
+
+  qSquared1 = kX1 * kX1 + kY1 * kY1 + kZ1 * kZ1;
+  qSquared2 = kX2 * kX2 + kY2 * kY2 + kZ2 * kZ2;
+  
+  V_R1 = V_0R/(L*L*L)*pow(M_PI/kappa_R,1.5) * exp(-qSquared1/(4*kappa_R));
+  V_T1 = -V_0T/(L*L*L)*pow(M_PI/kappa_T,1.5) * exp(-qSquared1/(4*kappa_T));
+  V_S1 = -V_0S/(L*L*L)*pow(M_PI/kappa_S,1.5) * exp(-qSquared1/(4*kappa_S));
+
+  V_R2 = V_0R/(L*L*L)*pow(M_PI/kappa_R,1.5) * exp(-qSquared2/(4*kappa_R));
+  V_T2 = -V_0T/(L*L*L)*pow(M_PI/kappa_T,1.5) * exp(-qSquared2/(4*kappa_T));
+  V_S2 = -V_0S/(L*L*L)*pow(M_PI/kappa_S,1.5) * exp(-qSquared2/(4*kappa_S));
+  
+  spinEx1 = spinExchangeMtxEle(Space.qnums[qi].m, Space.qnums[qj].m, Space.qnums[qk].m, Space.qnums[ql].m);
+  isoSpinEx1 = spinExchangeMtxEle(Space.qnums[qi].t, Space.qnums[qj].t, Space.qnums[qk].t, Space.qnums[ql].t);
+
+  spinEx2 = spinExchangeMtxEle(Space.qnums[qi].m, Space.qnums[qj].m, Space.qnums[ql].m, Space.qnums[qk].m);
+  isoSpinEx2 = spinExchangeMtxEle(Space.qnums[qi].t, Space.qnums[qj].t, Space.qnums[ql].t, Space.qnums[qk].t);
+  
+  IsIt1 = kron_del(Space.qnums[qi].m, Space.qnums[qk].m) * kron_del(Space.qnums[qj].m, Space.qnums[ql].m) * 
+    kron_del(Space.qnums[qi].t, Space.qnums[qk].t) * kron_del(Space.qnums[qj].t, Space.qnums[ql].t);
+  PsIt1 = spinEx1 * kron_del(Space.qnums[qi].t, Space.qnums[qk].t) * kron_del(Space.qnums[qj].t, Space.qnums[ql].t);
+  PsPt1 = spinEx1 * isoSpinEx1;
+  IsPt1 = kron_del(Space.qnums[qi].m, Space.qnums[qk].m)*kron_del(Space.qnums[qj].m, Space.qnums[ql].m) * isoSpinEx1;
+
+  IsIt2 = kron_del(Space.qnums[qi].m, Space.qnums[ql].m) * kron_del(Space.qnums[qj].m, Space.qnums[qk].m) * 
+    kron_del(Space.qnums[qi].t, Space.qnums[ql].t) * kron_del(Space.qnums[qj].t, Space.qnums[qk].t);
+  PsIt2 = spinEx2 * kron_del(Space.qnums[qi].t, Space.qnums[ql].t) * kron_del(Space.qnums[qj].t, Space.qnums[qk].t);
+  PsPt2 = spinEx2 * isoSpinEx2;
+  IsPt2 = kron_del(Space.qnums[qi].m, Space.qnums[ql].m) * kron_del(Space.qnums[qj].m, Space.qnums[qk].m) * isoSpinEx2;
+
+  return 0.5 * (V_R1 + 0.5*V_T1 + 0.5*V_S1) * IsIt1 + 
+    0.25 * (V_T1 - V_S1) * PsIt1 - 
+    0.5 * (V_R1 + 0.5*V_T1 + 0.5*V_S1) * PsPt1 - 
+    0.25 * (V_T1 - V_S1) * IsPt1 -
+    0.5 * (V_R2 + 0.5*V_T2 + 0.5*V_S2) * IsIt2 - 
+    0.25 * (V_T2 - V_S2) * PsIt2 +
+    0.5 * (V_R2 + 0.5*V_T2 + 0.5*V_S2) * PsPt2 + 
+    0.25 * (V_T2 - V_S2) * IsPt2;
+}
+
+
+// Minnesota Potential for momentum basis
+double vint_Minnesota_Momentum2(const Model_Space2 &Space, const int &qi, const int &qj, const int &qk, const int &ql, const double &L)
+{
+  double V_R1, V_T1, V_S1, V_R2, V_T2, V_S2;
+  double V_0R, V_0T, V_0S;
+  double kappa_R, kappa_T, kappa_S;
+  double kX1, kY1, kZ1, kX2, kY2, kZ2;
+  double qSquared1, spinEx1, isoSpinEx1, qSquared2, spinEx2, isoSpinEx2;
+  double IsIt1, PsIt1, PsPt1, IsPt1, IsIt2, PsIt2, PsPt2, IsPt2;
+  V_0R = 200; //MeV
+  V_0T = 178; //MeV
+  V_0S = 91.85; //MeV
+  kappa_R = 1.487; //fm^-2
+  kappa_T = 0.639; //fm^-2
+  kappa_S = 0.465; //fm^-2
+
+  if(Space.qnums[qi].nx + Space.qnums[qj].nx != Space.qnums[qk].nx + Space.qnums[ql].nx){ return 0.0; }
+  if(Space.qnums[qi].ny + Space.qnums[qj].ny != Space.qnums[qk].ny + Space.qnums[ql].ny){ return 0.0; }
+  if(Space.qnums[qi].nz + Space.qnums[qj].nz != Space.qnums[qk].nz + Space.qnums[ql].nz){ return 0.0; }
+  if(Space.qnums[qi].m + Space.qnums[qj].m != Space.qnums[qk].m + Space.qnums[ql].m){ return 0.0; }
+  if(Space.qnums[qi].t + Space.qnums[qj].t != Space.qnums[qk].t + Space.qnums[ql].t){ return 0.0; }
+
   kX1 = (M_PI/L) * (Space.qnums[qi].nx - Space.qnums[qj].nx - Space.qnums[qk].nx + Space.qnums[ql].nx);
   kY1 = (M_PI/L) * (Space.qnums[qi].ny - Space.qnums[qj].ny - Space.qnums[qk].ny + Space.qnums[ql].ny);
   kZ1 = (M_PI/L) * (Space.qnums[qi].nz - Space.qnums[qj].nz - Space.qnums[qk].nz + Space.qnums[ql].nz);
@@ -3677,7 +4106,6 @@ void Perform_CC(const Input_Parameters &Parameters, const Model_Space &Space, co
   }
   Amps2.D1.Evec = Amps.D1.Evec;
 
-  //std::cout << std::endl;
   if(Parameters.approx == "singles"){
     for(int i = 0; i < Chan.hp1[Chan.ind0]; ++i){
       ++Stot;
@@ -3696,6 +4124,9 @@ void Perform_CC(const Input_Parameters &Parameters, const Model_Space &Space, co
     Amps.D1.set_T_2(Chan, Ints);
   }
   Amps2.zero(Chan, Parameters);
+
+  CCoutE = Amps.get_energy(Parameters, Chan, Ints);
+  std::cout << "Iteration Number = " << ind << ", CCD Energy = " << CCoutE << std::endl;
 
   //std::cout << std::endl;
   //while(ind < 1){
@@ -3722,7 +4153,9 @@ void Perform_CC(const Input_Parameters &Parameters, const Model_Space &Space, co
 	    tempt = Amps2.D1.get_T(chan, hind * Chan.pp[chan] + pind);
 	    tempt += Ints.D_ME1.V4[chan][pind * Chan.hh[chan] + hind];
 	    tempt /= Amps2.D1.Evec[chan][hind * Chan.pp[chan] + pind];
-	    error += fabs((tempt - Amps.D1.T1[chan][hind * Chan.pp[chan] + pind])/Amps.D1.T1[chan][hind * Chan.pp[chan] + pind]);
+	    if(fabs(Amps.D1.T1[chan][hind * Chan.pp[chan] + pind]) > 1.0e-10){
+	      error += fabs((tempt - Amps.D1.T1[chan][hind * Chan.pp[chan] + pind])/Amps.D1.T1[chan][hind * Chan.pp[chan] + pind]);
+	    }
 	    Amps.D1.set_T(chan, hind * Chan.pp[chan] + pind, tempt);
 	  }
 	  //std::cout << "T: " << ind1 << ind2 << ind3 << ind4 << " = " << tempt << std::endl;
@@ -3752,7 +4185,7 @@ void Perform_CC(const Input_Parameters &Parameters, const Model_Space &Space, co
     Amps2.zero(Chan, Parameters);
 
     //std::cout << std::endl;
-    std::cout << "Iteration Number = " << ind << ", CCD Energy = " << CCoutE << ", error = " << error << std::endl;
+    std::cout << "Iteration Number = " << ind+1 << ", CCD Energy = " << CCoutE << ", error = " << error << "\r";//<< std::endl;
     ++ind;
   }
   std::cout << std::endl << std::endl;
@@ -3764,7 +4197,7 @@ void Perform_CC(const Input_Parameters &Parameters, const Model_Space &Space, co
 	ind2 = Chan.hhvec1[chan][2*hind + 1];
 	ind3 = Chan.ppvec1[chan][2*pind];
 	ind4 = Chan.ppvec1[chan][2*pind + 1];
-	std::cout << "T: " << ind1 << ind2 << ind3 << ind4 << " = " << Amps.D1.T1[chan][hind * Chan.pp[chan] + pind] << std::endl;
+	//std::cout << "T: " << ind1 << ind2 << ind3 << ind4 << " = " << Amps.D1.T1[chan][hind * Chan.pp[chan] + pind] << std::endl;
       }
     }
   }
@@ -3773,7 +4206,7 @@ void Perform_CC(const Input_Parameters &Parameters, const Model_Space &Space, co
     for(int i = 0; i < Chan.hp1[Chan.ind0]; ++i){
       ind1 = Chan.hp1vec1[Chan.ind0][2*i];
       ind2 = Chan.hp1vec1[Chan.ind0][2*i + 1];
-      std::cout << "t: " << ind1 << ind2 << " = " << Amps.S1.T1[i] << std::endl;
+      //std::cout << "t: " << ind1 << ind2 << " = " << Amps.S1.T1[i] << std::endl;
     }
   }
 }

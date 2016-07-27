@@ -39,6 +39,9 @@ struct Channels;
 struct Amplitudes;
 struct Interactions;
 
+struct Model_Space2;
+struct Channels2;
+
 struct Doubles_1;
 struct Singles_1;
 struct Doubles_ME1;
@@ -54,6 +57,7 @@ int Index22(const std::vector<int> &vec1, const std::vector<int> &vec2, const in
 int Index13(const std::vector<int> &vec1, const std::vector<int> &vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s);
 int Index31(const std::vector<int> &vec1, const std::vector<int> &vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s);
 
+int ChanInd_2b_dir2(const Model_Space2 &Space, const State &State);
 int ChanInd_2b_dir(const std::string &basis, const Model_Space &Space, const State &State);
 int ChanInd_2b_cross(const std::string &basis, const Model_Space &Space, const State &State);
 void plus(State &S, const State &S1, const State &S2);
@@ -70,6 +74,7 @@ void Setup_Ints(const Input_Parameters &Parameters, const Channels &Chan, Intera
 void Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space);
 void Build_Model_Space_J2(Input_Parameters &Parameters, Model_Space &Space);
 void CART_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space);
+void CART_Build_Model_Space2(Input_Parameters &Parameters, Model_Space2 &Space);
 void EG_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space);
 void QD_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space);
 //void CART_Build_Model_Space_Twist(Input_Parameters &Parameters, const double &tx, const double &ty, const double &tz);
@@ -88,17 +93,24 @@ void HF(const Input_Parameters &Parameters, Model_Space &Space, const Channels &
 double E_Ref(const Input_Parameters &Parameters, Model_Space &Space, const Channels &Chan, const Interactions &Int);
 
 double vint_Minnesota_Momentum(const Model_Space &Space, const int &qi, const int &qj, const int &qk, const int &ql, const double &L);
+double vint_Minnesota_Momentum2(const Model_Space2 &Space, const int &qi, const int &qj, const int &qk, const int &ql, const double &L);
 int kron_del(const int &i, const int &j);
 int spinExchangeMtxEle(const int &i, const int &j, const int &k, const int &l);
 double Coulomb_Inf(const Model_Space &Space, const int &qi, const int &qj, const int &qk, const int &ql, const double &L);
 double Coulomb_HO(const Input_Parameters &Parameters, const Model_Space &Space, const int &qi, const int &qj, const int &qk, const int &ql);
 
 void Build_CC_Eff(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, CC_Eff &V_Eff);
-//CC_Eff Build_CC_Eff(const Model_Space &Space, const Input_Parameters &Parameters, CC_Matrix_Elements &CCME, CCD &CC, const Channels &Chan);
 void EE_EOM(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, const CC_Eff &V_Eff);
-//void EE_EOM_HO(const Model_Space &Space, const Input_Parameters &Parameters, const CC_Eff &V_Eff, const CCD &CC, const Channels &Chan);
 void bitsetup(const std::vector<int> &vec, std::vector<unsigned long long> &state);
 double matrixe(const std::vector<unsigned long long> &bra, const std::vector<unsigned long long> &ket, const std::vector<int> &p, const std::vector<int> &q, const double &ME);
+
+void Setup_Channels_MBPT(const Input_Parameters &Parameters, const Model_Space2 &Space, Channels2 &Chan);
+void Perform_MBPT_0(const Input_Parameters &Parameters, const Model_Space2 &Space);
+void Perform_MBPT_1(const Input_Parameters &Parameters, const Model_Space2 &Space);
+void Perform_MBPT_2(const Input_Parameters &Parameters, const Model_Space2 &Space, const Channels2 &Chan);
+void Perform_MBPT_3(const Input_Parameters &Parameters, const Model_Space2 &Space, const Channels2 &Chan);
+void Perform_MBPT_4(const Input_Parameters &Parameters, const Model_Space2 &Space, const Channels2 &Chan);
+void Perform_MBPT_5(const Input_Parameters &Parameters, const Model_Space2 &Space, const Channels2 &Chan);
 
 //Structure for holding Input parameters
 struct Input_Parameters{
@@ -120,6 +132,7 @@ struct Input_Parameters{
   int extra; // -1 for pr, 0 for es, 1 for pa
   int Nx, Ny, Nz;
   double M, T, Par;
+  int MBPT; // 0 for serial, 1 for parallel, 2 for block serial, 3 for block parallel, 4 for block M-M
 };
 
 struct State{
@@ -144,41 +157,32 @@ struct Model_Space{
   int indhol; //number of hole orbits
   int indtot; //number of total orbits
 
-  //std::vector<int> levelsind; //list of single particle state indicies (1,2...)
-
-  /*std::vector<int> levelstz; //list of single particle state isospins
-  std::vector<int> levelsms; //list of single particle state total angular momentum projection
-  std::vector<int> levelsnx; //list of single particle state x-momeuntum quantum number
-  std::vector<int> levelsny; //list of single particle state y-momeuntum quantum number
-  std::vector<int> levelsnz; //list of single particle state z-momeuntum quantum number
-  std::vector<int> levelsml; //list of single particle state total angular momentum projection
-  std::vector<int> levelsn; //list of single particle state total angular momentum projection
-  std::vector<int> levelsj; //list of single particle state total angular momentum projection
-  std::vector<int> levelspar; //list of single particle state total angular momentum projection*/
-  /*std::vector<std::vector<int> > qnums;
-  std::vector<double> levelsen; //list of single particle energies
-  std::vector<std::string> levelstype; //list of single particle state types
-  std::vector<std::vector<int> > shellsm;*/
   std::vector<struct State> qnums;
   struct State qmins;
   struct State qmaxs;
   struct State qsizes;
   std::vector<std::vector<int> > shellsm; // for j
 
-  /*std::vector<std::vector<int> > qmins;
-  std::vector<std::vector<int> > qmaxs;
-  std::vector<std::vector<int> > qsize1;
-  std::vector<std::vector<int> > qsize2;*/
-  /*int Nxmin, Nxmax, Nxsize, Nx2size;
-  int Nymin, Nymax, Nysize, Ny2size;
-  int Nzmin, Nzmax, Nzsize, Nz2size;
-  int Pmin, Pmax, Psize, P2size;
-  int Mmin, Mmax, Msize, M2size;
-  int Jmin, Jmax, Jsize, J2size;
-  int Tmin, Tmax, Tsize, T2size;*/
-
   int nmax;
   std::vector<int> map_2b;
+  int Chansize_2b;
+};
+
+//Structure for holding all model space info
+struct Model_Space2{
+  int indp; //number of proton orbits
+  int indn; //number of neutron orbits
+  int indpar; //number of particle orbits
+  int indhol; //number of hole orbits
+  int indtot; //number of total orbits
+
+  State *qnums;
+  struct State qmins;
+  struct State qmaxs;
+  struct State qsizes;
+
+  int nmax;
+  int *map_2b;
   int Chansize_2b;
 };
 
@@ -229,6 +233,18 @@ struct Channels{
   std::vector<std::vector<int> > pppvec1;
 
   int ind0; // index of i-i cross channel for singles
+  std::vector<int> hhppsize;
+};
+
+//Structure for holding channel information
+struct Channels2{
+  int size1;
+  int size3;
+
+  int* hh;
+  int* pp;
+  int** hhvec1;
+  int** ppvec1;
 };
 
 //Structure for holding channel information
