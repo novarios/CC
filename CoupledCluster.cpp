@@ -17,33 +17,43 @@ int main(int argc, char * argv[])
   HF_Matrix_Elements HF_ME;
   Single_Particle_States States;
   double EperA;
-  omp_set_num_threads(20);
+  omp_set_num_threads(10);
   std::cout << std::setprecision(12);
 
   if(argc == 1 || argc == 2){
     std::string inputfile;
     if(argc == 1){ inputfile = "input.dat"; }
     else{ inputfile = argv[1]; }
+
     Get_Input_Parameters(inputfile, Parameters);
     if(Parameters.basis == "infinite"){ Parameters.approx == "doubles"; }
+
     Build_Model_Space(Parameters, Space);
     Print_Parameters(Parameters);
-    Setup_Channels_HF(Parameters, Space, HF_Chan);
-    Build_Single_Particle_States(Parameters, Space, HF_Chan, States);
+
+    HF_Chan = HF_Channels(Parameters, Space);
+    States = Single_Particle_States(Parameters, Space, HF_Chan);
     Read_Matrix_Elements_M(Parameters, Space, HF_Chan, HF_ME);
     Hartree_Fock_States(Parameters, Space, HF_Chan, States, HF_ME);
     Convert_To_HF_Matrix_Elements(HF_Chan, States, HF_ME);
-    Setup_Channels(Parameters, Space, Chan);
-    Setup_Amps(Parameters, Space, Chan, Amps);
-    Setup_Ints(Parameters, Chan, Ints);
+    States.delete_struct(HF_Chan);
+    Chan = Channels(Parameters, Space);
+    Amps = Amplitudes(Parameters, Space, Chan);
+    Ints = Interactions(Parameters, Chan);
     Get_Matrix_Elements(Parameters, HF_Chan, HF_ME, Space, Chan, Ints);
+    HF_ME.delete_struct(HF_Chan);
+    HF_Chan.delete_struct();
+
     Perform_CC(Parameters, Space, Chan, Ints, Amps);
     EperA = E_Ref(Parameters, Space, Chan, Ints);
+
     if(Parameters.extra == 0){
       CC_Eff V_Eff(Parameters, Space, Chan);
       Build_CC_Eff(Parameters, Space, Chan, Ints, Amps, V_Eff);
       EE_EOM(Parameters, Space, Chan, V_Eff);
+      V_Eff.delete_struct(Chan);
     }
+
     double en = Amps.get_energy(Parameters, Chan, Ints);
     std::cout << "Eref = " << EperA << ", dCCD = " << en << std::endl;
     EperA += en;
@@ -52,7 +62,7 @@ int main(int argc, char * argv[])
   else if(argc == 6 || argc == 7){
     Parameters.calc_case = argv[1];
     Parameters.density = atof(argv[2]);
-    Parameters.Nmax = atoi(argv[3]);
+    Parameters.Shells = atoi(argv[3]);
     Parameters.Pshells = atoi(argv[4]);
     Parameters.Nshells = atoi(argv[5]);
     Parameters.obstrength = 1.0;
@@ -63,9 +73,9 @@ int main(int argc, char * argv[])
       Parameters.approx = "doubles";
       CART_Build_Model_Space(Parameters, Space);
       Print_Parameters(Parameters);
-      Setup_Channels(Parameters, Space, Chan);
-      Setup_Amps(Parameters, Space, Chan, Amps);
-      Setup_Ints(Parameters, Chan, Ints);
+      Chan = Channels(Parameters, Space);
+      Amps = Amplitudes(Parameters, Space, Chan);
+      Ints = Interactions(Parameters, Chan);
       Minnesota_Matrix_Elements(Parameters, Space, Chan, Ints);
       Perform_CC(Parameters, Space, Chan, Ints, Amps);
       EperA = E_Ref(Parameters, Space, Chan, Ints);
@@ -73,11 +83,11 @@ int main(int argc, char * argv[])
     else if(Parameters.calc_case == "electronic"){
       Parameters.basis = "infinite";
       Parameters.approx = "doubles";
-      EG_Build_Model_Space(Parameters, Space);
+      CART_Build_Model_Space(Parameters, Space);
       Print_Parameters(Parameters);
-      Setup_Channels(Parameters, Space, Chan);
-      Setup_Amps(Parameters, Space, Chan, Amps);
-      Setup_Ints(Parameters, Chan, Ints);
+      Chan = Channels(Parameters, Space);
+      Amps = Amplitudes(Parameters, Space, Chan);
+      Ints = Interactions(Parameters, Chan);
       Coulomb_Inf_Matrix_Elements(Parameters, Space, Chan, Ints);
       Perform_CC(Parameters, Space, Chan, Ints, Amps);
       EperA = E_Ref(Parameters, Space, Chan, Ints);
@@ -87,15 +97,20 @@ int main(int argc, char * argv[])
       Parameters.approx = "singles";
       QD_Build_Model_Space(Parameters, Space);
       Print_Parameters(Parameters);
-      Setup_Channels_HF(Parameters, Space, HF_Chan);
-      Build_Single_Particle_States(Parameters, Space, HF_Chan, States);
+
+      HF_Chan = HF_Channels(Parameters, Space);
+      States = Single_Particle_States(Parameters, Space, HF_Chan);
       Read_Matrix_Elements_HO(Parameters, Space, HF_Chan, HF_ME);
       Hartree_Fock_States(Parameters, Space, HF_Chan, States, HF_ME);
       Convert_To_HF_Matrix_Elements(HF_Chan, States, HF_ME);
-      Setup_Channels(Parameters, Space, Chan);
-      Setup_Amps(Parameters, Space, Chan, Amps);
-      Setup_Ints(Parameters, Chan, Ints);
+      States.delete_struct(HF_Chan);
+      Chan = Channels(Parameters, Space);
+      Amps = Amplitudes(Parameters, Space, Chan);
+      Ints = Interactions(Parameters, Chan);
       Get_Matrix_Elements(Parameters, HF_Chan, HF_ME, Space, Chan, Ints);
+      HF_ME.delete_struct(HF_Chan);
+      HF_Chan.delete_struct();
+
       Perform_CC(Parameters, Space, Chan, Ints, Amps);
       EperA = E_Ref(Parameters, Space, Chan, Ints);
     }
@@ -104,6 +119,8 @@ int main(int argc, char * argv[])
       if(Parameters.extra == 0){
 	CC_Eff V_Eff(Parameters, Space, Chan);
 	Build_CC_Eff(Parameters, Space, Chan, Ints, Amps, V_Eff);
+	EE_EOM(Parameters, Space, Chan, V_Eff);
+	V_Eff.delete_struct(Chan);
       }
     }
     double en = Amps.get_energy(Parameters, Chan, Ints);
@@ -111,77 +128,10 @@ int main(int argc, char * argv[])
     EperA += en;
     std::cout << "E = " << EperA << ", E/A = " << EperA/(Parameters.P + Parameters.N) << std::endl << std::endl;
   }
-  else if(argc == 8){
-    Model_Space2 Space2;
-    Channels2 Chan2;
-
-    struct timespec time1, time2, time3;
-    double elapsed1 = 0.0, elapsed2 = 0.0;
-
-    Parameters.calc_case = argv[1];
-    Parameters.density = atof(argv[2]);
-    Parameters.Nmax = atoi(argv[3]);
-    Parameters.Pshells = atoi(argv[4]);
-    Parameters.Nshells = atoi(argv[5]);
-    Parameters.MBPT = atoi(argv[7]);
-    Parameters.obstrength = 1.0;
-    Parameters.tbstrength = 1.0;
-    Parameters.basis = "infinite";
-    Parameters.approx = "doubles";
-    CART_Build_Model_Space2(Parameters, Space2);
-    //Print_Parameters(Parameters);
-    
-    clock_gettime(CLOCK_MONOTONIC, &time1);
-    
-    if(Parameters.MBPT == 2 || Parameters.MBPT == 3 || Parameters.MBPT == 4 || Parameters.MBPT == 5){
-      Setup_Channels_MBPT(Parameters, Space2, Chan2);
-    }
-
-    clock_gettime(CLOCK_MONOTONIC, &time2);
-    elapsed1 = (time2.tv_sec - time1.tv_sec);
-    elapsed1 += (time2.tv_nsec - time1.tv_nsec) / 1000000000.0;
-
-    if(Parameters.MBPT == 0){ Perform_MBPT_0(Parameters, Space2); }
-    else if(Parameters.MBPT == 1){ Perform_MBPT_1(Parameters, Space2); }
-    else if(Parameters.MBPT == 2){ Perform_MBPT_2(Parameters, Space2, Chan2); }
-    else if(Parameters.MBPT == 3){ Perform_MBPT_3(Parameters, Space2, Chan2); }
-    else if(Parameters.MBPT == 4){ Perform_MBPT_4(Parameters, Space2, Chan2); }
-    else if(Parameters.MBPT == 5){ Perform_MBPT_5(Parameters, Space2, Chan2); }
-    
-    clock_gettime(CLOCK_MONOTONIC, &time3);
-    elapsed2 = (time3.tv_sec - time2.tv_sec);
-    elapsed2 += (time3.tv_nsec - time2.tv_nsec) / 1000000000.0;
-
-    std::cout << "size = " << Space2.indtot << ",  MBPT = " << Parameters.MBPT << ",  time1 = " << elapsed1 << ",  time2 = " << elapsed2 << std::endl << std::endl;
-
-    /*std::ofstream results;
-    results.open("output_runtime0.txt", std::ios_base::app);
-    results << std::setprecision(12);
-    results << Space.indtot << "\t" << Parameters.MBPT << "\t" << elapsed1 << "\t" << elapsed2 << "\n";*/
-
-    //Channels Chan2;
-    /*Chan = Channels();
-    if(Parameters.calc_case == "nuclear"){
-      Setup_Channels(Parameters, Space, Chan);
-      Setup_Amps(Parameters, Space, Chan, Amps);
-      Setup_Ints(Parameters, Chan, Ints);
-      Minnesota_Matrix_Elements(Parameters, Space, Chan, Ints);
-      Perform_CC(Parameters, Space, Chan, Ints, Amps);
-      EperA = E_Ref(Parameters, Space, Chan, Ints);
-    }
-    else if(Parameters.calc_case == "electronic"){
-      Setup_Channels(Parameters, Space, Chan);
-      Setup_Amps(Parameters, Space, Chan, Amps);
-      Setup_Ints(Parameters, Chan, Ints);
-      Coulomb_Inf_Matrix_Elements(Parameters, Space, Chan, Ints);
-      Perform_CC(Parameters, Space, Chan, Ints, Amps);
-      EperA = E_Ref(Parameters, Space, Chan, Ints);
-    }
-    double en = Amps.get_energy(Parameters, Chan, Ints);
-    std::cout << "Eref = " << EperA << ", dCCD = " << en << std::endl;
-    EperA += en;
-    std::cout << "E = " << EperA << ", E/A = " << EperA/(Parameters.P + Parameters.N) << std::endl << std::endl;*/
-  }
+  Ints.delete_struct(Parameters, Chan);
+  Amps.delete_struct(Parameters, Chan);
+  Chan.delete_struct();
+  Space.delete_struct(Parameters);
 
   /*Model_Space Space = CART_Build_Model_Space(Parameters);
   Print_Parameters(Parameters);    

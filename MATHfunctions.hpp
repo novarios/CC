@@ -46,5 +46,8 @@ double loggamma(const double &x);
 
 std::vector<double> projection(const std::vector<double> &u, const std::vector<double> &v);
 void GramSchmidt(std::vector<std::vector<double> > &Vectors);
+void projection(double *u, double *v, double *proj, const int &size);
+void GramSchmidt(double **Vectors, const int &size);
+
 
 #endif

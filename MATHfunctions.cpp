@@ -303,6 +303,17 @@ std::vector<double> projection(const std::vector<double> &u, const std::vector<d
   return proj;
 }
 
+//Gives negative projection of v onto u
+void projection(double *u, double *v, double *proj, const int &size)
+{
+  double innerprod = 0.0;
+  double norm = 0.0;
+  //delete[] proj;
+  //proj = new double[size];
+  for(int i = 0; i < size; ++i){ innerprod += v[i]*u[i]; norm += u[i]*u[i]; }
+  for(int i = 0; i < size; ++i){ proj[i] = -1.0 * (innerprod/norm)*u[i]; }
+}
+
 void GramSchmidt(std::vector<std::vector<double> > &Vectors)
 {
   if(Vectors.size() == 0){ return; }
@@ -326,5 +337,33 @@ void GramSchmidt(std::vector<std::vector<double> > &Vectors)
       if(fabs(Vectors[i][j]/sqrt(norm)) < 0.0000001){ norm -= pow(Vectors[i][j], 2); Vectors[i][j] = 0.0; }
     }
     for(int j = 0; j < NN; ++j){ Vectors[i][j] /= sqrt(norm); }
+  }
+}
+
+void GramSchmidt(double **Vectors, const int &size)
+{
+  if(size == 0){ return; }
+  double *proj;
+  double norm;
+
+  for(int i = 0; i < size; ++i){
+    norm = 0.0;
+    proj = new double[size];
+    for(int j = 0; j < size; ++j){ norm += pow(Vectors[i][j], 2); }
+    for(int j = 0; j < size; ++j){ Vectors[i][j] /= sqrt(norm); }
+    for(int j = i + 1; j < size; ++j){
+      projection(Vectors[i], Vectors[j], proj, size);
+      for(int k = 0; k < size; ++k){ Vectors[j][k] += proj[k]; }
+    }
+    delete[] proj;
+  }
+
+  for(int i = 0; i < size; ++i){
+    norm = 0.0;
+    for(int j = 0; j < size; ++j){ 
+      if(fabs(Vectors[i][j]/sqrt(norm)) < 1e-10){ Vectors[i][j] = 0.0; }
+      else{ norm += pow(Vectors[i][j], 2); }
+    }
+    for(int j = 0; j < size; ++j){ Vectors[i][j] /= sqrt(norm); }
   }
 }

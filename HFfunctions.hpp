@@ -21,9 +21,9 @@ struct Single_Particle_States;
 struct HF_Channels;
 struct HF_Matrix_Elements;
 
-void Separate_Particles_Holes(Single_Particle_States &States, const HF_Channels &Chan);
-void Build_Single_Particle_States(const Input_Parameters &Parameters, const Model_Space &Space, const HF_Channels &Chan, Single_Particle_States &States);
-void Setup_Channels_HF(const Input_Parameters &Parameters, const Model_Space &Space, HF_Channels &Chan);
+//void Separate_Particles_Holes(Single_Particle_States &States, const HF_Channels &Chan);
+//void Build_Single_Particle_States(const Input_Parameters &Parameters, const Model_Space &Space, const HF_Channels &Chan, Single_Particle_States &States);
+//void Setup_Channels_HF(const Input_Parameters &Parameters, const Model_Space &Space, HF_Channels &Chan);
 void Read_Matrix_Elements_J(const Input_Parameters &Parameters, const Model_Space &Space, const HF_Channels &Chan, HF_Matrix_Elements &HF_ME);
 void Read_Matrix_Elements_M(const Input_Parameters &Parameters, const Model_Space &Space, const HF_Channels &Chan, HF_Matrix_Elements &HF_ME);
 void Hartree_Fock_States(const Input_Parameters &Parameters, Model_Space &Space, const HF_Channels &Chan, Single_Particle_States &States, const HF_Matrix_Elements &ME);
@@ -37,33 +37,42 @@ void Read_Matrix_Elements_HO(const Input_Parameters &Parameters, const Model_Spa
 struct Single_Particle_States{
   int hp;
   int hn;
-  std::vector<std::vector<std::vector<double> > > holes; //list of sp hole states given as vectors of coefficients
-  std::vector<std::vector<std::vector<double> > > particles; //list of sp particle states given as vectors of coefficients
-  std::vector<std::vector<double> > h_energies; //list of sp-hole energies
-  std::vector<std::vector<double> > pt_energies; //list of sp-particle energies
-  std::vector<std::vector<std::vector<double> > > vectors; 
-  std::vector<std::vector<double> > energies;
-  std::vector<int> h; //number of holes in OBchan
-  std::vector<int> p; //number of particles in OBchan
+  double*** holes; //list of sp hole states given as vectors of coefficients
+  double*** particles; //list of sp particle states given as vectors of coefficients
+  double** h_energies; //list of sp-hole energies
+  double** pt_energies; //list of sp-particle energies
+  double*** vectors; 
+  double** energies;
+  int* h; //number of holes in OBchan
+  int* p; //number of particles in OBchan
+
+  Single_Particle_States(){};
+  Single_Particle_States(const Input_Parameters &Parameters, const Model_Space &Space, const HF_Channels &Chan);
+  void delete_struct(const HF_Channels &Chan);
+  void Separate(const HF_Channels &Chan);
 };
 
 //Structure for holding channel information
 struct HF_Channels{
   int size1;
   int size3;
-  std::vector<struct State> qnums1;
-  std::vector<struct State> qnums3;
-  std::vector<int> indvec;
-  std::vector<int> tb;
-  std::vector<std::vector<int> > tbvec1;
-  std::vector<int> ob;
-  std::vector<std::vector<int> > obvec1;
+  State *qnums1;
+  State *qnums3;
+  int *indvec;
+  int *ntb;
+  int **tbvec;
+  int *nob;
+  int **obvec;
+  HF_Channels(){};
+  HF_Channels(const Input_Parameters &Parameters, const Model_Space &Space);
+  void delete_struct();
 };
 
 struct HF_Matrix_Elements{
-  std::vector<std::vector<double> > V;
+  double **V;
   HF_Matrix_Elements(const HF_Channels &Chan);
-  HF_Matrix_Elements();
+  HF_Matrix_Elements(){};
+  void delete_struct(const HF_Channels &Chan);
 };
 
 #endif
