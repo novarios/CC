@@ -18,19 +18,23 @@
 #include <omp.h>
 #include <complex>
 
+const std::string PATH = "inputs/";
 
 //LAPACK functions
 extern "C" void dgemm_(char* ta,char* tb,int* m,int* n,int* k,double* al,double* a,int* la,double* b,int* lb,double* be,double* c,int* lc);
 extern "C" void dgetrf_(int* M,int* N,double* A,int* lda,int* ipiv,int* info);
 extern "C" void dgetri_(int* N,double* A,int* lda,int* ipiv,double* work,int* lwork,int* info);
 extern "C" void dgeev_(char* jobvl,char* jobvr,int* N,double* A,int* lda,double* wr,double* wi,double* vl,int* ldvl,double* vr,int* ldvr,double* work,int* lwork,int* info);
-#define RM_dgemm(A, B, C, m, n, k, alpha, beta, transf_A, transf_B) dgemm_(transf_B, transf_A, n, m, k, alpha, B, n, A, k, beta, C, n)
-#define RM_dgemm2(A, B, C, m, n, k, alpha, beta, transf_A, transf_B) dgemm_(transf_A, transf_B, m, n, k, alpha, A, k, B, n, beta, C, n)
+
+#define dgemm_NN(A, B, C, m, n, k, alpha, beta, transA, transB) dgemm_(transB, transA, n, m, k, alpha, B, n, A, k, beta, C, n)
+#define dgemm_NT(A, B, C, m, n, k, alpha, beta, transA, transB) dgemm_(transB, transA, n, m, k, alpha, B, k, A, k, beta, C, n)
+#define dgemm_TN(A, B, C, m, n, k, alpha, beta, transA, transB) dgemm_(transB, transA, n, m, k, alpha, B, n, A, m, beta, C, n)
+#define dgemm_TT(A, B, C, m, n, k, alpha, beta, transA, transB) dgemm_(transB, transA, n, m, k, alpha, B, k, A, m, beta, C, n)
+//#define RM_dgemm(A, B, C, m, n, k, alpha, beta, transf_A, transf_B) dgemm_(transf_B, transf_A, n, m, k, alpha, B, n, A, k, beta, C, n)
+//#define RMT_dgemm(A, B, C, m, n, k, alpha, beta, transf_A, transf_B) dgemm_(transf_B, transf_A, n, m, k, alpha, B, k, A, k, beta, C, n)
 
 #define min(a,b) (a <= b ? a : b)
 #define max(a,b) (a >= b ? a : b)
-
-const std::string PATH = "inputs/";
 
 struct Input_Parameters;
 struct State;
@@ -67,23 +71,12 @@ void plus(State &S, const State &S1, const State &S2);
 void minus(State &S, const State &S1, const State &S2);
 bool equal(const State &S1, const State &S2);
 
-//void Setup_Channels(const Input_Parameters &Parameters, const Model_Space &Space, Channels &Chan);
-//void Delete_Channels(Channels &Chan);
-
 void Get_Input_Parameters(std::string &infile, Input_Parameters &Parameters);
-void Print_Parameters(const Input_Parameters &Parameters);
-
-//void Setup_Amps(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Amplitudes &Amps);
-//void Delete_Amps(const Input_Parameters &Parameters, const Channels &Chan, Amplitudes &Amps);
-//void Setup_Ints(const Input_Parameters &Parameters, const Channels &Chan, Interactions &Ints);
-//void Delete_Ints(const Input_Parameters &Parameters, const Channels &Chan, Interactions &Ints);
-
-//void Delete_Model_Space(Input_Parameters &Parameters, Model_Space &Space);
+void Print_Parameters(const Input_Parameters &Parameters, const Model_Space &Space);
 void Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space);
 void Build_Model_Space_J2(Input_Parameters &Parameters, Model_Space &Space);
 void CART_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space);
 void QD_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space);
-//void CART_Build_Model_Space_Twist(Input_Parameters &Parameters, const double &tx, const double &ty, const double &tz);
 
 void Minnesota_Matrix_Elements(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints);
 void Coulomb_Inf_Matrix_Elements(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints);
@@ -106,12 +99,10 @@ double Coulomb_HO(const Input_Parameters &Parameters, const Model_Space &Space, 
 
 void Build_CC_Eff(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, CC_Eff &V_Eff);
 void EE_EOM(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, const CC_Eff &V_Eff);
-//void bitsetup(int *vec, unsigned long long *state, const int &size);
+void PA_EOM(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, const CC_Eff &V_Eff);
+void PR_EOM(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, const CC_Eff &V_Eff);
 void bitsetup(int *vec, unsigned long long *state, const int &begin, const int &size);
-//void bitsetup(int *vec, const int &begin, const int &size0, unsigned long long *state, const int &size);
-//void bitsetup(const std::vector<int> &vec, std::vector<unsigned long long> &state);
 double matrixe(unsigned long long *bra, unsigned long long *ket, const int &size, int *p, const int &psize, int *q, const int &qsize, const double &ME);
-//double matrixe(const std::vector<unsigned long long> &bra, const std::vector<unsigned long long> &ket, const std::vector<int> &p, const std::vector<int> &q, const double &ME);
 
 //Structure for holding Input parameters
 struct Input_Parameters{

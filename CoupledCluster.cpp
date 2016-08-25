@@ -17,7 +17,7 @@ int main(int argc, char * argv[])
   HF_Matrix_Elements HF_ME;
   Single_Particle_States States;
   double EperA;
-  omp_set_num_threads(10);
+  //omp_set_num_threads(8);
   std::cout << std::setprecision(12);
 
   if(argc == 1 || argc == 2){
@@ -29,8 +29,9 @@ int main(int argc, char * argv[])
     if(Parameters.basis == "infinite"){ Parameters.approx == "doubles"; }
 
     Build_Model_Space(Parameters, Space);
-    Print_Parameters(Parameters);
+    Print_Parameters(Parameters, Space);
 
+    std::cout << "Performing Hartree-Fock Diagonalization ..." << std::endl;
     HF_Chan = HF_Channels(Parameters, Space);
     States = Single_Particle_States(Parameters, Space, HF_Chan);
     Read_Matrix_Elements_M(Parameters, Space, HF_Chan, HF_ME);
@@ -47,10 +48,11 @@ int main(int argc, char * argv[])
     Perform_CC(Parameters, Space, Chan, Ints, Amps);
     EperA = E_Ref(Parameters, Space, Chan, Ints);
 
-    if(Parameters.extra == 0){
+    if(Parameters.extra == 1 || Parameters.extra == 0){
       CC_Eff V_Eff(Parameters, Space, Chan);
       Build_CC_Eff(Parameters, Space, Chan, Ints, Amps, V_Eff);
-      EE_EOM(Parameters, Space, Chan, V_Eff);
+      if(Parameters.extra == 0){ EE_EOM(Parameters, Space, Chan, V_Eff); }
+      else if(Parameters.extra == 1){ PA_EOM(Parameters, Space, Chan, V_Eff); }
       V_Eff.delete_struct(Chan);
     }
 
@@ -72,7 +74,7 @@ int main(int argc, char * argv[])
       Parameters.basis = "infinite";
       Parameters.approx = "doubles";
       CART_Build_Model_Space(Parameters, Space);
-      Print_Parameters(Parameters);
+      Print_Parameters(Parameters, Space);
       Chan = Channels(Parameters, Space);
       Amps = Amplitudes(Parameters, Space, Chan);
       Ints = Interactions(Parameters, Chan);
@@ -84,7 +86,7 @@ int main(int argc, char * argv[])
       Parameters.basis = "infinite";
       Parameters.approx = "doubles";
       CART_Build_Model_Space(Parameters, Space);
-      Print_Parameters(Parameters);
+      Print_Parameters(Parameters, Space);
       Chan = Channels(Parameters, Space);
       Amps = Amplitudes(Parameters, Space, Chan);
       Ints = Interactions(Parameters, Chan);
@@ -96,8 +98,9 @@ int main(int argc, char * argv[])
       Parameters.basis = "finite_HO";
       Parameters.approx = "singles";
       QD_Build_Model_Space(Parameters, Space);
-      Print_Parameters(Parameters);
+      Print_Parameters(Parameters, Space);
 
+      std::cout << "Performing Hartree-Fock Diagonalization ..." << std::endl;
       HF_Chan = HF_Channels(Parameters, Space);
       States = Single_Particle_States(Parameters, Space, HF_Chan);
       Read_Matrix_Elements_HO(Parameters, Space, HF_Chan, HF_ME);
@@ -116,12 +119,12 @@ int main(int argc, char * argv[])
     }
     if(argc == 7){
       Parameters.extra = atoi(argv[6]);
-      if(Parameters.extra == 0){
-	CC_Eff V_Eff(Parameters, Space, Chan);
-	Build_CC_Eff(Parameters, Space, Chan, Ints, Amps, V_Eff);
-	EE_EOM(Parameters, Space, Chan, V_Eff);
-	V_Eff.delete_struct(Chan);
-      }
+      CC_Eff V_Eff(Parameters, Space, Chan);
+      Build_CC_Eff(Parameters, Space, Chan, Ints, Amps, V_Eff);
+      if(Parameters.extra == 0){ EE_EOM(Parameters, Space, Chan, V_Eff); }
+      else if(Parameters.extra == 1){ PA_EOM(Parameters, Space, Chan, V_Eff); }
+      else if(Parameters.extra == -1){ PR_EOM(Parameters, Space, Chan, V_Eff); }
+      V_Eff.delete_struct(Chan);
     }
     double en = Amps.get_energy(Parameters, Chan, Ints);
     std::cout << "Eref = " << EperA << ", dCCD = " << en << std::endl;

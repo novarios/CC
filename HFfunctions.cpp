@@ -10,8 +10,12 @@ HF_Matrix_Elements::HF_Matrix_Elements(const HF_Channels &Chan)
     ntb1 = Chan.ntb[i];
     if(ntb1 != 0){
       V[i] = new double[ntb1 * ntb1];
-      for(int j = 0; j < ntb1*ntb1; ++j){
-	V[i][j] = 0.0;
+      #pragma omp parallel
+      {
+        #pragma omp for schedule(static)
+	for(int j = 0; j < ntb1*ntb1; ++j){
+	  V[i][j] = 0.0;
+	}
       }
     }
   }
@@ -33,7 +37,6 @@ void HF_Matrix_Elements::delete_struct(const HF_Channels &Chan)
 HF_Channels::HF_Channels(const Input_Parameters &Parameters, const Model_Space &Space)
 {
   std::cout << "Building HF Channels ... " << std::endl;
-  std::cout << "----------------------------------------------------------" << std::endl;
 
   State state;
   int count0, ind1, nob1, ntb1;
@@ -56,7 +59,7 @@ HF_Channels::HF_Channels(const Input_Parameters &Parameters, const Model_Space &
 	++obnum[k];
 	goto stop;
       }
-      if(k == count0 - 1){
+      else if(k == count0 - 1){
 	qnumstemp[count0] = Space.qnums[i];
 	indvec[i] = count0;
 	++obnum[count0];
@@ -87,19 +90,10 @@ HF_Channels::HF_Channels(const Input_Parameters &Parameters, const Model_Space &
       if( equal(Space.qnums[i], qnums3[k]) ){
 	obvec[k][nob[k]] = i;
 	++nob[k];
+	break;
       }
     }
   }
-
-  /*for(int i = 0; i < size3; ++i){
-    nob1 = obnum[i];
-    std::cout << "Chan3 = " << i << " : " << qnums3[i].ml << " " << qnums3[i].m << " " << qnums3[i].ml << ", " << nob1 << std::endl;
-    if(nob1 != 0){
-      std::cout << "obvec = ";
-      for(int j = 0; j < nob1; ++j){ std::cout << obvec[i][j] << " "; }
-      std::cout << std::endl;
-    }
-    }*/
 
   size1 = Space.size_2b;
   qnums1 = new State[size1];
@@ -136,15 +130,6 @@ HF_Channels::HF_Channels(const Input_Parameters &Parameters, const Model_Space &
       ++ntb[ind1];
     }
   }
-
-  /*for(int i = 0; i < size1; ++i){
-    std::cout << "Chan1 = " << i << " : " << qnums1[i].ml << " " << qnums1[i].m << " " << qnums1[i].ml << std::endl;
-    if(ntb1 != 0){
-      std::cout << "tbvec = ";
-      for(int j = 0; j < ntb1; ++j){ std::cout << tbvec[i][2*j] << tbvec[i][2*j + 1] << " "; }
-      std::cout << std::endl;
-    }
-    }*/
 }
 
 void HF_Channels::delete_struct()
@@ -169,108 +154,9 @@ void HF_Channels::delete_struct()
   delete[] ntb;
 }
 
-//ignores existing holes and particles and fills them from protons and neutrons
-void Single_Particle_States::Separate(const HF_Channels &Chan)
-{
-  //define holes/particles
-  double tempen;
-  int ind, h1, p1, nob1;
-
-  for(int i = 0; i < Chan.size3; ++i){
-    h1 = h[i];
-    p1 = p[i];
-    if(h1 != 0){
-      for(int j = 0; j < h1; ++j){
-	delete[] holes[i][j];
-      }
-      delete[] holes[i];
-      delete[] h_energies[i];
-    }
-    if(p1 != 0){
-      for(int j = 0; j < p1; ++j){
-	delete[] particles[i][j];
-      }
-      delete[] particles[i];
-      delete[] pt_energies[i];
-    }
-  }
-
-  for(int i = 0; i < Chan.size3; ++i){
-    h[i] = 0;
-    p[i] = 0;
-    for(int j = 0; j < Chan.nob[i]; ++j){
-      tempen = energies[i][j];
-      ind = 0;
-      for(int k = 0; k < Chan.size3; ++k){
-	if(Chan.qnums3[i].t == Chan.qnums3[k].t){
-	  for(int l = 0; l < Chan.nob[k]; ++l){
-	    if(energies[k][l] <= tempen){ ++ind; }
-	  }
-	}
-      }
-      if(Chan.qnums3[i].t == -1){
-	if(ind <= hp){ ++h[i]; }
-	else{ ++p[i]; }
-      }
-      else if(Chan.qnums3[i].t == 1){
-	if(ind <= hn){ ++h[i]; }
-	else{ ++p[i]; }
-      }
-    }
-  }
-
-  for(int i = 0; i < Chan.size3; ++i){
-    h1 = h[i];
-    p1 = p[i];
-    nob1 = Chan.nob[i];
-    if(h1 != 0){
-      holes[i] = new double*[h1];
-      h_energies[i] = new double[h1];
-      for(int j = 0; j < h1; ++j){
-	holes[i][j] = new double[nob1];
-	h_energies[i][j] = energies[i][j];
-	for(int k = 0; k < nob1; ++k){
-	  holes[i][j][k] = vectors[i][j][k];
-	}
-      }
-    }
-    if(p1 != 0){
-      particles[i] = new double*[p1];
-      pt_energies[i] = new double[p1];
-      for(int j = 0; j < p1; ++j){
-	particles[i][j] = new double[nob1];
-	pt_energies[i][j] = energies[i][j + h1];
-	for(int k = 0; k < nob1; ++k){
-	  particles[i][j][k] = vectors[i][j + h1][k];
-	}
-      }
-    }
-  }
-
-  /*for(int i = 0; i < Chan.size3; ++i){
-    nob1 = Chan.nob[i];
-    h1 = h[i];
-    p1 = p[i];
-    std::cout << "Chan3 = " << i << " : " << nob1 << " " << h1 << " " << p1 << std::endl;
-    if(h1 != 0){
-      for(int j = 0; j < h1; ++j){
-	std::cout << "h: " << Chan.obvec[i][j] << " : " << h_energies[i][j] << std::endl;
-      }
-    }
-    if(p1 != 0){
-      for(int j = 0; j < p1; ++j){
-	std::cout << "p: " << Chan.obvec[i][j+h1] << " : " << pt_energies[i][j] << std::endl;
-      }
-    }
-    }*/
-
-}
 
 Single_Particle_States::Single_Particle_States(const Input_Parameters &Parameters, const Model_Space &Space, const HF_Channels &Chan)
 {
-  std::cout << "Building Single-Particle States" << std::endl;
-  std::cout << "-------------------------------" << std::endl;
-
   int ind; // count for filling states
   int nob1, h1, p1;
   double tempen, tempen1, vec1; // temp energy for ordering states
@@ -326,14 +212,6 @@ Single_Particle_States::Single_Particle_States(const Input_Parameters &Parameter
       }
     }
   }
-
-  /*for(int i = 0; i < Chan.size3; ++i){
-    std::cout << "Chan3 = " << i << " : " << h[i] << " " << p[i] << std::endl;
-    for(int j = 0; j < Chan.nob[i]; ++j){
-      std::cout << Chan.obvec[i][j] << " : " << energies[i][j] << std::endl;
-    }
-  }
-  std::cout << std::endl;*/
 
   for(int i = 0; i < Chan.size3; ++i){
     nob1 = Chan.nob[i];
@@ -405,6 +283,42 @@ void Single_Particle_States::delete_struct(const HF_Channels &Chan)
   delete[] particles;
   delete[] pt_energies;
 }
+
+
+//ignores existing holes and particles and fills them from protons and neutrons
+void Single_Particle_States::Separate(const HF_Channels &Chan)
+{
+  //define holes/particles
+  int h1, p1, nob1;
+  for(int i = 0; i < Chan.size3; ++i){
+    h1 = h[i];
+    p1 = p[i];
+    nob1 = Chan.nob[i];
+    if(h1 != 0){
+      holes[i] = new double*[h1];
+      h_energies[i] = new double[h1];
+      for(int j = 0; j < h1; ++j){
+	holes[i][j] = new double[nob1];
+	h_energies[i][j] = energies[i][j];
+	for(int k = 0; k < nob1; ++k){
+	  holes[i][j][k] = vectors[i][j][k];
+	}
+      }
+    }
+    if(p1 != 0){
+      particles[i] = new double*[p1];
+      pt_energies[i] = new double[p1];
+      for(int j = 0; j < p1; ++j){
+	particles[i][j] = new double[nob1];
+	pt_energies[i][j] = energies[i][j + h1];
+	for(int k = 0; k < nob1; ++k){
+	  particles[i][j][k] = vectors[i][j + h1][k];
+	}
+      }
+    }
+  }
+}
+
 
 void Read_Matrix_Elements_J(const Input_Parameters &Parameters, const Model_Space &Space, const HF_Channels &Chan, HF_Matrix_Elements &ME)
 {
@@ -489,7 +403,6 @@ void Read_Matrix_Elements_M(const Input_Parameters &Parameters, const Model_Spac
   interactionstream.str(interactionline);
   interactionstream >> NumElements;
 
-  //std::cout << "!! " << NumElements << " !!" << std::endl;
   for(int i = 0; i < NumElements; ++i){
     getline(interaction, interactionline);
     std::istringstream(interactionline) >> shell1 >> shell2 >> shell3 >> shell4 >> TBME;
@@ -522,42 +435,36 @@ void Read_Matrix_Elements_M(const Input_Parameters &Parameters, const Model_Spac
       ind = Index22(Chan.tbvec[ind1], Chan.tbvec[ind1], Chan.ntb[ind1], Chan.ntb[ind1], shell4, shell3, shell2, shell1);
       ME.V[ind1][ind] = TBME;
     }
-    //std::cout << shell1 << " " << shell2 << " " << shell3 << " " << shell4 << ", " << ind1 << " " << ind << ", " << TBME << std::endl;
   }
   interaction.close();
-
-  /*for(int chan = 0; chan < Chan.size1; ++chan){
-    for(int tb1 = 0; tb1 < Chan.tb[chan]; ++tb1){ std::cout << Chan.tbvec1[chan][2*tb1] << Chan.tbvec1[chan][2*tb1 + 1] << " "; }
-    std::cout << std::endl;
-    for(int tb1 = 0; tb1 < Chan.tb[chan]; ++tb1){
-      for(int tb2 = 0; tb2 < Chan.tb[chan]; ++tb2){
-	std::cout << ME.V[chan][Chan.tb[chan]*tb1 + tb2] << " ";
-      }
-      std::cout << std::endl;
-    }
-    std::cout << std::endl;
-    }*/
 }
 
 void Read_Matrix_Elements_HO(const Input_Parameters &Parameters, const Model_Space &Space, const HF_Channels &Chan, HF_Matrix_Elements &ME)
 {
-  int pind, qind, rind, sind;
+  std::cout << "Computing Coulomb Matrix Elements ..." << std::endl;
+  int p, q, r, s;
+  int ntb;
   double TBME;
   ME = HF_Matrix_Elements(Chan);
-  for(int i = 0; i < Chan.size1; ++i){
-    for(int pq = 0; pq < Chan.ntb[i]; ++pq){
-      pind = Chan.tbvec[i][2*pq];
-      qind = Chan.tbvec[i][2*pq + 1];
-      if(pind == qind){ continue; }
-      for(int rs = 0; rs < Chan.ntb[i]; ++rs){
-	rind = Chan.tbvec[i][2*rs];
-	sind = Chan.tbvec[i][2*rs + 1];
-	if(rind == sind){ continue; }
-	TBME = Coulomb_HO(Parameters, Space, pind, qind, rind, sind);
-	ME.V[i][pq * Chan.ntb[i] + rs] = TBME;
-	/*if(pind < qind && rind < sind && pind <= rind && pq <= rs){
-	  std::cout << pind << " " << qind << " " << rind << " " << sind << " : " << TBME << std::endl;
-	  }*/
+  for(int chan = 0; chan < Chan.size1; ++chan){
+    ntb = Chan.ntb[chan];
+    if(ntb == 0){ continue; }
+
+    #pragma omp parallel private(p, q, r, s, TBME)
+    {
+      #pragma omp for schedule(static)
+      for(int pq = 0; pq < ntb; ++pq){
+	p = Chan.tbvec[chan][2*pq];
+	q = Chan.tbvec[chan][2*pq + 1];
+	if(p == q){ continue; }
+	for(int rs = pq; rs < ntb; ++rs){
+	  r = Chan.tbvec[chan][2*rs];
+	  s = Chan.tbvec[chan][2*rs + 1];
+	  if(r == s){ continue; }
+	  TBME = Coulomb_HO(Parameters, Space, p, q, r, s);
+	  ME.V[chan][pq * ntb + rs] = TBME;
+	  if(pq != rs){ ME.V[chan][rs * ntb + pq] = TBME; }
+	}
       }
     }
   }
@@ -718,8 +625,9 @@ void Hartree_Fock_States_J(const Input_Parameters &Parameters, Model_Space &Spac
 
 void Hartree_Fock_States(const Input_Parameters &Parameters, Model_Space &Space, const HF_Channels &Chan, Single_Particle_States &HF, const HF_Matrix_Elements &ME)
 {
-  Single_Particle_States HFtemp(Parameters, Space, Chan);
+  std::cout << "Diagonalizing Hartree-Fock Matrix ..." << std::endl;
   double error; // Energy error between iterations
+  double error1; // Energy error between iterations
   double Bshift; // level shift parameter
   int ind; // Index to keep track of iteration number
   char jobz, uplo; // Parameters for Diagonalization, Multiplication
@@ -733,9 +641,28 @@ void Hartree_Fock_States(const Input_Parameters &Parameters, Model_Space &Space,
   double tempen3;
   double vec3;
 
+  int *temph;
+  double **tempen;
+  double ***tempvec;
+  temph = new int[Chan.size3];
+  tempen = new double*[Chan.size3];
+  tempvec = new double**[Chan.size3];
+  for(int i = 0; i < Chan.size3; ++i){
+    nob1 = Chan.nob[i];
+    temph[i] = HF.h[i];
+    tempen[i] = new double[nob1];
+    tempvec[i] = new double*[nob1];
+    for(int j = 0; j < nob1; ++j){
+      tempen[i][j] = HF.energies[i][j];
+      tempvec[i][j] = new double[nob1];
+      for(int k = 0; k < nob1; ++k){
+	tempvec[i][j][k] = HF.vectors[i][j][k];
+      }
+    }
+  }
+
   double *w;
   double *work;
-
   double *fock;
 
   jobz = 'V';
@@ -745,64 +672,43 @@ void Hartree_Fock_States(const Input_Parameters &Parameters, Model_Space &Space,
   ind = 0;
   error = 1000;
 
-  /*for(int i = 0; i < Chan.size3; ++i){
-    int size1 = Chan.nob[i];
-    std::cout << "h,p = " << HF.h[i] << " " << HF.p[i] << std::endl;
-    for(int j = 0; j < size1; ++j){
-      std::cout << "E = " << HF.energies[i][j] << std::endl;
-      for(int k = 0; k < size1; ++k){
-	std::cout << HF.vectors[i][j][k] << " ";
-      }
-      std::cout << std::endl;
-    }
-    std::cout << std::endl;
-    }*/
-
-  while((error > 1e-18 && ind < 1000) || ind < 10){ //10
+  while((error > 1e-16 && ind < 5000) || ind < 50){ //10
     ++ind;
     error = 0.0;
-    
+
     //Make Fock Matrix
     for(int i = 0; i < Chan.size3; ++i){
+      error1 = 0.0;
       int size1 = Chan.nob[i];
-      //std::cout << "chan = " << i << ", size = " << size1 << ", h = " << HFtemp.h[i] << ", p = " << HFtemp.p[i] << std::endl;
       fock = new double[size1 * size1];
       for(int m = 0; m < size1; ++m){
 	int mind = Chan.obvec[i][m];
 	for(int l = 0; l < size1; ++l){
 	  int lind = Chan.obvec[i][l];
-	  if(m == l){ fock[size1 * m + m] = Space.qnums[mind].energy; }	// Add diagonal elements to fock matrices
+	  if(m == l){ fock[size1 * m + l] = Space.qnums[mind].energy; }	// Add diagonal elements to fock matrices
 	  else{ fock[size1 * m + l] = 0.0; }
 	  for(int j = 0; j < Chan.size3; ++j){
 	    int size2 = Chan.nob[j];
-	    for(int beta = 0; beta < HF.h[j]; ++beta){ // Sum over occupied levels
+	    for(int beta = 0; beta < temph[j]; ++beta){ // Sum over occupied levels
 	      for(int n = 0; n < size2; ++n){
 		int nind = Chan.obvec[j][n];
+		plus(tb, Space.qnums[mind], Space.qnums[nind]);
+		int ind1 = ChanInd_2b_dir(Parameters.basis, Space, tb);
 		for(int k = 0; k < size2; ++k){
 		  int kind = Chan.obvec[j][k];
-		  plus(tb, Space.qnums[mind], Space.qnums[nind]);
-		  int ind1 = ChanInd_2b_dir(Parameters.basis, Space, tb);
 		  int ind2 = Index22(Chan.tbvec[ind1], Chan.tbvec[ind1], Chan.ntb[ind1], Chan.ntb[ind1], mind, nind, lind, kind);
-		  term = HFtemp.vectors[j][beta][n] * HFtemp.vectors[j][beta][k] * ME.V[ind1][ind2];
+		  term = tempvec[j][beta][n] * tempvec[j][beta][k] * ME.V[ind1][ind2];
 		  fock[size1 * m + l] += term;
 		}
 	      }
 	    }
 	  }
-	  for(int beta = 0; beta < HFtemp.h[i]; ++beta){ // Sum over occupied levels
-	    fock[size1 * m + l] -= HFtemp.vectors[i][beta][m] * HFtemp.vectors[i][beta][l] * Bshift;
+	  for(int beta = 0; beta < temph[i]; ++beta){ // Sum over occupied levels
+	    fock[size1 * m + l] -= tempvec[i][beta][m] * tempvec[i][beta][l] * Bshift;
 	  }
 	}
       }
       for(int j = 0; j < size1*size1; ++j){ if(fabs(fock[j]) < 10e-13){ fock[j] = 0.0; }}
-
-      /*for(int x = 0; x < size1; ++x){
-	for(int y = 0; y < size1; ++y){
-	  std::cout << fock[size1*x + y] << " ";
-	}
-	std::cout << std::endl;
-      }
-      std::cout << std::endl;*/
 
       lda = size1;
       lwork = (3+2)*size1;
@@ -813,22 +719,16 @@ void Hartree_Fock_States(const Input_Parameters &Parameters, Model_Space &Space,
     
       if(size1 != 0){ dsyev_(&jobz, &uplo, &size1, fock, &lda, w, work, &lwork, &info); }
       for(int j = 0; j < size1*size1; ++j){ if(fabs(fock[j]) < 10e-13){ fock[j] = 0.0; }}
-      for(int j = 0; j < HFtemp.h[i]; ++j){ w[j] += Bshift; } //Add back Level-shift parameter
-      
+      for(int j = 0; j < temph[i]; ++j){ w[j] += Bshift; } //Add back Level-shift parameter
+
       for(int j = 0; j < size1; ++j){
 	for(int k = 0; k < size1; ++k){
+	  if(fabs(fock[size1 * j + k]) > 1e-10){
+	    error1 += fabs((HF.vectors[i][j][k] - fock[size1 * j + k])/fock[size1 * j + k]);
+	  }
 	  HF.vectors[i][j][k] = fock[size1 * j + k];
 	}
       }
-
-      /*for(int x = 0; x < size1; ++x){
-	std::cout << "E = " << w[x] << std::endl;
-	for(int y = 0; y < size1; ++y){
-	  std::cout << fock[size1*x + y] << " ";
-	}
-	std::cout << std::endl;
-      }
-      std::cout << std::endl;*/
 
       // Order states by energy
       for(int j = 0; j < size1 - 1; ++j){
@@ -848,7 +748,6 @@ void Hartree_Fock_States(const Input_Parameters &Parameters, Model_Space &Space,
       }
 
       for(int j = 0; j < size1; ++j){
-	error += fabs(HF.energies[i][j] - w[j])/Chan.nob[i]; 
 	HF.energies[i][j] = w[j];
       }
       GramSchmidt(HF.vectors[i], size1);
@@ -856,81 +755,57 @@ void Hartree_Fock_States(const Input_Parameters &Parameters, Model_Space &Space,
       delete[] fock;
       delete[] w;
       delete[] work;
+
+      error += (error1 / (size1*size1));
     }
     HF.Separate(Chan);
 
     // HFtemp = HF
     for(int i = 0; i < Chan.size3; ++i){
+      temph[i] = HF.h[i];
       nob1 = Chan.nob[i];
-      HFtemp.h[i] = HF.h[i];
-      HFtemp.p[i] = HF.p[i];
-      if(nob1 != 0){
-	for(int j = 0; j < nob1; ++j){
-	  HFtemp.energies[i][j] = HF.energies[i][j];
-	  for(int k = 0; k < nob1; ++k){
-	    HFtemp.vectors[i][j][k] = HF.vectors[i][j][k];
-	  }
+      for(int j = 0; j < nob1; ++j){
+	tempen[i][j] = HF.energies[i][j];
+	for(int k = 0; k < nob1; ++k){
+	  tempvec[i][j][k] = HF.vectors[i][j][k];
 	}
       }
     }
   }
 
-  HFtemp.delete_struct(Chan);
+  for(int i = 0; i < Chan.size3; ++i){
+    nob1 = Chan.nob[i];
+    for(int j = 0; j < nob1; ++j){
+      delete[] tempvec[i][j];
+    }
+    delete[] tempen[i];
+    delete[] tempvec[i];
+  }
+  delete[] temph;
+  delete[] tempen;
+  delete[] tempvec;
 
   ind = 0;
   for(int i = 0; i < Chan.size3; ++i){
     for(int j = 0; j < HF.h[i]; ++j){
-      Space.qnums[ind] = Chan.qnums3[i];
-      Space.qnums[ind].energy = HF.energies[i][j];
-      Space.qnums[ind].type = "hole";
+      Space.qnums[Chan.obvec[i][j]] = Chan.qnums3[i];
+      Space.qnums[Chan.obvec[i][j]].energy = HF.energies[i][j];
+      Space.qnums[Chan.obvec[i][j]].type = "hole";
       ++ind;
     }
   }
   for(int i = 0; i < Chan.size3; ++i){
     for(int j = HF.h[i]; j < HF.h[i] + HF.p[i]; ++j){
-      Space.qnums[ind] = Chan.qnums3[i];
-      Space.qnums[ind].energy = HF.energies[i][j];
-      Space.qnums[ind].type = "particle";
+      Space.qnums[Chan.obvec[i][j]] = Chan.qnums3[i];
+      Space.qnums[Chan.obvec[i][j]].energy = HF.energies[i][j];
+      Space.qnums[Chan.obvec[i][j]].type = "particle";
       ++ind;
     }
   }
 
-  // Order holes by energy
-  for(int i = 0; i < Space.indhol; ++i){
-    ind2 = i;
-    tempen2 = Space.qnums[i].energy;
-    for(int j = i + 1; j < Space.indhol; ++j){
-      if((tempen2 - Space.qnums[j].energy) > 1e-6){
-	tempen2 = Space.qnums[j].energy;
-	ind2 = j;
-      }
-    }
-    tb = Space.qnums[ind2];
-    for(int j = ind2; j > i; --j){
-      Space.qnums[j] = Space.qnums[j - 1];
-    }
-    Space.qnums[i] = tb;
-  }
-  // Order particles by energy
-  for(int i = Space.indhol; i < Space.indtot; ++i){
-    ind2 = i;
-    tempen2 = Space.qnums[i].energy;
-    for(int j = i + 1; j < Space.indtot; ++j){
-      if((tempen2 - Space.qnums[j].energy) > 1e-6){
-	tempen2 = Space.qnums[j].energy;
-	ind2 = j;
-      }
-    }
-    tb = Space.qnums[ind2];
-    for(int j = ind2; j > i; --j){
-      Space.qnums[j] = Space.qnums[j - 1];
-    }
-    Space.qnums[i] = tb;
-  }
-
-  for(int i = 0; i < Space.indtot; ++i){
-    std::cout << Space.qnums[i].n << " " << Space.qnums[i].par << " " << Space.qnums[i].j << " " << Space.qnums[i].m << " " << Space.qnums[i].t << " " << Space.qnums[i].energy << " " << Space.qnums[i].type << std::endl;
-  }
+  /*for(int i = 0; i < Space.indtot; ++i){
+    std::cout << Space.qnums[i].par << " " << Space.qnums[i].ml << " " << Space.qnums[i].m << " : " << Space.qnums[i].energy << " " << Space.qnums[i].type << std::endl;
+    }*/
 
 
   /*std::ofstream HFlevelfile;
@@ -960,160 +835,68 @@ void Hartree_Fock_States(const Input_Parameters &Parameters, Model_Space &Space,
 
 void Convert_To_HF_Matrix_Elements(const HF_Channels &Chan, const Single_Particle_States &States, HF_Matrix_Elements &ME)
 {
-  std::cout << "Converting Matrix Elements to HF basis" << std::endl;
-  std::cout << "--------------------------------------" << std::endl;
+  std::cout << "Converting Matrix Elements to HF basis ..." << std::endl;
 
   int length, matlength; // max length of M-Scheme indicies, length of J_ME
   double tempel;
-  double *M1, *M2; // Matrices of coefficients
+  double *M1;//, *M2; // Matrices of coefficients
   double *C;
 
-  char transa;
+  char transa, transb;
   double alpha1, beta1;
   std::ofstream jschemefile; // file to print M-Scheme matrix elements
+  int p, q, a, g;
+  int ind1, ind2;
 
-  /*for(int chan = 0; chan < Chan.size3; ++chan){
-    for(int i = 0; i < Chan.ob[chan]; ++i){
-      std::cout << "! " << i << " : ";
-      for(int j = 0; j < Chan.ob[chan]; ++j){
-	std::cout << States.vectors[chan][i][j] << " ";
-      }
-      std::cout << std::endl;
-    }
-    std::cout << std::endl;
-    }*/
-      
   for(int chan = 0; chan < Chan.size1; ++chan){
     length = Chan.ntb[chan];
     if(length == 0){ continue; }
     matlength = pow(length, 2.0);
 
     M1 = new double[matlength];
-    M2 = new double[matlength];
+    //M2 = new double[matlength];
     C = new double[matlength];
     for(int i = 0; i < matlength; ++i){
       M1[i] = 0.0;
-      M2[i] = 0.0;
+      //M2[i] = 0.0;
       C[i] = 0.0;
     }
 
-    for(int pq = 0; pq < length; ++pq){
-      for(int ag = 0; ag < length; ++ag){
-	int p = Chan.tbvec[chan][2*pq];
-	int q = Chan.tbvec[chan][2*pq + 1];
-	int a = Chan.tbvec[chan][2*ag];
-	int g = Chan.tbvec[chan][2*ag + 1];
-	//td::cout << "!! " << p << " " << q << " " << a << " " << g << std::endl;
-	if(Chan.indvec[p] != Chan.indvec[a] || Chan.indvec[q] != Chan.indvec[g]){ continue; }
-	int ind1 = Chan.indvec[p];
-	int ind2 = Chan.indvec[q];
-	//std::cout << "pass! " << ind1 << " " << ind2 << std::endl;
-	p = Index1(Chan.obvec[ind1], Chan.nob[ind1], p);
-	q = Index1(Chan.obvec[ind2], Chan.nob[ind2], q);
-	a = Index1(Chan.obvec[ind1], Chan.nob[ind1], a);
-	g = Index1(Chan.obvec[ind2], Chan.nob[ind2], g);
-	//std::cout << "?? " << p << " " << a << " = " << States.vectors[ind1][p][a] << std::endl;
-	//std::cout << "?? " << q << " " << g << " = " << States.vectors[ind2][q][g] << std::endl;
-	tempel = States.vectors[ind1][p][a] * States.vectors[ind2][q][g];
-	M1[length * pq + ag] = tempel;
-	M2[length * ag + pq] = tempel;
+    #pragma omp parallel private(p, q, a, g, ind1, ind2, tempel)
+    {
+      #pragma omp for schedule(static)
+      for(int pq = 0; pq < length; ++pq){
+	for(int ag = 0; ag < length; ++ag){
+	  p = Chan.tbvec[chan][2*pq];
+	  q = Chan.tbvec[chan][2*pq + 1];
+	  a = Chan.tbvec[chan][2*ag];
+	  g = Chan.tbvec[chan][2*ag + 1];
+	  if(Chan.indvec[p] != Chan.indvec[a] || Chan.indvec[q] != Chan.indvec[g]){ continue; }
+	  ind1 = Chan.indvec[p];
+	  ind2 = Chan.indvec[q];
+	  p = Index1(Chan.obvec[ind1], Chan.nob[ind1], p);
+	  q = Index1(Chan.obvec[ind2], Chan.nob[ind2], q);
+	  a = Index1(Chan.obvec[ind1], Chan.nob[ind1], a);
+	  g = Index1(Chan.obvec[ind2], Chan.nob[ind2], g);
+	  tempel = States.vectors[ind1][p][a] * States.vectors[ind2][q][g];
+	  M1[length * pq + ag] = tempel;
+	  //M2[length * ag + pq] = tempel;
+	}
       }
     }
 
-    /*std::cout << "M1" << std::endl;
-    for(int i = 0; i < length; ++i){ std::cout << Chan.tbvec1[chan][2*i] << Chan.tbvec1[chan][2*i+1] << " "; }
-    std::cout << std::endl;
-    for(int i = 0; i < length; ++i){
-      for(int j = 0; j < length; ++j){
-	std::cout << M1[length*i + j] << " ";
-      }
-      std::cout << std::endl;
-    }
-    std::cout << std::endl;
-    std::cout << "V0" << std::endl;
-    for(int i = 0; i < length; ++i){
-      for(int j = 0; j < length; ++j){
-	std::cout << ME.V[chan][length*i + j] << " ";
-      }
-      std::cout << std::endl;
-    }
-    std::cout << std::endl;*/
-
-    /*for(int ag = 0; ag < length; ++ag){
-      int aind = Chan.tbvec1[chan][2*ag];
-      int gind = Chan.tbvec1[chan][2*ag + 1];
-      for(int bd = 0; bd < length; ++bd){
-	int bind = Chan.tbvec1[chan][2*bd];
-	int dind = Chan.tbvec1[chan][2*bd + 1];
-	tempel = ME.V[chan][ag*Chan.tb[chan] + bd];
-	if(aind == gind){ tempel /= sqrt(2.0); }
-	if(bind == dind){ tempel /= sqrt(2.0); }
-	V[length * ag + bd] = tempel;
-      }
-      }*/
-      
     transa = 'N';
+    transb = 'T';
     alpha1 = 1.0;
     beta1 = 0.0;
     
-    RM_dgemm(M1, ME.V[chan], C, &length, &length, &length, &alpha1, &beta1, &transa, &transa);
-    /*std::cout << "V1" << std::endl;
-      for(int i = 0; i < length; ++i){
-      for(int j = 0; j < length; ++j){
-      std::cout << C[length*i + j] << " ";
-      }
-      std::cout << std::endl;
-      }
-      std::cout << std::endl;*/
-    RM_dgemm(C, M2, ME.V[chan], &length, &length, &length, &alpha1, &beta1, &transa, &transa);
-    /*std::cout << "V2" << std::endl;
-      for(int i = 0; i < length; ++i){
-      for(int j = 0; j < length; ++j){
-      std::cout << ME.V[chan][length*i + j] << " ";
-      }
-      std::cout << std::endl;
-      }
-      std::cout << std::endl;*/
+    dgemm_NN(M1, ME.V[chan], C, &length, &length, &length, &alpha1, &beta1, &transa, &transa);
+    dgemm_NT(C, M1, ME.V[chan], &length, &length, &length, &alpha1, &beta1, &transa, &transb);
 
     delete[] M1;
-    delete[] M2;
+    //delete[] M2;
     delete[] C;
   }
-    /*for(int p = 0; p < plength; ++p){
-      for(int q = p; q < plength; ++q){
-	for(int r = p; r < plength; ++r){
-	  for(int s = r; s < plength; ++s){
-	    num1 = number_diff(p, q, plength);
-	    num2 = number_diff(r, s, plength);
-	    if(num1 > num2){ std::swap(num1, num2); }
-	    tempel = PP_V[pmatlength * num1 + num2];
-	    if(p == q){ tempel /= sqrt(2.0); }
-	    if(r == s){ tempel /= sqrt(2.0); }
-	    if(fabs(tempel) > 1.0e-10){ 
-	      HF_ME.set_ppJME(p, q, r, s, J, tempel);
-	    }
-	  }
-	}
-      }
-    }
-  }
-  
-    HF_ME.cut_ppJME();
-    
-    ind = 0;
-    for(int J = 0; J <= Space.max2J; ++J){
-      for(int m = 0; m < plength; ++m){
-	for(int n = m; n < plength; ++n){
-	  for(int l = m; l < plength; ++l){
-	    for(int k = l; k < plength; ++k){
-	      tempel = HF_ME.get_ppJME(m, n, l, k, J);
-	      if(fabs(tempel) >= 1.0e-10){ ++ind; }
-	    }
-	  }
-	}
-      }
-    }
-    }*/
 
   // print J_ME to file
   /*jschemefile.open((PATH + MatrixElements + "_HF.int").c_str());
@@ -1259,261 +1042,244 @@ void Get_Matrix_Elements(const Input_Parameters &Parameters, const HF_Channels &
   std::string ptype, qtype, rtype, stype;
   State tb;
 
-  /*for(int i = 0; i < Space.indtot; ++i){
-    std::cout << Space.qnums[i].par << " " << Space.qnums[i].m << " " << Space.qnums[i].t << " " << Space.qnums[i].energy << " " << Space.qnums[i].type << std::endl;
-    }*/
-
   for(int chan = 0; chan < HF_Chan.size1; ++chan){
-    for(int tb1 = 0; tb1 < HF_Chan.ntb[chan]; ++tb1){
-      shell1 = HF_Chan.tbvec[chan][2*tb1];
-      shell2 = HF_Chan.tbvec[chan][2*tb1 + 1];
-      ptype = Space.qnums[shell1].type;
-      qtype = Space.qnums[shell2].type;
-      //std::cout << "shell1, shell2 = " << shell1 << " " << shell2 << std::endl;
-      if(ptype == qtype && shell1 >= shell2){ continue; }
-      if(ptype == "particle" && qtype == "hole"){ continue; }
-      for(int tb2 = 0; tb2 < HF_Chan.ntb[chan]; ++tb2){
-	shell3 = HF_Chan.tbvec[chan][2*tb2];
-	shell4 = HF_Chan.tbvec[chan][2*tb2 + 1];
-	rtype = Space.qnums[shell3].type;
-	stype = Space.qnums[shell4].type;
-	//std::cout << "shell3, shell4 = " << shell3 << " " << shell4 << std::endl;
-	if(rtype == stype && shell3 >= shell4){ continue; }
-	if(rtype == "particle" && stype == "hole"){ continue; }
-	if(ptype == rtype && shell1 > shell3){ continue; }
-	if(ptype == rtype && qtype == stype && shell1 == shell3 && shell2 > shell4){ continue; }
-	if(ptype == "particle" && rtype == "hole"){ continue; }
-	//std::cout << shell1 << " " << shell2 << " " << shell3 << " " << shell4 << std::endl;
-	TBME = HF_ME.V[chan][tb1*HF_Chan.ntb[chan] + tb2];
-	//std::cout << shell1 << " " << shell2 << " " << shell3 << " " << shell4 << ", " << TBME << std::endl;
-	if(ptype == "hole" && qtype == "hole" && rtype == "hole" && stype == "hole"){
-	  plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
-	  ind1 = ChanInd_2b_dir(Parameters.basis, Space, tb);
-	  ind = Index22(Chan.hhvec[ind1], Chan.hhvec[ind1], Chan.nhh[ind1], Chan.nhh[ind1], shell1, shell2, shell3, shell4);
-	  Ints.D_ME1.V2[ind1][ind] = TBME;
-	  ind = Index22(Chan.hhvec[ind1], Chan.hhvec[ind1], Chan.nhh[ind1], Chan.nhh[ind1], shell2, shell1, shell3, shell4);
-	  Ints.D_ME1.V2[ind1][ind] = -1.0 * TBME;
-	  ind = Index22(Chan.hhvec[ind1], Chan.hhvec[ind1], Chan.nhh[ind1], Chan.nhh[ind1], shell1, shell2, shell4, shell3);
-	  Ints.D_ME1.V2[ind1][ind] = -1.0 * TBME;
-	  ind = Index22(Chan.hhvec[ind1], Chan.hhvec[ind1], Chan.nhh[ind1], Chan.nhh[ind1], shell2, shell1, shell4, shell3);
-	  Ints.D_ME1.V2[ind1][ind] = TBME;
-	  ind = Index22(Chan.hhvec[ind1], Chan.hhvec[ind1], Chan.nhh[ind1], Chan.nhh[ind1], shell3, shell4, shell1, shell2);
-	  Ints.D_ME1.V2[ind1][ind] = TBME;
-	  ind = Index22(Chan.hhvec[ind1], Chan.hhvec[ind1], Chan.nhh[ind1], Chan.nhh[ind1], shell4, shell3, shell1, shell2);
-	  Ints.D_ME1.V2[ind1][ind] = -1.0 * TBME;
-	  ind = Index22(Chan.hhvec[ind1], Chan.hhvec[ind1], Chan.nhh[ind1], Chan.nhh[ind1], shell3, shell4, shell2, shell1);
-	  Ints.D_ME1.V2[ind1][ind] = -1.0 * TBME;
-	  ind = Index22(Chan.hhvec[ind1], Chan.hhvec[ind1], Chan.nhh[ind1], Chan.nhh[ind1], shell4, shell3, shell2, shell1);
-	  Ints.D_ME1.V2[ind1][ind] = TBME;
-	}
-	else if(ptype == "particle" && qtype == "particle" && rtype == "particle" && stype == "particle"){
-	  plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
-	  ind1 = ChanInd_2b_dir(Parameters.basis, Space, tb);
-	  ind = Index22(Chan.ppvec[ind1], Chan.ppvec[ind1], Chan.npp[ind1], Chan.npp[ind1], shell1, shell2, shell3, shell4);
-	  Ints.D_ME1.V1[ind1][ind] = TBME;
-	  ind = Index22(Chan.ppvec[ind1], Chan.ppvec[ind1], Chan.npp[ind1], Chan.npp[ind1], shell2, shell1, shell3, shell4);
-	  Ints.D_ME1.V1[ind1][ind] = -1.0 * TBME;
-	  ind = Index22(Chan.ppvec[ind1], Chan.ppvec[ind1], Chan.npp[ind1], Chan.npp[ind1], shell1, shell2, shell4, shell3);
-	  Ints.D_ME1.V1[ind1][ind] = -1.0 * TBME;
-	  ind = Index22(Chan.ppvec[ind1], Chan.ppvec[ind1], Chan.npp[ind1], Chan.npp[ind1], shell2, shell1, shell4, shell3);
-	  Ints.D_ME1.V1[ind1][ind] = TBME;
-	  ind = Index22(Chan.ppvec[ind1], Chan.ppvec[ind1], Chan.npp[ind1], Chan.npp[ind1], shell3, shell4, shell1, shell2);
-	  Ints.D_ME1.V1[ind1][ind] = TBME;
-	  ind = Index22(Chan.ppvec[ind1], Chan.ppvec[ind1], Chan.npp[ind1], Chan.npp[ind1], shell4, shell3, shell1, shell2);
-	  Ints.D_ME1.V1[ind1][ind] = -1.0 * TBME;
-	  ind = Index22(Chan.ppvec[ind1], Chan.ppvec[ind1], Chan.npp[ind1], Chan.npp[ind1], shell3, shell4, shell2, shell1);
-	  Ints.D_ME1.V1[ind1][ind] = -1.0 * TBME;
-	  ind = Index22(Chan.ppvec[ind1], Chan.ppvec[ind1], Chan.npp[ind1], Chan.npp[ind1], shell4, shell3, shell2, shell1);
-	  Ints.D_ME1.V1[ind1][ind] = TBME;
-	}
-	else if(ptype == "hole" && qtype == "particle" && rtype == "hole" && stype == "particle"){
-	  minus(tb, Space.qnums[shell4], Space.qnums[shell1]);
-	  ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
-	  ind = Index22(Chan.hp2vec[ind1], Chan.hp2vec[ind1], Chan.nhp2[ind1], Chan.nhp2[ind1], shell1, shell4, shell3, shell2);
-	  Ints.D_ME1.V3[ind1][ind] = TBME;
-	  ind = Index22(Chan.hp2vec[ind1], Chan.hp2vec[ind1], Chan.nhp2[ind1], Chan.nhp2[ind1], shell3, shell2, shell1, shell4);
-	  Ints.D_ME1.V3[ind1][ind] = TBME;
-	}
-	else if(ptype == "hole" && qtype == "hole" && rtype == "particle" && stype == "particle"){
-	  plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
-	  ind1 = ChanInd_2b_dir(Parameters.basis, Space, tb);
-	  ind = Index22(Chan.ppvec[ind1], Chan.hhvec[ind1], Chan.npp[ind1], Chan.nhh[ind1], shell3, shell4, shell1, shell2);
-	  Ints.D_ME1.V4[ind1][ind] = TBME;
-	  ind = Index22(Chan.ppvec[ind1], Chan.hhvec[ind1], Chan.npp[ind1], Chan.nhh[ind1], shell4, shell3, shell1, shell2);
-	  Ints.D_ME1.V4[ind1][ind] = -1.0 * TBME;
-	  ind = Index22(Chan.ppvec[ind1], Chan.hhvec[ind1], Chan.npp[ind1], Chan.nhh[ind1], shell3, shell4, shell2, shell1);
-	  Ints.D_ME1.V4[ind1][ind] = -1.0 * TBME;
-	  ind = Index22(Chan.ppvec[ind1], Chan.hhvec[ind1], Chan.npp[ind1], Chan.nhh[ind1], shell4, shell3, shell2, shell1);
-	  Ints.D_ME1.V4[ind1][ind] = TBME;
+    #pragma omp parallel private(shell1, shell2, shell3, shell4, ptype, qtype, rtype, stype, ind, ind1, ind2, tb, TBME)
+    {
+      #pragma omp for schedule(static)
+      for(int tb1 = 0; tb1 < HF_Chan.ntb[chan]; ++tb1){
+	shell1 = HF_Chan.tbvec[chan][2*tb1];
+	shell2 = HF_Chan.tbvec[chan][2*tb1 + 1];
+	ptype = Space.qnums[shell1].type;
+	qtype = Space.qnums[shell2].type;
+	if(shell1 >= shell2){ continue; }
+	for(int tb2 = 0; tb2 < HF_Chan.ntb[chan]; ++tb2){
+	  shell3 = HF_Chan.tbvec[chan][2*tb2];
+	  shell4 = HF_Chan.tbvec[chan][2*tb2 + 1];
+	  rtype = Space.qnums[shell3].type;
+	  stype = Space.qnums[shell4].type;
+	  if(shell3 >= shell4){ continue; }
+	  if(shell1 == shell3 && shell2 > shell4){ continue; }
 	  
-	  ind2 = Chan.indvec[shell2];
-	  ind = Index13(Chan.hvec[ind2], Chan.hppvec[ind2], Chan.nh[ind2], Chan.nhpp[ind2], shell2, shell1, shell3, shell4);
-	  Ints.D_ME1.V5[ind2][ind] = TBME;
-	  ind = Index13(Chan.hvec[ind2], Chan.hppvec[ind2], Chan.nh[ind2], Chan.nhpp[ind2], shell2, shell1, shell4, shell3);
-	  Ints.D_ME1.V5[ind2][ind] = -1.0 * TBME;
-	  ind2 = Chan.indvec[shell1];
-	  ind = Index13(Chan.hvec[ind2], Chan.hppvec[ind2], Chan.nh[ind2], Chan.nhpp[ind2], shell1, shell2, shell3, shell4);
-	  Ints.D_ME1.V5[ind2][ind] = -1.0 * TBME;
-	  ind = Index13(Chan.hvec[ind2], Chan.hppvec[ind2], Chan.nh[ind2], Chan.nhpp[ind2], shell1, shell2, shell4, shell3);
-	  Ints.D_ME1.V5[ind2][ind] = TBME;
+	  if(ptype == "hole" && qtype == "particle" && rtype == "hole" && stype == "hole"){ continue; }
+	  if(ptype == "particle" && qtype == "particle" && rtype == "hole" && stype == "particle"){ continue; }
 	  
-	  ind2 = Chan.indvec[shell1];
-	  ind = Index13(Chan.hvec[ind2], Chan.hppvec[ind2], Chan.nh[ind2], Chan.nhpp[ind2], shell1, shell2, shell3, shell4);
-	  Ints.D_ME1.V6[ind2][ind] = TBME;
-	  ind = Index13(Chan.hvec[ind2], Chan.hppvec[ind2], Chan.nh[ind2], Chan.nhpp[ind2], shell1, shell2, shell4, shell3);
-	  Ints.D_ME1.V6[ind2][ind] = -1.0 * TBME;
-	  ind2 = Chan.indvec[shell2];
-	  ind = Index13(Chan.hvec[ind2], Chan.hppvec[ind2], Chan.nh[ind2], Chan.nhpp[ind2], shell2, shell1, shell3, shell4);
-	  Ints.D_ME1.V6[ind2][ind] = -1.0 * TBME;
-	  ind = Index13(Chan.hvec[ind2], Chan.hppvec[ind2], Chan.nh[ind2], Chan.nhpp[ind2], shell2, shell1, shell4, shell3);
-	  Ints.D_ME1.V6[ind2][ind] = TBME;
-	  
-	  ind2 = Chan.indvec[shell4];
-	  ind = Index13(Chan.pvec[ind2], Chan.hhpvec[ind2], Chan.np[ind2], Chan.nhhp[ind2], shell4, shell1, shell2, shell3);
-	  Ints.D_ME1.V7[ind2][ind] = TBME;
-	  ind = Index13(Chan.pvec[ind2], Chan.hhpvec[ind2], Chan.np[ind2], Chan.nhhp[ind2], shell4, shell2, shell1, shell3);
-	  Ints.D_ME1.V7[ind2][ind] = -1.0 * TBME;
-	  ind2 = Chan.indvec[shell3];
-	  ind = Index13(Chan.pvec[ind2], Chan.hhpvec[ind2], Chan.np[ind2], Chan.nhhp[ind2], shell3, shell1, shell2, shell4);
-	  Ints.D_ME1.V7[ind2][ind] = -1.0 * TBME;
-	  ind = Index13(Chan.pvec[ind2], Chan.hhpvec[ind2], Chan.np[ind2], Chan.nhhp[ind2], shell3, shell2, shell1, shell4);
-	  Ints.D_ME1.V7[ind2][ind] = TBME;
-	  
-	  ind2 = Chan.indvec[shell3];
-	  ind = Index13(Chan.pvec[ind2], Chan.hhpvec[ind2], Chan.np[ind2], Chan.nhhp[ind2], shell3, shell1, shell2, shell4);
-	  Ints.D_ME1.V8[ind2][ind] = TBME;
-	  ind = Index13(Chan.pvec[ind2], Chan.hhpvec[ind2], Chan.np[ind2], Chan.nhhp[ind2], shell3, shell2, shell1, shell4);
-	  Ints.D_ME1.V8[ind2][ind] = -1.0 * TBME;
-	  ind2 = Chan.indvec[shell4];
-	  ind = Index13(Chan.pvec[ind2], Chan.hhpvec[ind2], Chan.np[ind2], Chan.nhhp[ind2], shell4, shell1, shell2, shell3);
-	  Ints.D_ME1.V8[ind2][ind] = -1.0 * TBME;
-	  ind = Index13(Chan.pvec[ind2], Chan.hhpvec[ind2], Chan.np[ind2], Chan.nhhp[ind2], shell4, shell2, shell1, shell3);
-	  Ints.D_ME1.V8[ind2][ind] = TBME;
-	  
-	  minus(tb, Space.qnums[shell3], Space.qnums[shell1]);
-	  ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
-	  ind = Index22(Chan.hp2vec[ind1], Chan.hp1vec[ind1], Chan.nhp2[ind1], Chan.nhp1[ind1], shell1, shell3, shell2, shell4);
-	  Ints.D_ME1.V9[ind1][ind] = TBME;
-	  minus(tb, Space.qnums[shell3], Space.qnums[shell2]);
-	  ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
-	  ind = Index22(Chan.hp2vec[ind1], Chan.hp1vec[ind1], Chan.nhp2[ind1], Chan.nhp1[ind1], shell2, shell3, shell1, shell4);
-	  Ints.D_ME1.V9[ind1][ind] = -1.0 * TBME;
-	  minus(tb, Space.qnums[shell4], Space.qnums[shell1]);
-	  ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
-	  ind = Index22(Chan.hp2vec[ind1], Chan.hp1vec[ind1], Chan.nhp2[ind1], Chan.nhp1[ind1], shell1, shell4, shell2, shell3);
-	  Ints.D_ME1.V9[ind1][ind] = -1.0 * TBME;
-	  minus(tb, Space.qnums[shell4], Space.qnums[shell2]);
-	  ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
-	  ind = Index22(Chan.hp2vec[ind1], Chan.hp1vec[ind1], Chan.nhp2[ind1], Chan.nhp1[ind1], shell2, shell4, shell1, shell3);
-	  Ints.D_ME1.V9[ind1][ind] = TBME;
-	  
-	  minus(tb, Space.qnums[shell4], Space.qnums[shell1]);
-	  ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
-	  ind = Index22(Chan.hp2vec[ind1], Chan.hp1vec[ind1], Chan.nhp2[ind1], Chan.nhp1[ind1], shell1, shell4, shell2, shell3);
-	  Ints.D_ME1.V10[ind1][ind] = TBME;
-	  minus(tb, Space.qnums[shell4], Space.qnums[shell2]);
-	  ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
-	  ind = Index22(Chan.hp2vec[ind1], Chan.hp1vec[ind1], Chan.nhp2[ind1], Chan.nhp1[ind1], shell2, shell4, shell1, shell3);
-	  Ints.D_ME1.V10[ind1][ind] = -1.0 * TBME;
-	  minus(tb, Space.qnums[shell3], Space.qnums[shell1]);
-	  ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
-	  ind = Index22(Chan.hp2vec[ind1], Chan.hp1vec[ind1], Chan.nhp2[ind1], Chan.nhp1[ind1], shell1, shell3, shell2, shell4);
-	  Ints.D_ME1.V10[ind1][ind] = -1.0 * TBME;
-	  minus(tb, Space.qnums[shell3], Space.qnums[shell2]);
-	  ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
-	  ind = Index22(Chan.hp2vec[ind1], Chan.hp1vec[ind1], Chan.nhp2[ind1], Chan.nhp1[ind1], shell2, shell3, shell1, shell4);
-	  Ints.D_ME1.V10[ind1][ind] = TBME;
-	}
-	if(Parameters.approx == "singles"){
-	  if(ptype == "hole" && qtype == "particle" && rtype == "particle" && stype == "particle"){
-	    ind2 = Chan.indvec[shell2];
-	    ind = Index13(Chan.pvec[ind2], Chan.hppvec[ind2], Chan.np[ind2], Chan.nhpp[ind2], shell2, shell1, shell3, shell4);
-	    Ints.S_ME1.V11[ind2][ind] = TBME;
-	    ind = Index13(Chan.pvec[ind2], Chan.hppvec[ind2], Chan.np[ind2], Chan.nhpp[ind2], shell2, shell1, shell4, shell3);
-	    Ints.S_ME1.V11[ind2][ind] = -1.0 * TBME;
-	    
-	    ind2 = Chan.indvec[shell3];
-	    ind = Index31(Chan.hpp1vec[ind2], Chan.pvec[ind2], Chan.nhpp1[ind2], Chan.np[ind2], shell1, shell2, shell4, shell3);
-	    Ints.S_ME1.V13[ind2][ind] = TBME;
-	    ind2 = Chan.indvec[shell4];
-	    ind = Index31(Chan.hpp1vec[ind2], Chan.pvec[ind2], Chan.nhpp1[ind2], Chan.np[ind2], shell1, shell2, shell3, shell4);
-	    Ints.S_ME1.V13[ind2][ind] = -1.0 * TBME;
-	    
-	    minus(tb, Space.qnums[shell1], Space.qnums[shell3]);
-	    ind2 = ChanInd_2b_cross(Parameters.basis, Space, tb);
-	    ind = Index22(Chan.pp1vec[ind2], Chan.hp1vec[ind2], Chan.npp1[ind2], Chan.nhp1[ind2], shell4, shell2, shell1, shell3);
-	    Ints.S_ME1.V16[ind2][ind] = TBME;
-	    minus(tb, Space.qnums[shell1], Space.qnums[shell4]);
-	    ind2 = ChanInd_2b_cross(Parameters.basis, Space, tb);
-	    ind = Index22(Chan.pp1vec[ind2], Chan.hp1vec[ind2], Chan.npp1[ind2], Chan.nhp1[ind2], shell3, shell2, shell1, shell4);
-	    Ints.S_ME1.V16[ind2][ind] = -1.0 * TBME;
-	    
-	    ind2 = Chan.indvec[shell2];
-	    ind = Index31(Chan.hppvec[ind2], Chan.pvec[ind2], Chan.nhpp[ind2], Chan.np[ind2], shell1, shell3, shell4, shell2);
-	    Ints.S_ME1.V17[ind2][ind] = TBME;
-	    ind = Index31(Chan.hppvec[ind2], Chan.pvec[ind2], Chan.nhpp[ind2], Chan.np[ind2], shell1, shell4, shell3, shell2);
-	    Ints.S_ME1.V17[ind2][ind] = -1.0 * TBME;
-	    
+	  TBME = HF_ME.V[chan][tb1*HF_Chan.ntb[chan] + tb2];
+	  if(ptype == "hole" && qtype == "hole" && rtype == "hole" && stype == "hole"){
 	    plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
-	    ind2 = ChanInd_2b_dir(Parameters.basis, Space, tb);
-	    ind = Index22(Chan.ppvec[ind2], Chan.hpvec[ind2], Chan.npp[ind2], Chan.nhp[ind2], shell3, shell4, shell1, shell2);
-	    Ints.S_ME1.V20[ind2][ind] = TBME;
-	    ind = Index22(Chan.ppvec[ind2], Chan.hpvec[ind2], Chan.npp[ind2], Chan.nhp[ind2], shell4, shell3, shell1, shell2);
-	    Ints.S_ME1.V20[ind2][ind] = -1.0 * TBME;
+	    ind1 = ChanInd_2b_dir(Parameters.basis, Space, tb);
+	    ind = Index22(Chan.hhvec[ind1], Chan.hhvec[ind1], Chan.nhh[ind1], Chan.nhh[ind1], shell1, shell2, shell3, shell4);
+	    Ints.D_ME1.V2[ind1][ind] = TBME;
+	    ind = Index22(Chan.hhvec[ind1], Chan.hhvec[ind1], Chan.nhh[ind1], Chan.nhh[ind1], shell2, shell1, shell3, shell4);
+	    Ints.D_ME1.V2[ind1][ind] = -1.0 * TBME;
+	    ind = Index22(Chan.hhvec[ind1], Chan.hhvec[ind1], Chan.nhh[ind1], Chan.nhh[ind1], shell1, shell2, shell4, shell3);
+	    Ints.D_ME1.V2[ind1][ind] = -1.0 * TBME;
+	    ind = Index22(Chan.hhvec[ind1], Chan.hhvec[ind1], Chan.nhh[ind1], Chan.nhh[ind1], shell2, shell1, shell4, shell3);
+	    Ints.D_ME1.V2[ind1][ind] = TBME;
+	    ind = Index22(Chan.hhvec[ind1], Chan.hhvec[ind1], Chan.nhh[ind1], Chan.nhh[ind1], shell3, shell4, shell1, shell2);
+	    Ints.D_ME1.V2[ind1][ind] = TBME;
+	    ind = Index22(Chan.hhvec[ind1], Chan.hhvec[ind1], Chan.nhh[ind1], Chan.nhh[ind1], shell4, shell3, shell1, shell2);
+	    Ints.D_ME1.V2[ind1][ind] = -1.0 * TBME;
+	    ind = Index22(Chan.hhvec[ind1], Chan.hhvec[ind1], Chan.nhh[ind1], Chan.nhh[ind1], shell3, shell4, shell2, shell1);
+	    Ints.D_ME1.V2[ind1][ind] = -1.0 * TBME;
+	    ind = Index22(Chan.hhvec[ind1], Chan.hhvec[ind1], Chan.nhh[ind1], Chan.nhh[ind1], shell4, shell3, shell2, shell1);
+	    Ints.D_ME1.V2[ind1][ind] = TBME;
 	  }
-	  else if(ptype == "hole" && qtype == "hole" && rtype == "hole" && stype == "particle"){
-	    ind2 = Chan.indvec[shell3];
-	    ind = Index13(Chan.hvec[ind2], Chan.hhpvec[ind2], Chan.nh[ind2], Chan.nhhp[ind2], shell3, shell1, shell2, shell4);
-	    Ints.S_ME1.V12[ind2][ind] = TBME;
-	    ind = Index13(Chan.hvec[ind2], Chan.hhpvec[ind2], Chan.nh[ind2], Chan.nhhp[ind2], shell3, shell2, shell1, shell4);
-	    Ints.S_ME1.V12[ind2][ind] = -1.0 * TBME;
+	  else if(ptype == "particle" && qtype == "particle" && rtype == "particle" && stype == "particle"){
+	    plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
+	    ind1 = ChanInd_2b_dir(Parameters.basis, Space, tb);
+	    ind = Index22(Chan.ppvec[ind1], Chan.ppvec[ind1], Chan.npp[ind1], Chan.npp[ind1], shell1, shell2, shell3, shell4);
+	    Ints.D_ME1.V1[ind1][ind] = TBME;
+	    ind = Index22(Chan.ppvec[ind1], Chan.ppvec[ind1], Chan.npp[ind1], Chan.npp[ind1], shell2, shell1, shell3, shell4);
+	    Ints.D_ME1.V1[ind1][ind] = -1.0 * TBME;
+	    ind = Index22(Chan.ppvec[ind1], Chan.ppvec[ind1], Chan.npp[ind1], Chan.npp[ind1], shell1, shell2, shell4, shell3);
+	    Ints.D_ME1.V1[ind1][ind] = -1.0 * TBME;
+	    ind = Index22(Chan.ppvec[ind1], Chan.ppvec[ind1], Chan.npp[ind1], Chan.npp[ind1], shell2, shell1, shell4, shell3);
+	    Ints.D_ME1.V1[ind1][ind] = TBME;
+	    ind = Index22(Chan.ppvec[ind1], Chan.ppvec[ind1], Chan.npp[ind1], Chan.npp[ind1], shell3, shell4, shell1, shell2);
+	    Ints.D_ME1.V1[ind1][ind] = TBME;
+	    ind = Index22(Chan.ppvec[ind1], Chan.ppvec[ind1], Chan.npp[ind1], Chan.npp[ind1], shell4, shell3, shell1, shell2);
+	    Ints.D_ME1.V1[ind1][ind] = -1.0 * TBME;
+	    ind = Index22(Chan.ppvec[ind1], Chan.ppvec[ind1], Chan.npp[ind1], Chan.npp[ind1], shell3, shell4, shell2, shell1);
+	    Ints.D_ME1.V1[ind1][ind] = -1.0 * TBME;
+	    ind = Index22(Chan.ppvec[ind1], Chan.ppvec[ind1], Chan.npp[ind1], Chan.npp[ind1], shell4, shell3, shell2, shell1);
+	    Ints.D_ME1.V1[ind1][ind] = TBME;
+	  }
+	  else if(ptype == "hole" && qtype == "particle" && rtype == "hole" && stype == "particle"){
+	    minus(tb, Space.qnums[shell4], Space.qnums[shell1]);
+	    ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
+	    ind = Index22(Chan.hp2vec[ind1], Chan.hp2vec[ind1], Chan.nhp2[ind1], Chan.nhp2[ind1], shell1, shell4, shell3, shell2);
+	    Ints.D_ME1.V3[ind1][ind] = TBME;
+	    ind = Index22(Chan.hp2vec[ind1], Chan.hp2vec[ind1], Chan.nhp2[ind1], Chan.nhp2[ind1], shell3, shell2, shell1, shell4);
+	    Ints.D_ME1.V3[ind1][ind] = TBME;
+	  }
+	  else if(ptype == "hole" && qtype == "hole" && rtype == "particle" && stype == "particle"){
+	    plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
+	    ind1 = ChanInd_2b_dir(Parameters.basis, Space, tb);
+	    ind = Index22(Chan.ppvec[ind1], Chan.hhvec[ind1], Chan.npp[ind1], Chan.nhh[ind1], shell3, shell4, shell1, shell2);
+	    Ints.D_ME1.V4[ind1][ind] = TBME;
+	    ind = Index22(Chan.ppvec[ind1], Chan.hhvec[ind1], Chan.npp[ind1], Chan.nhh[ind1], shell4, shell3, shell1, shell2);
+	    Ints.D_ME1.V4[ind1][ind] = -1.0 * TBME;
+	    ind = Index22(Chan.ppvec[ind1], Chan.hhvec[ind1], Chan.npp[ind1], Chan.nhh[ind1], shell3, shell4, shell2, shell1);
+	    Ints.D_ME1.V4[ind1][ind] = -1.0 * TBME;
+	    ind = Index22(Chan.ppvec[ind1], Chan.hhvec[ind1], Chan.npp[ind1], Chan.nhh[ind1], shell4, shell3, shell2, shell1);
+	    Ints.D_ME1.V4[ind1][ind] = TBME;
+	    
+	    ind2 = Chan.indvec[shell2];
+	    ind = Index13(Chan.hvec[ind2], Chan.hppvec[ind2], Chan.nh[ind2], Chan.nhpp[ind2], shell2, shell1, shell3, shell4);
+	    Ints.D_ME1.V5[ind2][ind] = TBME;
+	    ind = Index13(Chan.hvec[ind2], Chan.hppvec[ind2], Chan.nh[ind2], Chan.nhpp[ind2], shell2, shell1, shell4, shell3);
+	    Ints.D_ME1.V5[ind2][ind] = -1.0 * TBME;
+	    ind2 = Chan.indvec[shell1];
+	    ind = Index13(Chan.hvec[ind2], Chan.hppvec[ind2], Chan.nh[ind2], Chan.nhpp[ind2], shell1, shell2, shell3, shell4);
+	    Ints.D_ME1.V5[ind2][ind] = -1.0 * TBME;
+	    ind = Index13(Chan.hvec[ind2], Chan.hppvec[ind2], Chan.nh[ind2], Chan.nhpp[ind2], shell1, shell2, shell4, shell3);
+	    Ints.D_ME1.V5[ind2][ind] = TBME;
 	    
 	    ind2 = Chan.indvec[shell1];
-	    ind = Index31(Chan.hhp1vec[ind2], Chan.hvec[ind2], Chan.nhhp1[ind2], Chan.nh[ind2], shell2, shell3, shell4, shell1);
-	    Ints.S_ME1.V14[ind2][ind] = TBME;
+	    ind = Index13(Chan.hvec[ind2], Chan.hppvec[ind2], Chan.nh[ind2], Chan.nhpp[ind2], shell1, shell2, shell3, shell4);
+	    Ints.D_ME1.V6[ind2][ind] = TBME;
+	    ind = Index13(Chan.hvec[ind2], Chan.hppvec[ind2], Chan.nh[ind2], Chan.nhpp[ind2], shell1, shell2, shell4, shell3);
+	    Ints.D_ME1.V6[ind2][ind] = -1.0 * TBME;
 	    ind2 = Chan.indvec[shell2];
-	    ind = Index31(Chan.hhp1vec[ind2], Chan.hvec[ind2], Chan.nhhp1[ind2], Chan.nh[ind2], shell1, shell3, shell4, shell2);
-	    Ints.S_ME1.V14[ind2][ind] = -1.0 * TBME;
+	    ind = Index13(Chan.hvec[ind2], Chan.hppvec[ind2], Chan.nh[ind2], Chan.nhpp[ind2], shell2, shell1, shell3, shell4);
+	    Ints.D_ME1.V6[ind2][ind] = -1.0 * TBME;
+	    ind = Index13(Chan.hvec[ind2], Chan.hppvec[ind2], Chan.nh[ind2], Chan.nhpp[ind2], shell2, shell1, shell4, shell3);
+	    Ints.D_ME1.V6[ind2][ind] = TBME;
 	    
-	    minus(tb, Space.qnums[shell1], Space.qnums[shell4]);
-	    ind2 = ChanInd_2b_cross(Parameters.basis, Space, tb);
-	    ind = Index22(Chan.hh1vec[ind2], Chan.hp1vec[ind2], Chan.nhh1[ind2], Chan.nhp1[ind2], shell3, shell2, shell1, shell4);
-	    Ints.S_ME1.V15[ind2][ind] = TBME;
-	    minus(tb, Space.qnums[shell2], Space.qnums[shell4]);
-	    ind2 = ChanInd_2b_cross(Parameters.basis, Space, tb);
-	    ind = Index22(Chan.hh1vec[ind2], Chan.hp1vec[ind2], Chan.nhh1[ind2], Chan.nhp1[ind2], shell3, shell1, shell2, shell4);
-	    Ints.S_ME1.V15[ind2][ind] = -1.0 * TBME;
+	    ind2 = Chan.indvec[shell4];
+	    ind = Index13(Chan.pvec[ind2], Chan.hhpvec[ind2], Chan.np[ind2], Chan.nhhp[ind2], shell4, shell1, shell2, shell3);
+	    Ints.D_ME1.V7[ind2][ind] = TBME;
+	    ind = Index13(Chan.pvec[ind2], Chan.hhpvec[ind2], Chan.np[ind2], Chan.nhhp[ind2], shell4, shell2, shell1, shell3);
+	    Ints.D_ME1.V7[ind2][ind] = -1.0 * TBME;
+	    ind2 = Chan.indvec[shell3];
+	    ind = Index13(Chan.pvec[ind2], Chan.hhpvec[ind2], Chan.np[ind2], Chan.nhhp[ind2], shell3, shell1, shell2, shell4);
+	    Ints.D_ME1.V7[ind2][ind] = -1.0 * TBME;
+	    ind = Index13(Chan.pvec[ind2], Chan.hhpvec[ind2], Chan.np[ind2], Chan.nhhp[ind2], shell3, shell2, shell1, shell4);
+	    Ints.D_ME1.V7[ind2][ind] = TBME;
 	    
 	    ind2 = Chan.indvec[shell3];
-	    ind = Index31(Chan.hhpvec[ind2], Chan.hvec[ind2], Chan.nhhp[ind2], Chan.nh[ind2], shell1, shell2, shell4, shell3);
-	    Ints.S_ME1.V18[ind2][ind] = TBME;
-	    ind = Index31(Chan.hhpvec[ind2], Chan.hvec[ind2], Chan.nhhp[ind2], Chan.nh[ind2], shell2, shell1, shell4, shell3);
-	    Ints.S_ME1.V18[ind2][ind] = -1.0 * TBME;
+	    ind = Index13(Chan.pvec[ind2], Chan.hhpvec[ind2], Chan.np[ind2], Chan.nhhp[ind2], shell3, shell1, shell2, shell4);
+	    Ints.D_ME1.V8[ind2][ind] = TBME;
+	    ind = Index13(Chan.pvec[ind2], Chan.hhpvec[ind2], Chan.np[ind2], Chan.nhhp[ind2], shell3, shell2, shell1, shell4);
+	    Ints.D_ME1.V8[ind2][ind] = -1.0 * TBME;
+	    ind2 = Chan.indvec[shell4];
+	    ind = Index13(Chan.pvec[ind2], Chan.hhpvec[ind2], Chan.np[ind2], Chan.nhhp[ind2], shell4, shell1, shell2, shell3);
+	    Ints.D_ME1.V8[ind2][ind] = -1.0 * TBME;
+	    ind = Index13(Chan.pvec[ind2], Chan.hhpvec[ind2], Chan.np[ind2], Chan.nhhp[ind2], shell4, shell2, shell1, shell3);
+	    Ints.D_ME1.V8[ind2][ind] = TBME;
 	    
-	    plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
-	    ind2 = ChanInd_2b_dir(Parameters.basis, Space, tb);
-	    ind = Index22(Chan.hpvec[ind2], Chan.hhvec[ind2], Chan.nhp[ind2], Chan.nhh[ind2], shell3, shell4, shell1, shell2);
-	    Ints.S_ME1.V19[ind2][ind] = TBME;
-	    ind = Index22(Chan.hpvec[ind2], Chan.hhvec[ind2], Chan.nhp[ind2], Chan.nhh[ind2], shell3, shell4, shell2, shell1);
-	    Ints.S_ME1.V19[ind2][ind] = -1.0 * TBME;
+	    minus(tb, Space.qnums[shell3], Space.qnums[shell1]);
+	    ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
+	    ind = Index22(Chan.hp2vec[ind1], Chan.hp1vec[ind1], Chan.nhp2[ind1], Chan.nhp1[ind1], shell1, shell3, shell2, shell4);
+	    Ints.D_ME1.V9[ind1][ind] = TBME;
+	    minus(tb, Space.qnums[shell3], Space.qnums[shell2]);
+	    ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
+	    ind = Index22(Chan.hp2vec[ind1], Chan.hp1vec[ind1], Chan.nhp2[ind1], Chan.nhp1[ind1], shell2, shell3, shell1, shell4);
+	    Ints.D_ME1.V9[ind1][ind] = -1.0 * TBME;
+	    minus(tb, Space.qnums[shell4], Space.qnums[shell1]);
+	    ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
+	    ind = Index22(Chan.hp2vec[ind1], Chan.hp1vec[ind1], Chan.nhp2[ind1], Chan.nhp1[ind1], shell1, shell4, shell2, shell3);
+	    Ints.D_ME1.V9[ind1][ind] = -1.0 * TBME;
+	    minus(tb, Space.qnums[shell4], Space.qnums[shell2]);
+	    ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
+	    ind = Index22(Chan.hp2vec[ind1], Chan.hp1vec[ind1], Chan.nhp2[ind1], Chan.nhp1[ind1], shell2, shell4, shell1, shell3);
+	    Ints.D_ME1.V9[ind1][ind] = TBME;
+	    
+	    minus(tb, Space.qnums[shell4], Space.qnums[shell1]);
+	    ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
+	    ind = Index22(Chan.hp2vec[ind1], Chan.hp1vec[ind1], Chan.nhp2[ind1], Chan.nhp1[ind1], shell1, shell4, shell2, shell3);
+	    Ints.D_ME1.V10[ind1][ind] = TBME;
+	    minus(tb, Space.qnums[shell4], Space.qnums[shell2]);
+	    ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
+	    ind = Index22(Chan.hp2vec[ind1], Chan.hp1vec[ind1], Chan.nhp2[ind1], Chan.nhp1[ind1], shell2, shell4, shell1, shell3);
+	    Ints.D_ME1.V10[ind1][ind] = -1.0 * TBME;
+	    minus(tb, Space.qnums[shell3], Space.qnums[shell1]);
+	    ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
+	    ind = Index22(Chan.hp2vec[ind1], Chan.hp1vec[ind1], Chan.nhp2[ind1], Chan.nhp1[ind1], shell1, shell3, shell2, shell4);
+	    Ints.D_ME1.V10[ind1][ind] = -1.0 * TBME;
+	    minus(tb, Space.qnums[shell3], Space.qnums[shell2]);
+	    ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
+	    ind = Index22(Chan.hp2vec[ind1], Chan.hp1vec[ind1], Chan.nhp2[ind1], Chan.nhp1[ind1], shell2, shell3, shell1, shell4);
+	    Ints.D_ME1.V10[ind1][ind] = TBME;
+	  }
+	  if(Parameters.approx == "singles"){
+	    if(ptype == "hole" && qtype == "particle" && rtype == "particle" && stype == "particle"){
+	      ind2 = Chan.indvec[shell2];
+	      ind = Index13(Chan.pvec[ind2], Chan.hppvec[ind2], Chan.np[ind2], Chan.nhpp[ind2], shell2, shell1, shell3, shell4);
+	      Ints.S_ME1.V11[ind2][ind] = TBME;
+	      ind = Index13(Chan.pvec[ind2], Chan.hppvec[ind2], Chan.np[ind2], Chan.nhpp[ind2], shell2, shell1, shell4, shell3);
+	      Ints.S_ME1.V11[ind2][ind] = -1.0 * TBME;
+	      
+	      ind2 = Chan.indvec[shell3];
+	      ind = Index31(Chan.hpp1vec[ind2], Chan.pvec[ind2], Chan.nhpp1[ind2], Chan.np[ind2], shell1, shell2, shell4, shell3);
+	      Ints.S_ME1.V13[ind2][ind] = TBME;
+	      ind2 = Chan.indvec[shell4];
+	      ind = Index31(Chan.hpp1vec[ind2], Chan.pvec[ind2], Chan.nhpp1[ind2], Chan.np[ind2], shell1, shell2, shell3, shell4);
+	      Ints.S_ME1.V13[ind2][ind] = -1.0 * TBME;
+	      
+	      minus(tb, Space.qnums[shell1], Space.qnums[shell3]);
+	      ind2 = ChanInd_2b_cross(Parameters.basis, Space, tb);
+	      ind = Index22(Chan.pp1vec[ind2], Chan.hp1vec[ind2], Chan.npp1[ind2], Chan.nhp1[ind2], shell4, shell2, shell1, shell3);
+	      Ints.S_ME1.V16[ind2][ind] = TBME;
+	      minus(tb, Space.qnums[shell1], Space.qnums[shell4]);
+	      ind2 = ChanInd_2b_cross(Parameters.basis, Space, tb);
+	      ind = Index22(Chan.pp1vec[ind2], Chan.hp1vec[ind2], Chan.npp1[ind2], Chan.nhp1[ind2], shell3, shell2, shell1, shell4);
+	      Ints.S_ME1.V16[ind2][ind] = -1.0 * TBME;
+	      
+	      ind2 = Chan.indvec[shell2];
+	      ind = Index31(Chan.hppvec[ind2], Chan.pvec[ind2], Chan.nhpp[ind2], Chan.np[ind2], shell1, shell3, shell4, shell2);
+	      Ints.S_ME1.V17[ind2][ind] = TBME;
+	      ind = Index31(Chan.hppvec[ind2], Chan.pvec[ind2], Chan.nhpp[ind2], Chan.np[ind2], shell1, shell4, shell3, shell2);
+	      Ints.S_ME1.V17[ind2][ind] = -1.0 * TBME;
+	      
+	      plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
+	      ind2 = ChanInd_2b_dir(Parameters.basis, Space, tb);
+	      ind = Index22(Chan.ppvec[ind2], Chan.hpvec[ind2], Chan.npp[ind2], Chan.nhp[ind2], shell3, shell4, shell1, shell2);
+	      Ints.S_ME1.V20[ind2][ind] = TBME;
+	      ind = Index22(Chan.ppvec[ind2], Chan.hpvec[ind2], Chan.npp[ind2], Chan.nhp[ind2], shell4, shell3, shell1, shell2);
+	      Ints.S_ME1.V20[ind2][ind] = -1.0 * TBME;
+	    }
+	    else if(ptype == "hole" && qtype == "hole" && rtype == "hole" && stype == "particle"){
+	      ind2 = Chan.indvec[shell3];
+	      ind = Index13(Chan.hvec[ind2], Chan.hhpvec[ind2], Chan.nh[ind2], Chan.nhhp[ind2], shell3, shell1, shell2, shell4);
+	      Ints.S_ME1.V12[ind2][ind] = TBME;
+	      ind = Index13(Chan.hvec[ind2], Chan.hhpvec[ind2], Chan.nh[ind2], Chan.nhhp[ind2], shell3, shell2, shell1, shell4);
+	      Ints.S_ME1.V12[ind2][ind] = -1.0 * TBME;
+	      
+	      ind2 = Chan.indvec[shell1];
+	      ind = Index31(Chan.hhp1vec[ind2], Chan.hvec[ind2], Chan.nhhp1[ind2], Chan.nh[ind2], shell2, shell3, shell4, shell1);
+	      Ints.S_ME1.V14[ind2][ind] = TBME;
+	      ind2 = Chan.indvec[shell2];
+	      ind = Index31(Chan.hhp1vec[ind2], Chan.hvec[ind2], Chan.nhhp1[ind2], Chan.nh[ind2], shell1, shell3, shell4, shell2);
+	      Ints.S_ME1.V14[ind2][ind] = -1.0 * TBME;
+	      
+	      minus(tb, Space.qnums[shell1], Space.qnums[shell4]);
+	      ind2 = ChanInd_2b_cross(Parameters.basis, Space, tb);
+	      ind = Index22(Chan.hh1vec[ind2], Chan.hp1vec[ind2], Chan.nhh1[ind2], Chan.nhp1[ind2], shell3, shell2, shell1, shell4);
+	      Ints.S_ME1.V15[ind2][ind] = TBME;
+	      minus(tb, Space.qnums[shell2], Space.qnums[shell4]);
+	      ind2 = ChanInd_2b_cross(Parameters.basis, Space, tb);
+	      ind = Index22(Chan.hh1vec[ind2], Chan.hp1vec[ind2], Chan.nhh1[ind2], Chan.nhp1[ind2], shell3, shell1, shell2, shell4);
+	      Ints.S_ME1.V15[ind2][ind] = -1.0 * TBME;
+	      
+	      ind2 = Chan.indvec[shell3];
+	      ind = Index31(Chan.hhpvec[ind2], Chan.hvec[ind2], Chan.nhhp[ind2], Chan.nh[ind2], shell1, shell2, shell4, shell3);
+	      Ints.S_ME1.V18[ind2][ind] = TBME;
+	      ind = Index31(Chan.hhpvec[ind2], Chan.hvec[ind2], Chan.nhhp[ind2], Chan.nh[ind2], shell2, shell1, shell4, shell3);
+	      Ints.S_ME1.V18[ind2][ind] = -1.0 * TBME;
+	      
+	      plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
+	      ind2 = ChanInd_2b_dir(Parameters.basis, Space, tb);
+	      ind = Index22(Chan.hpvec[ind2], Chan.hhvec[ind2], Chan.nhp[ind2], Chan.nhh[ind2], shell3, shell4, shell1, shell2);
+	      Ints.S_ME1.V19[ind2][ind] = TBME;
+	      ind = Index22(Chan.hpvec[ind2], Chan.hhvec[ind2], Chan.nhp[ind2], Chan.nhh[ind2], shell3, shell4, shell2, shell1);
+	      Ints.S_ME1.V19[ind2][ind] = -1.0 * TBME;
+	    }
 	  }
 	}
       }
     }
   }
-  /*for(int i = 0; i < Chan.size1; ++i){
-    for(int pp = 0; pp < Chan.pp[i]; ++pp){ std::cout << Chan.ppvec1[i][2*pp] << Chan.ppvec1[i][2*pp + 1] << " "; }
-    std::cout << std::endl;
-    for(int hh = 0; hh < Chan.hh[i]; ++hh){ std::cout << Chan.hhvec1[i][2*hh] << Chan.hhvec1[i][2*hh + 1] << " "; }
-    std::cout << std::endl;
-    for(int pp = 0; pp < Chan.pp[i]; ++pp){
-      for(int hh = 0; hh < Chan.hh[i]; ++hh){
-	std::cout << Ints.D_ME1.V4[i][pp*Chan.hh[i] + hh] << " ";
-      }
-      std::cout << std::endl;
-    }
-    std::cout << std::endl;
-    }*/
 }
 
 /*void Get_Matrix_Elements_J(const Input_Parameters &Parameters, const HF_Channels &HF_Chan, const HF_Matrix_Elements &HF_ME, const Model_Space &Space, const Channels &Chan, Interactions &Ints)
