@@ -7,8 +7,8 @@
 #include <complex>
 #include <vector>
 
-#define PI 3.14159265359
-#define e 2.718281828459
+#define PI 3.141592653589793
+#define e 2.718281828459045
 
 #define hbarc_MeVfm 197.3269788 // MeV fm
 #define hbarc_eVum 0.1973269788 // eV um
@@ -29,6 +29,7 @@ long long factorial2(const double &n);
 double CGC(double j1, double m1, double j2, double m2, double jtot, double mtot);
 double CGC3(const double &j1, const double &m1, const double &j2, const double &m2, const double &jtot, const double &mtot);
 double CGC6(const double &j1, const double &j2, const double &j3, const double &j4, const double &j5, const double &j6);
+double Chi_J(const int &a, const int &b, const int &c, const int &d, const int &J1, const int &J2);
 double Legendre(const double &x, const int &l, const int &m);
 std::complex<double> SphericalY_C(const double &theta, const double &phi, const int &l, const int &m);
 double SphericalY(const double &theta, const double &phi, const int &l, const int &m);
@@ -43,11 +44,9 @@ double product1(const int &n1, const int &m1, const int &n2, const int &m2, cons
 double logproduct2(const int &n1, const int &m1, const int &n2, const int &m2, const int &n3, const int &m3, const int &n4, const int &m4, const int &j1, const int &j2, const int &j3, const int &j4);
 double logproduct3(const int &l1, const int &l2, const int &l3, const int &l4, const int &g1, const int &g2, const int &g3, const int &g4);
 double loggamma(const double &x);
-
-std::vector<double> projection(const std::vector<double> &u, const std::vector<double> &v);
-void GramSchmidt(std::vector<std::vector<double> > &Vectors);
 void projection(double *u, double *v, double *proj, const int &size);
+void GramSchmidt(double *Vectors, const int &size);
 void GramSchmidt(double **Vectors, const int &size);
-
+double rand_normal(double mean, double stddev);
 
 #endif

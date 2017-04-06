@@ -5,6 +5,7 @@
 #include <math.h>
 #include <fstream>
 #include <string>
+#include <cstring>
 #include <sstream>
 #include <vector>
 #include <bitset>
@@ -17,6 +18,7 @@
 #include <numeric>
 #include <omp.h>
 #include <complex>
+#include <unordered_map>
 
 const std::string PATH = "inputs/";
 
@@ -25,6 +27,9 @@ extern "C" void dgemm_(char* ta,char* tb,int* m,int* n,int* k,double* al,double*
 extern "C" void dgetrf_(int* M,int* N,double* A,int* lda,int* ipiv,int* info);
 extern "C" void dgetri_(int* N,double* A,int* lda,int* ipiv,double* work,int* lwork,int* info);
 extern "C" void dgeev_(char* jobvl,char* jobvr,int* N,double* A,int* lda,double* wr,double* wi,double* vl,int* ldvl,double* vr,int* ldvr,double* work,int* lwork,int* info);
+
+extern "C" void dnaupd_(int* ido,char* bmat,int* N,char* which,int* nev,double* tol,double* resid,int* ncv,double* v,int* ldv,int* iparam,int* ipntr,double* workd,double* workl,int* lworkl,int* info);
+extern "C" void dneupd_(bool* rvec,char* howmny,int* select,double* dr,double* di,double* z,int* ldz,double* sigmar,double* sigmai,double* workev,char* bmat,int* N,char* which,int* nev,double* tol,double* resid,int* ncv,double* v,int* ldv,int* iparam,int* ipntr,double* workd,double* workl,int* lworkl,int* info);
 
 #define dgemm_NN(A, B, C, m, n, k, alpha, beta, transA, transB) dgemm_(transB, transA, n, m, k, alpha, B, n, A, k, beta, C, n)
 #define dgemm_NT(A, B, C, m, n, k, alpha, beta, transA, transB) dgemm_(transB, transA, n, m, k, alpha, B, k, A, k, beta, C, n)
@@ -49,7 +54,11 @@ struct Doubles_ME1;
 struct Singles_ME1;
 struct CC_Eff;
 
-//struct V_Conv;
+struct HF_Channels;
+struct HF_Matrix_Elements;
+
+int Hash2(const int &p, const int &q, const int &size);
+int Hash3(const int &p, const int &q, const int &r, const int &size);
 
 int Index11(const int *vec1, const int *vec2, const int &num1, const int &num2, const int &p, const int &q);
 int Index2(const int *vec1, const int &num1, const int &p, const int &q);
@@ -58,13 +67,7 @@ int Index22(const int *vec1, const int *vec2, const int &num1, const int &num2, 
 int Index13(const int *vec1, const int *vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s);
 int Index31(const int *vec1, const int *vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s);
 
-/*int Index1(const std::vector<int> &vec1, const int &p);
-int Index11(const std::vector<int> &vec1, const std::vector<int> &vec2, const int &num1, const int &num2, const int &p, const int &q);
-int Index2(const std::vector<int> &vec1, const int &p, const int &q);
-int Index22(const std::vector<int> &vec1, const std::vector<int> &vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s);
-int Index13(const std::vector<int> &vec1, const std::vector<int> &vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s);
-int Index31(const std::vector<int> &vec1, const std::vector<int> &vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s);*/
-
+int ChanInd_1b(const std::string &basis, const Model_Space &Space, const State &State);
 int ChanInd_2b_dir(const std::string &basis, const Model_Space &Space, const State &State);
 int ChanInd_2b_cross(const std::string &basis, const Model_Space &Space, const State &State);
 void plus(State &S, const State &S1, const State &S2);
@@ -83,10 +86,25 @@ void Coulomb_Inf_Matrix_Elements(const Input_Parameters &Parameters, const Model
 void Read_Matrix_Elements(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints);
 //void Read_Matrix_Elements_J(const Input_Parameters &Parameters, const Model_Space &Space, const Model_Space &Space_J, const Channels &Chan, Interactions &Ints);
 
+//void Perform_CC(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, const HF_Channels &HF_Chan, const HF_Matrix_Elements &HF_ME);
 void Perform_CC(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps);
 void Doubles_Step(const Model_Space &Space, const Channels &Chan, Interactions &Int, Amplitudes &Amp1, Amplitudes &Amp2);
 void Doubles_Step_2(const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps1, Amplitudes &Amps2);
 void Singles_Step(const Model_Space &Space, const Channels &Chan, Interactions &Int, Amplitudes &Amp1, Amplitudes &Amp2);
+void Doubles_Step_J(const Model_Space &Space, const Channels &Chan, Interactions &Int, Amplitudes &Amp1, Amplitudes &Amp2);
+void Doubles_Step_2_J(const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps1, Amplitudes &Amps2);
+void Singles_Step_J(const Model_Space &Space, const Channels &Chan, Interactions &Int, Amplitudes &Amp1, Amplitudes &Amp2);
+
+void Random_Step(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps0, Amplitudes &Amps, Amplitudes &Amps2, Amplitudes &tempAmps, double &mix, bool &denom, double &width, double &error2);
+void Randomize_Amps(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps0, Amplitudes &Amps, double &width);
+void Gather_Amps0(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, Amplitudes &Amps2, double &mix);
+void Gather_Amps(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, Amplitudes &Amps2, double &mix, bool &denom);
+void Gather_Amps2(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, Amplitudes &Amps2, double &mix, bool &denom, double &checkdot, int &N, double ***delp);
+void Gather_Amps3(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, Amplitudes &Amps2, double &mix, bool &denom, int &N, double ***p, double ***delp, double *B);
+void CC_Error(const Input_Parameters &Parameters, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, Amplitudes &Amps2, double &error);
+void Print_Amps(const Input_Parameters &Parameters, const Channels &Chan, Amplitudes &Amps);
+void Doubles_Step_explicit(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps1, Amplitudes &Amps2, double &error);
+void Doubles_Step_explicit2(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Amplitudes &Amps1, Amplitudes &Amps2, const HF_Channels &HF_Chan, const HF_Matrix_Elements &HF_ME, double &error);
 
 void HF(const Input_Parameters &Parameters, Model_Space &Space, const Channels &Chan, Interactions &Int);
 double E_Ref(const Input_Parameters &Parameters, Model_Space &Space, const Channels &Chan, const Interactions &Int);
@@ -99,10 +117,9 @@ double Coulomb_HO(const Input_Parameters &Parameters, const Model_Space &Space, 
 
 void Build_CC_Eff(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, CC_Eff &V_Eff);
 void EE_EOM(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, const CC_Eff &V_Eff);
-void PA_EOM(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, const CC_Eff &V_Eff);
-void PR_EOM(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, const CC_Eff &V_Eff);
-void bitsetup(int *vec, unsigned long long *state, const int &begin, const int &size);
-double matrixe(unsigned long long *bra, unsigned long long *ket, const int &size, int *p, const int &psize, int *q, const int &qsize, const double &ME);
+void PA_EOM(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, const CC_Eff &V_Eff, State *states, double *nums);
+void PR_EOM(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, const CC_Eff &V_Eff, State *states, double *nums);
+void CC_compare_JM(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, std::string &inputfile);
 
 //Structure for holding Input parameters
 struct Input_Parameters{
@@ -164,17 +181,23 @@ struct Model_Space{
   int indpar; //number of particle orbits
   int indhol; //number of hole orbits
   int indtot; //number of total orbits
+  int indtotj;
 
   State *qnums;
   State qmins;
   State qmaxs;
   State qsizes;
+  State qsizes0;
   int **shellsm; // for j
 
   int Nmax;
   int nmax;
+  std::unordered_map<int,int> map_1b;
+  std::unordered_map<int,int> map_2b_dir;
+  std::unordered_map<int,int> map_2b_cross;
   int *map_2b;
   int size_2b;
+  
   Model_Space(){};
   void delete_struct(Input_Parameters &Parameters);
 };
@@ -223,6 +246,22 @@ struct Channels{
   int **hhhvec;
   int **pppvec;
 
+  std::unordered_map<int,int> *hh_map;
+  std::unordered_map<int,int> *pp_map;
+  std::unordered_map<int,int> *hp_map;
+  std::unordered_map<int,int> *hp1_map;
+  std::unordered_map<int,int> *hp2_map;
+  std::unordered_map<int,int> *p_map;
+  std::unordered_map<int,int> *h_map;
+  std::unordered_map<int,int> *hhp_map;
+  std::unordered_map<int,int> *hpp_map;
+  std::unordered_map<int,int> *hhp1_map;
+  std::unordered_map<int,int> *hpp1_map;
+  std::unordered_map<int,int> *hh1_map;
+  std::unordered_map<int,int> *pp1_map;
+  std::unordered_map<int,int> *hhh_map;
+  std::unordered_map<int,int> *ppp_map;
+
   int ind0; // index of i-i cross channel for singles
   Channels(){};
   Channels(const Input_Parameters &Parameters, const Model_Space &Space);
@@ -231,6 +270,8 @@ struct Channels{
 
 struct Doubles_1{
   int **Tmap;
+  int **TJnum;
+  int ****TJmap;
   double **Evec;
   double **T1;
   double **T2;
@@ -256,17 +297,25 @@ struct Doubles_1{
   int **Qmap2;
 
   Doubles_1(){}; //default constructor
+  Doubles_1(const Channels &Chan, const Doubles_1 &D1); //constructor
   Doubles_1(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan); //constructor
+  void copy_Doubles_1(const Channels &Chan, const Doubles_1 &D1);
   void delete_struct(const Channels &Chan);
   void zero(const Channels &Chan);
+  void zero1(const Channels &Chan);
   void set_T(int, int, double);
   void set_T_2(const Channels &Chan, Interactions &Ints);
   double get_T(int, int) const;
+  void set_TJ(const Model_Space &Space, const Channels &Chan, int &chan, int &hhpp, int &i, int &j, int &a, int &b, double T);
+  double get_TJ(const Model_Space &Space, const Channels &Chan, int &chan, int &hhpp, int &i, int &j, int &a, int &b) const;
+  void set_T_2J(const Channels &Chan, Interactions &Ints);
 };
 
 struct Singles_1{
   int *Tmap;
   int *Tmap2;
+  int *TJnum;
+  int **TJmap;
   double *Evec;
   double *T1;
   double **T2;
@@ -303,21 +352,30 @@ struct Singles_1{
   int **Qmap5;
   int **Qmap6;
   Singles_1(){}; //default constructor
+  Singles_1(const Channels &Chan, const Singles_1 &S1); //constructor
   Singles_1(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan); //constructor
+  void copy_Singles_1(const Channels &Chan, const Singles_1 &S1);
   void delete_struct(const Channels &Chan);
   void zero(const Channels &Chan);
+  void zero1(const Channels &Chan);
   void set_T(int, double);
   void set_T_2(const Channels &Chan, Interactions &Ints);
   double get_T(int) const;
+  void set_TJ(const Model_Space &Space, int &hp, int &i, int &a, double T);
+  void set_T_2J(const Model_Space &Space, const Channels &Chan, Interactions &Ints);
+  double get_TJ(const Model_Space &Space, int &hp, int &i, int &a) const;
 };
 
 struct Amplitudes{
   Doubles_1 D1; // for doubles only
   Singles_1 S1; // for singles part of singles
   Amplitudes(){};
+  Amplitudes(const Input_Parameters &Parameters, const Channels &Chan, const Amplitudes &Amps);
   Amplitudes(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan);
+  void copy_Amplitudes(const Input_Parameters &Parameters, const Channels &Chan, const Amplitudes &Amps);
   void delete_struct(const Input_Parameters &Parameters, const Channels &Chan);
   void zero(const Input_Parameters &Parameters, const Channels &Chan);
+  void zero1(const Input_Parameters &Parameters, const Channels &Chan);
   double get_energy(const Input_Parameters &Parameters, const Channels &Chan, const Interactions &Ints);
 };
 

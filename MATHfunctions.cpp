@@ -78,9 +78,6 @@ double logproduct2(const int &n1, const int &m1, const int &n2, const int &m2, c
 
 double logproduct3(const int &l1, const int &l2, const int &l3, const int &l4, const int &g1, const int &g2, const int &g3, const int &g4)
 {
-  //std::cout << "$$ " << g1 << " " << g2 << " " << g3 << " " << g4 << std::endl;
-  //std::cout << "$$ " << l1 << " " << l2 << " " << l3 << " " << l4 << std::endl; 
-  //std::cout << "$$ " << g1-l1 << " " << g2-l2 << " " << g3-l3 << " " << g4-l4 << std::endl; 
   double prod = logfac(g1) + logfac(g2) + logfac(g3) + logfac(g4);
   prod -= (logfac(l1) + logfac(l2) + logfac(l3) + logfac(l4));
   prod -= (logfac(g1 - l1) + logfac(g2 - l2) + logfac(g3 - l3) + logfac(g4 - l4));
@@ -121,7 +118,6 @@ double loggamma(const double &x){
 
 double CGC(double j1, double m1, double j2, double m2, double jtot, double mtot)
 {
-  //std::cout << "! " << j1 << " " << m1 << " " << j2 << " " << m2 << " " << jtot << " " << mtot << std::endl;
   if(fabs(m1 + m2 - mtot) > 0.1){ std::cout << "CGC1" << std::endl; return 0.0; } //projections must add correctly
   else if((jtot < fabs(j1 - j2)) || (jtot > j1 + j2)){ std::cout << "CGC2" << std::endl; return 0.0; } //triangle rule
   else if((fabs(m1) > j1) || (fabs(m2) > j2) || (fabs(mtot) > jtot)){ std::cout << "CGC3" << std::endl; return 0.0; } //unphysical
@@ -130,8 +126,7 @@ double CGC(double j1, double m1, double j2, double m2, double jtot, double mtot)
   int change1 = 0, change2 = 0; //flags to change from general formula
   double maxk1, maxk2; //variables to find maximum sum
   double CGC; //clebsch-gordon coefficient
-  if(j1 < j2){ std::swap(j1,j2); std::swap(m1,m2); change1 = 1; };
-  
+  if(j1 < j2){ std::swap(j1,j2); std::swap(m1,m2); change1 = 1; };  
   if(mtot < 0){ m1 = -m1; m2 = -m2; change2 = 1; }
   mtot = fabs(mtot);
   num1 = (2 * jtot + 1) * factorial(jtot + j1 - j2) * factorial(jtot - j1 + j2) * factorial(j1 + j2 - jtot);
@@ -141,7 +136,6 @@ double CGC(double j1, double m1, double j2, double m2, double jtot, double mtot)
   num2_2 = double(factorial(j1 - m1) * factorial(j1 + m1));
   num2_3 = double(factorial(j2 - m2) * factorial(j2 + m2));
   fac2 = std::sqrt(num2_1 * num2_2 * num2_3);
-
   maxk1 = std::min(j1 + j2 - jtot, j1 - m1);
   maxk2 = std::min(maxk1, j2 + m2);
   fac3 = 0.0;
@@ -155,31 +149,24 @@ double CGC(double j1, double m1, double j2, double m2, double jtot, double mtot)
       fac3 = fac3 + (pow(-1.0, k) / (factorial(k)*factorial(den3_1)*factorial(den3_2)*factorial(den3_3)*factorial(den3_4)*factorial(den3_5)));
     }
   }
-  
-  //std::cout << fac1 << " " << fac2 << " " << fac3 << std::endl;
-
   CGC = fac1*fac2*fac3;
   if (change1 == 1){ CGC = CGC*pow(-1.0, int(abs(jtot - j2 - j1) + 0.1)); };
   if (change2 == 1){ CGC = CGC*pow(-1.0, int(abs(jtot - j1 - j2) + 0.1)); };
-
   return CGC;
 }
 
 double CGC3(const double &j1, const double &m1, const double &j2, const double &m2, const double &jtot, const double &mtot)
 {
-  double threej;
-  
+  double threej;  
   if(m1 + m2 + mtot != 0 || abs(m1) > j1 || abs(m2) > j2 || abs(mtot) > jtot || abs(j1 - j2) > jtot || j1 + j2 < jtot){ threej = 0.0; }
   else{ threej = (pow(-1.0, int(abs(j1 - j2 - mtot) + 0.1)) / sqrt(2.0 * jtot + 1.0)) * CGC(j1,m1,j2,m2,jtot,-mtot); }
-  
   return threej;
 }
 
 double CGC6(const double &j1, const double &j2, const double &j3, const double &j4, const double &j5, const double &j6)
 {
   double sixj = 0.0;
-  int S;
-  
+  int S;  
   for(double m1 = -j1; m1 <= j1; m1 = m1 + 1.0){
     for(double m2 = -j2; m2 <= j2; m2 = m2 + 1.0){
       for(double m4 = -j4; m4 <= j4; m4 = m4 + 1.0){
@@ -194,8 +181,33 @@ double CGC6(const double &j1, const double &j2, const double &j3, const double &
       }
     }
   }
-  
   return sixj;
+}
+
+double CGC9_0(const double &j1, const double &j2, const double &j3, const double &j4, const double &j5, const double &j6)
+{
+  return pow(-1.0, int(j2 + j5 + j3 + j6)) * CGC6(j1, j2, j5, j4, j3, j6);
+}
+
+double Pandya(const double &j1, const double &j2, const double &j3, const double &j4, const double &j13)
+{
+  double p = 0.0;
+  int j12min = int(abs(j1 - j2));
+  int j12max = j1 + j2;
+  for(int j = j12min; j < j12max; ++j){ p += pow(-1.0, int(j3 + j4 + j)) * (2 * j + 1) * CGC6(j1, j2, j, j4, j3, j13); }
+  return p;
+}
+
+double Chi_J(const int &a, const int &b, const int &c, const int &d, const int &J1, const int &J2)
+{
+  double a2 = 0.5*a;
+  double b2 = 0.5*b;
+  double c2 = 0.5*c;
+  double d2 = 0.5*d;
+  double J1_2 = 0.5*J1;
+  double J2_2 = 0.5*J2;
+  double fac1 = std::sqrt((2*J1_2 + 1) * (2*J2_2 + 1));
+  return fac1 * pow(-1.0, int(b2 + J1_2 + c2 + J2_2)) * CGC6(a2, b2, J1_2, d2, c2, J2_2);
 }
 
 double Legendre(const double &x, const int &l, const int &m)
@@ -215,13 +227,11 @@ double Legendre(const double &x, const int &l, const int &m)
     L += 1;
   }
   if(M != m){ P *= pow(-1.0, M) * factorial(l - M) / factorial(l + M); }
-
   return P;
 }
 
 std::complex<double> SphericalY_C(const double &theta, const double &phi, const int &l, const int &m)
 {
-  //std::cout << theta << " " << phi << " " << l << " " << m << std::endl;
   if(abs(m) > l){ return 0.0; }
   std::complex<double> I (0.0, 1.0), M (m, 0.0), PHI (phi, 0.0);
   std::complex<double> fac1 (pow(-1.0, m), 0.0), fac2 (sqrt(((2*l + 1)*factorial(l - m))/(4*PI*factorial(l + m))), 0.0);
@@ -231,7 +241,6 @@ std::complex<double> SphericalY_C(const double &theta, const double &phi, const 
 
 double SphericalY(const double &theta, const double &phi, const int &l, const int &m)
 {
-  //std::cout << theta << " " << phi << " " << l << " " << m << std::endl;
   if(abs(m) > l){ return 0.0; }
   if(m < 0){ return sqrt(2)*pow(-1.0, m)*SphericalY_C(theta, phi, l, abs(m)).imag(); }
   else if(m == 0){ return SphericalY_C(theta, phi, l, 0).real(); }
@@ -242,10 +251,7 @@ double SphericalYTens(const double &theta, const double &phi, const double &j, c
 {
   if(abs(ms) > s){ return 0.0; }
   double Y = 0.0;
-  for(int ml = -l; ml <= l; ++ml){
-    Y += SphericalY(theta, phi, l, ml) * CGC(l, ml, s, ms, j, ml + ms);
-  }
-  //std::cout << theta << " " << phi << " " << j << " " << l << " " << s << " " << ms << std::endl;
+  for(int ml = -l; ml <= l; ++ml){ Y += SphericalY(theta, phi, l, ml) * CGC(l, ml, s, ms, j, ml + ms); }
   return Y;
 }
 
@@ -288,82 +294,92 @@ double HOfunction(const double &hw, const int &k, const int &l, const int &m, co
   return N * std::pow(r, l) * std::pow(e, -1.0 * nu * r * r) * Laguerre(k, l+0.5, 2 * nu * r * r) * SphericalY(theta, phi, l, m);
 }
 
-//Gives negative projection of v onto u
-std::vector<double> projection(const std::vector<double> &u, const std::vector<double> &v)
-{
-  double innerprod;
-  double norm;
-  std::vector<double> proj;
-  innerprod = 0.0;
-  norm = 0.0;
-  proj.resize(u.size());
-  for(int i = 0; i < int(u.size()); ++i){ innerprod += v[i]*u[i]; norm += u[i]*u[i]; }
-  for(int i = 0; i < int(u.size()); ++i){ proj[i] = -1.0 * (innerprod/norm)*u[i]; }
-  
-  return proj;
-}
-
-//Gives negative projection of v onto u
 void projection(double *u, double *v, double *proj, const int &size)
 {
   double innerprod = 0.0;
   double norm = 0.0;
-  //delete[] proj;
-  //proj = new double[size];
   for(int i = 0; i < size; ++i){ innerprod += v[i]*u[i]; norm += u[i]*u[i]; }
   for(int i = 0; i < size; ++i){ proj[i] = -1.0 * (innerprod/norm)*u[i]; }
 }
 
-void GramSchmidt(std::vector<std::vector<double> > &Vectors)
-{
-  if(Vectors.size() == 0){ return; }
-  std::vector<double> tempvec;
-  double norm;
-  int N = int(Vectors.size());
-  int NN = int(Vectors[0].size());
-  for(int i = 0; i < N; ++i){
-    norm = 0;
-    for(int j = 0; j < NN; ++j){ norm += pow(Vectors[i][j], 2); }
-    for(int j = 0; j < NN; ++j){ Vectors[i][j] /= sqrt(norm); }
-    for(int j = i + 1; j < N; ++j){
-      tempvec = projection(Vectors[i], Vectors[j]);
-      for(int k = 0; k < NN; ++k){ Vectors[j][k] += tempvec[k]; }
-    }
-  }
-  for(int i = 0; i < N; ++i){
-    norm = 0.0;
-    for(int j = 0; j < NN; ++j){ norm += pow(Vectors[i][j], 2); }
-    for(int j = 0; j < NN; ++j){ 
-      if(fabs(Vectors[i][j]/sqrt(norm)) < 0.0000001){ norm -= pow(Vectors[i][j], 2); Vectors[i][j] = 0.0; }
-    }
-    for(int j = 0; j < NN; ++j){ Vectors[i][j] /= sqrt(norm); }
-  }
-}
-
 void GramSchmidt(double **Vectors, const int &size)
 {
-  if(size == 0){ return; }
-  double *proj;
   double norm;
-
+  double innerprod;
+  double **V = new double*[size];
   for(int i = 0; i < size; ++i){
-    norm = 0.0;
-    proj = new double[size];
-    for(int j = 0; j < size; ++j){ norm += pow(Vectors[i][j], 2); }
-    for(int j = 0; j < size; ++j){ Vectors[i][j] /= sqrt(norm); }
-    for(int j = i + 1; j < size; ++j){
-      projection(Vectors[i], Vectors[j], proj, size);
-      for(int k = 0; k < size; ++k){ Vectors[j][k] += proj[k]; }
-    }
-    delete[] proj;
+    V[i] = new double[size];
+    for(int j = 0; j < size; ++j){ V[i][j] = Vectors[i][j]; }
   }
 
-  for(int i = 0; i < size; ++i){
-    norm = 0.0;
-    for(int j = 0; j < size; ++j){ 
-      if(fabs(Vectors[i][j]/sqrt(norm)) < 1e-10){ Vectors[i][j] = 0.0; }
-      else{ norm += pow(Vectors[i][j], 2); }
+  norm = 0.0;
+  for(int i = 0; i < size; ++i){ norm += V[0][i] * V[0][i]; }
+  for(int i = 0; i < size; ++i){ Vectors[0][i] = V[0][i]/std::sqrt(norm); }
+  for(int i = 1; i < size; ++i){
+    for(int j = 0; j < size; ++j){ Vectors[i][j] = V[i][j]; }
+    for(int j = 0; j < i; ++j){
+      innerprod = 0.0;
+      for(int k = 0; k < size; ++k){ innerprod += Vectors[i][k] * Vectors[j][k]; }
+      for(int k = 0; k < size; ++k){ Vectors[i][k] -= innerprod * Vectors[j][k]; }
     }
-    for(int j = 0; j < size; ++j){ Vectors[i][j] /= sqrt(norm); }
+    norm = 0.0;
+    for(int j = 0; j < size; ++j){ norm += Vectors[i][j] * Vectors[i][j]; }
+    for(int j = 0; j < size; ++j){ Vectors[i][j] /= std::sqrt(norm); }
+  }
+  for(int i = 0; i < size; ++i){
+    delete[] V[i];
+  }
+  delete[] V;
+}
+
+void GramSchmidt(double *Vectors, const int &size)
+{
+  if(size == 0){ return; }
+  double norm;
+  double innerprod;
+  double *V = new double[size*size];
+  for(int i = 0; i < size; ++i){
+    for(int j = 0; j < size; ++j){ V[size * i + j] = Vectors[size * i + j]; }
+  }
+  norm = 0.0;
+  for(int i = 0; i < size; ++i){ norm += V[i] * V[i]; }
+  for(int i = 0; i < size; ++i){ Vectors[i] = V[i]/std::sqrt(norm); }
+  for(int i = 1; i < size; ++i){
+    for(int j = 0; j < size; ++j){ Vectors[size * i + j] = V[size * i + j]; }
+    for(int j = 0; j < i; ++j){
+      innerprod = 0.0;
+      for(int k = 0; k < size; ++k){ innerprod += Vectors[size * i + k] * Vectors[size * j + k]; }
+      for(int k = 0; k < size; ++k){ Vectors[size * i + k] -= innerprod * Vectors[size * j + k]; }
+    }
+    norm = 0.0;
+    for(int j = 0; j < size; ++j){ norm += Vectors[size * i + j] * Vectors[size * i + j]; }
+    for(int j = 0; j < size; ++j){ Vectors[size * i + j] /= std::sqrt(norm); }
+  }
+  delete[] V;
+}
+
+//box muller method
+double rand_normal(double mean, double stddev)
+{
+  static double n2 = 0.0;
+  static int n2_cached = 0;
+  if(!n2_cached){
+    double x, y, r;
+    do{
+      x = 2.0 * double(rand())/double(RAND_MAX) - 1.0;
+      y = 2.0 * double(rand())/double(RAND_MAX) - 1.0;
+      r = x*x + y*y;
+    }
+    while(r == 0.0 || r > 1.0);
+    double d = std::sqrt(-2.0*log(r)/r);
+    double n1 = x*d;
+    n2 = y*d;
+    double result = n1*stddev + mean;
+    n2_cached = 1;
+    return result;
+  }
+  else{
+    n2_cached = 0;
+    return n2*stddev + mean;
   }
 }
