@@ -1,0 +1,14 @@
+Total number of twobody matx elements:	7
+----> Interaction part
+Nucleon-Nucleon interaction model:n3lo
+Type of calculation: nocore
+Number and value of starting energies:   1	0.000000E+00
+Total number of twobody matx elements:	7
+Tz      Par      2J      a      b      c      d      <ab|V|cd>
+	 -1	1	0	1	1	1	1	-0.22585379
+	 -1	1	0	1	1	1	2	-0.22310232
+	 -1	1	0	1	1	2	2	-0.11019218
+	 -1	1	0	1	2	1	2	-0.22038436
+	 -1	1	0	1	2	2	2	-0.10884976
+	 -1	1	0	2	2	2	2	-0.053761845
+	 -1	1	2	1	2	1	2	-0.25

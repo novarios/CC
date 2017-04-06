@@ -1,0 +1,19 @@
+#!/bin/bash --login
+#PBS -l nodes=1:ppn=28,walltime=2:00:00,mem=10000mb
+#PBS -j oe
+
+module swap GNU Intel/12.1.2.273
+module load LAPACK BLAS arpack-ng
+
+cd /mnt/home/novarios/CoupledCluster2
+
+export OMP_NUM_THREADS=28
+
+./CoupledCluster quantum_dot 1.0 20 2 0
+
+for i in 2 3 4 6 8 10 12 14 16 18 20
+do
+    ./CoupledCluster quantum_dot 1.0 $i 3 0
+done
+
+qstat -f ${PBS_JOBID}

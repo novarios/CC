@@ -1,0 +1,16 @@
+\* Calculation Case (nuclear/electronic): nuclear
+\* Level Scheme Basis (infinite/finite/finite_J): finite_J
+\* Approximation Level (doubles/singles/triples): singles
+
+\* One-Body multiplication strength: 1
+\* Two-Body multiplication strength: 1
+
+\* Valence proton shell number: 1
+\* Valence neutron shell number: 1
+
+\* Level Scheme (if basis = finite): NoCore_He4
+\* Matrix Elements (if basis = finite): NoCore_He4
+
+\* Extra States (0 for excited states): 100
+
+<** END_OF_INPUT_FILE **>
