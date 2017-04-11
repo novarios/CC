@@ -461,7 +461,7 @@ void Read_Matrix_Elements_M(const Input_Parameters &Parameters, const Model_Spac
   for(int i = 0; i < NumElements; ++i){
     getline(interaction, interactionline);
     std::istringstream(interactionline) >> shell1 >> shell2 >> shell3 >> shell4 >> TBME;
-    //TBME *= Parameters.tbstrength;
+    TBME *= Parameters.tbstrength;
     //std::cout << "? " << shell1 << " " << shell2 << " " << shell3 << " " << shell4 << "  " << TBME << std::endl;
     shell1 -= 1;
     shell2 -= 1;
@@ -703,9 +703,9 @@ void Hartree_Fock_States(const Input_Parameters &Parameters, Model_Space &Space,
   //std::cout << "Diagonalizing Hartree-Fock Matrix ..." << std::endl;
   std::cout << std::setprecision(12);
   double error1; // Energy error between iterations
-  double error2, error0; // Energy error between iterations
+  double error2; // Energy error between iterations
   double Bshift; // level shift parameter
-  double width;
+  //double width;
   int ind; // Index to keep track of iteration number
   int nob1;
   int **tempn;
@@ -713,7 +713,7 @@ void Hartree_Fock_States(const Input_Parameters &Parameters, Model_Space &Space,
   Single_Particle_States HF0, HF2;
 
   //// for DIIS //////
-  double norm, maxnorm;
+  /*double norm, maxnorm;
   int maxind, ortho;
   double checkdot;
   double checknorm1, checknorm2;
@@ -749,7 +749,7 @@ void Hartree_Fock_States(const Input_Parameters &Parameters, Model_Space &Space,
   double *work = new double[sizeof(double) * P];
   int info = 0;
   B[0] = 0.0;
-  B2[0] = 0.0;
+  B2[0] = 0.0;*/
   ////////////////////
   
   HF0 = Single_Particle_States(Parameters, Space, Chan);
@@ -781,7 +781,7 @@ void Hartree_Fock_States(const Input_Parameters &Parameters, Model_Space &Space,
     ++ind;
     Hartree_Fock_Step(Parameters, Space, Chan, HF, HF2, ME, Bshift, error1);
     //// for DIIS //////
-    norm = 0.0;
+    /*norm = 0.0;
     for(int i = 0; i < Chan.size3; ++i){
       nob1 = Chan.nob[i];
       for(int j = 0; j < nob1; ++j){
@@ -940,7 +940,7 @@ void Hartree_Fock_States(const Input_Parameters &Parameters, Model_Space &Space,
 	nob1 = Chan.nob[i];
 	GramSchmidt(HF2.vectors[i], nob1);
       }
-    }
+      }*/
     ////////////////////
 
     if(error1 > error2){
@@ -1013,6 +1013,10 @@ void Hartree_Fock_States(const Input_Parameters &Parameters, Model_Space &Space,
   delete[] tempn;
   HF0.delete_struct(Chan);
   HF2.delete_struct(Chan);
+
+  /*for(int i = 0; i < Space.indtot; ++i){
+    std::cout << Space.qnums[i].n << " " << Space.qnums[i].m << " : " << Space.qnums[i].energy << " " << Space.qnums[i].type << std::endl;
+    }*/
 
   /*for(int i = 0; i < Space.indtot; ++i){
     std::cout << Space.qnums[i].n << " " << Space.qnums[i].par << " " << Space.qnums[i].j << " : " << Space.qnums[i].energy << " " << Space.qnums[i].type << std::endl;
@@ -1181,7 +1185,6 @@ void Convert_To_HF_Matrix_Elements(const HF_Channels &Chan, const Single_Particl
   double *C;
   char transa, transb;
   double alpha1, beta1;
-  double CGCsum;
   std::ofstream jschemefile; // file to print M-Scheme matrix elements
   int p, q, a, g;
   int ind1, ind2;
@@ -1249,168 +1252,164 @@ void Get_Matrix_Elements(const Input_Parameters &Parameters, const HF_Channels &
 {
   double TBME; // interaction two-body interaction ME and two-body COM ME
   int shell1, shell2, shell3, shell4; // interaction file contents
-  int ind, ind1, key1, key2, key3, key4;
+  int ind, ind1, key1, key2, key3;
   std::string ptype, qtype, rtype, stype;
   State tb;
 
   for(int chan = 0; chan < HF_Chan.size1; ++chan){
-    #pragma omp parallel private(shell1, shell2, shell3, shell4, ptype, qtype, rtype, stype, key1, key2, key3, key4, ind, ind1, tb, TBME)
-    {
-      #pragma omp for schedule(static)
-      for(int tb1 = 0; tb1 < HF_Chan.ntb[chan]; ++tb1){
-	shell1 = HF_Chan.tbvec[chan][2*tb1];
-	shell2 = HF_Chan.tbvec[chan][2*tb1 + 1];
-	ptype = Space.qnums[shell1].type;
-	qtype = Space.qnums[shell2].type;
-	if(shell1 == shell2){ continue; }
-	for(int tb2 = 0; tb2 < HF_Chan.ntb[chan]; ++tb2){
-	  shell3 = HF_Chan.tbvec[chan][2*tb2];
-	  shell4 = HF_Chan.tbvec[chan][2*tb2 + 1];
-	  rtype = Space.qnums[shell3].type;
-	  stype = Space.qnums[shell4].type;
-	  if(shell3 == shell4){ continue; }
-	  if(ptype == "hole" && qtype == "particle" && rtype == "hole" && stype == "hole"){ continue; }
-	  if(ptype == "particle" && qtype == "particle" && rtype == "hole" && stype == "particle"){ continue; }
-	  TBME = HF_ME.V[chan][tb1*HF_Chan.ntb[chan] + tb2];
-	  //std::cout << "V_hf: " << shell1 << " " << shell2 << " " << shell3 << " " << shell4 << " = " << TBME << std::endl;
+    for(int tb1 = 0; tb1 < HF_Chan.ntb[chan]; ++tb1){
+      shell1 = HF_Chan.tbvec[chan][2*tb1];
+      shell2 = HF_Chan.tbvec[chan][2*tb1 + 1];
+      ptype = Space.qnums[shell1].type;
+      qtype = Space.qnums[shell2].type;
+      if(shell1 == shell2){ continue; }
+      for(int tb2 = 0; tb2 < HF_Chan.ntb[chan]; ++tb2){
+	shell3 = HF_Chan.tbvec[chan][2*tb2];
+	shell4 = HF_Chan.tbvec[chan][2*tb2 + 1];
+	rtype = Space.qnums[shell3].type;
+	stype = Space.qnums[shell4].type;
+	if(shell3 == shell4){ continue; }
+	if(ptype == "hole" && qtype == "particle" && rtype == "hole" && stype == "hole"){ continue; }
+	if(ptype == "particle" && qtype == "particle" && rtype == "hole" && stype == "particle"){ continue; }
+	TBME = HF_ME.V[chan][tb1*HF_Chan.ntb[chan] + tb2];
+	//std::cout << "V_hf: " << shell1 << " " << shell2 << " " << shell3 << " " << shell4 << " = " << TBME << std::endl;
 
-	  if(ptype == "particle" && qtype == "particle" && rtype == "particle" && stype == "particle"){
+	if(ptype == "particle" && qtype == "particle" && rtype == "particle" && stype == "particle"){
+	  plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
+	  ind1 = ChanInd_2b_dir(Parameters.basis, Space, tb);
+	  key1 = Chan.pp_map[ind1][Hash2(shell3, shell4, Space.indtot)];
+	  key2 = Chan.pp_map[ind1][Hash2(shell1, shell2, Space.indtot)];
+	  ind = key1 * Chan.npp[ind1] + key2;
+	  Ints.D_ME1.V1[ind1][ind] = TBME;
+	}
+	else if(ptype == "hole" && qtype == "hole" && rtype == "hole" && stype == "hole"){
+	  plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
+	  ind1 = ChanInd_2b_dir(Parameters.basis, Space, tb);
+	  key1 = Chan.hh_map[ind1][Hash2(shell1, shell2, Space.indtot)];
+	  key2 = Chan.hh_map[ind1][Hash2(shell3, shell4, Space.indtot)];
+	  ind = key1 * Chan.nhh[ind1] + key2;
+	  Ints.D_ME1.V2[ind1][ind] = TBME;
+	}
+	else if(ptype == "hole" && qtype == "particle" && rtype == "hole" && stype == "particle"){
+	  minus(tb, Space.qnums[shell4], Space.qnums[shell1]);
+	  ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
+	  key1 = Chan.hp2_map[ind1][Hash2(shell1, shell4, Space.indtot)];
+	  key2 = Chan.hp2_map[ind1][Hash2(shell3, shell2, Space.indtot)];
+	  ind = key1 * Chan.nhp2[ind1] + key2;
+	  Ints.D_ME1.V3[ind1][ind] = TBME;
+	}
+	else if(ptype == "hole" && qtype == "hole" && rtype == "particle" && stype == "particle"){
+	  plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
+	  ind1 = ChanInd_2b_dir(Parameters.basis, Space, tb);
+	  key1 = Chan.pp_map[ind1][Hash2(shell3, shell4, Space.indtot)];
+	  key2 = Chan.hh_map[ind1][Hash2(shell1, shell2, Space.indtot)];
+	  ind = key1 * Chan.nhh[ind1] + key2;
+	  Ints.D_ME1.V4[ind1][ind] = TBME;
+	    
+	  ind1 = Chan.indvec[shell2];
+	  key1 = Chan.h_map[ind1][shell2];
+	  key2 = Chan.hpp_map[ind1][Hash3(shell1, shell3, shell4, Space.indtot)];
+	  ind = key1 * Chan.nhpp[ind1] + key2;
+	  Ints.D_ME1.V5[ind1][ind] = TBME;
+	    
+	  ind1 = Chan.indvec[shell1];
+	  key1 = Chan.h_map[ind1][shell1];
+	  key2 = Chan.hpp_map[ind1][Hash3(shell2, shell3, shell4, Space.indtot)];
+	  ind = key1 * Chan.nhpp[ind1] + key2;
+	  Ints.D_ME1.V6[ind1][ind] = TBME;
+	    
+	  ind1 = Chan.indvec[shell4];
+	  key1 = Chan.p_map[ind1][shell4];
+	  key2 = Chan.hhp_map[ind1][Hash3(shell1, shell2, shell3, Space.indtot)];
+	  ind = key1 * Chan.nhhp[ind1] + key2;
+	  Ints.D_ME1.V7[ind1][ind] = TBME;
+	    
+	  ind1 = Chan.indvec[shell3];
+	  key1 = Chan.p_map[ind1][shell3];
+	  key2 = Chan.hhp_map[ind1][Hash3(shell1, shell2, shell4, Space.indtot)];
+	  ind = key1 * Chan.nhhp[ind1] + key2;
+	  Ints.D_ME1.V8[ind1][ind] = TBME;
+
+	  minus(tb, Space.qnums[shell3], Space.qnums[shell1]);
+	  ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
+	  key1 = Chan.hp2_map[ind1][Hash2(shell1, shell3, Space.indtot)];
+	  key2 = Chan.hp1_map[ind1][Hash2(shell2, shell4, Space.indtot)];
+	  ind = key1 * Chan.nhp1[ind1] + key2;
+	  Ints.D_ME1.V9[ind1][ind] = TBME;
+	    
+	  minus(tb, Space.qnums[shell4], Space.qnums[shell1]);
+	  ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
+	  key1 = Chan.hp2_map[ind1][Hash2(shell1, shell4, Space.indtot)];
+	  key2 = Chan.hp1_map[ind1][Hash2(shell2, shell3, Space.indtot)];
+	  ind = key1 * Chan.nhp1[ind1] + key2;
+	  Ints.D_ME1.V10[ind1][ind] = TBME;
+	}
+	if(Parameters.approx == "singles"){
+	  if(ptype == "hole" && qtype == "particle" && rtype == "particle" && stype == "particle"){
+	    ind1 = Chan.indvec[shell2];
+	    key1 = Chan.p_map[ind1][shell2];
+	    key2 = Chan.hpp_map[ind1][Hash3(shell1, shell3, shell4, Space.indtot)];
+	    ind = key1 * Chan.nhpp[ind1] + key2;
+	    Ints.S_ME1.V11[ind1][ind] = TBME;
+	      
+	    ind1 = Chan.indvec[shell3];
+	    key1 = Chan.p_map[ind1][shell3];
+	    key2 = Chan.hpp1_map[ind1][Hash3(shell1, shell2, shell4, Space.indtot)];
+	    ind = key2 * Chan.np[ind1] + key1;
+	    Ints.S_ME1.V13[ind1][ind] = TBME;
+	      
+	    minus(tb, Space.qnums[shell1], Space.qnums[shell3]);
+	    ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
+	    key1 = Chan.pp1_map[ind1][Hash2(shell4, shell2, Space.indtot)];
+	    key2 = Chan.hp1_map[ind1][Hash2(shell1, shell3, Space.indtot)];
+	    ind = key1 * Chan.nhp1[ind1] + key2;
+	    Ints.S_ME1.V16[ind1][ind] = TBME;
+	      
+	    ind1 = Chan.indvec[shell2];
+	    key1 = Chan.p_map[ind1][shell2];
+	    key2 = Chan.hpp_map[ind1][Hash3(shell1, shell3, shell4, Space.indtot)];
+	    ind = key2 * Chan.np[ind1] + key1;
+	    Ints.S_ME1.V17[ind1][ind] = TBME;
+	      
 	    plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
 	    ind1 = ChanInd_2b_dir(Parameters.basis, Space, tb);
 	    key1 = Chan.pp_map[ind1][Hash2(shell3, shell4, Space.indtot)];
-	    key2 = Chan.pp_map[ind1][Hash2(shell1, shell2, Space.indtot)];
-	    ind = key1 * Chan.npp[ind1] + key2;
-	    Ints.D_ME1.V1[ind1][ind] = TBME;
+	    key3 = Chan.hp_map[ind1][Hash2(shell1, shell2, Space.indtot)];
+	    ind = key1 * Chan.nhp[ind1] + key3;
+	    Ints.S_ME1.V20[ind1][ind] = TBME;
 	  }
-	  else if(ptype == "hole" && qtype == "hole" && rtype == "hole" && stype == "hole"){
+	  else if(ptype == "hole" && qtype == "hole" && rtype == "hole" && stype == "particle"){
+	    ind1 = Chan.indvec[shell3];
+	    key1 = Chan.h_map[ind1][shell3];
+	    key2 = Chan.hhp_map[ind1][Hash3(shell1, shell2, shell4, Space.indtot)];
+	    ind = key1 * Chan.nhhp[ind1] + key2;
+	    Ints.S_ME1.V12[ind1][ind] = TBME;
+	      
+	    ind1 = Chan.indvec[shell1];
+	    key1 = Chan.h_map[ind1][shell1];
+	    key2 = Chan.hhp1_map[ind1][Hash3(shell2, shell3, shell4, Space.indtot)];
+	    ind = key2 * Chan.nh[ind1] + key1;
+	    Ints.S_ME1.V14[ind1][ind] = TBME;
+	      
+	    minus(tb, Space.qnums[shell1], Space.qnums[shell4]);
+	    ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
+	    key1 = Chan.hh1_map[ind1][Hash2(shell3, shell2, Space.indtot)];
+	    key2 = Chan.hp1_map[ind1][Hash2(shell1, shell4, Space.indtot)];
+	    ind = key1 * Chan.nhp1[ind1] + key2;
+	    Ints.S_ME1.V15[ind1][ind] = TBME;
+	      
+	    ind1 = Chan.indvec[shell3];
+	    key1 = Chan.h_map[ind1][shell3];
+	    key2 = Chan.hhp_map[ind1][Hash3(shell1, shell2, shell4, Space.indtot)];
+	    ind = key2 * Chan.nh[ind1] + key1;
+	    Ints.S_ME1.V18[ind1][ind] = TBME;
+	      
 	    plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
 	    ind1 = ChanInd_2b_dir(Parameters.basis, Space, tb);
 	    key1 = Chan.hh_map[ind1][Hash2(shell1, shell2, Space.indtot)];
-	    key2 = Chan.hh_map[ind1][Hash2(shell3, shell4, Space.indtot)];
-	    ind = key1 * Chan.nhh[ind1] + key2;
-	    Ints.D_ME1.V2[ind1][ind] = TBME;
-	  }
-	  else if(ptype == "hole" && qtype == "particle" && rtype == "hole" && stype == "particle"){
-	    minus(tb, Space.qnums[shell4], Space.qnums[shell1]);
-	    ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
-	    key1 = Chan.hp2_map[ind1][Hash2(shell1, shell4, Space.indtot)];
-	    key2 = Chan.hp2_map[ind1][Hash2(shell3, shell2, Space.indtot)];
-	    ind = key1 * Chan.nhp2[ind1] + key2;
-	    Ints.D_ME1.V3[ind1][ind] = TBME;
-	  }
-	  else if(ptype == "hole" && qtype == "hole" && rtype == "particle" && stype == "particle"){
-	    plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
-	    ind1 = ChanInd_2b_dir(Parameters.basis, Space, tb);
-	    key1 = Chan.pp_map[ind1][Hash2(shell3, shell4, Space.indtot)];
-	    key2 = Chan.hh_map[ind1][Hash2(shell1, shell2, Space.indtot)];
-	    ind = key1 * Chan.nhh[ind1] + key2;
-	    Ints.D_ME1.V4[ind1][ind] = TBME;
-	    
-	    ind1 = Chan.indvec[shell2];
-	    key1 = Chan.h_map[ind1][shell2];
-	    key2 = Chan.hpp_map[ind1][Hash3(shell1, shell3, shell4, Space.indtot)];
-	    ind = key1 * Chan.nhpp[ind1] + key2;
-	    Ints.D_ME1.V5[ind1][ind] = TBME;
-	    
-	    ind1 = Chan.indvec[shell1];
-	    key1 = Chan.h_map[ind1][shell1];
-	    key2 = Chan.hpp_map[ind1][Hash3(shell2, shell3, shell4, Space.indtot)];
-	    ind = key1 * Chan.nhpp[ind1] + key2;
-	    Ints.D_ME1.V6[ind1][ind] = TBME;
-	    
-	    ind1 = Chan.indvec[shell4];
-	    key1 = Chan.p_map[ind1][shell4];
-	    key2 = Chan.hhp_map[ind1][Hash3(shell1, shell2, shell3, Space.indtot)];
-	    ind = key1 * Chan.nhhp[ind1] + key2;
-	    Ints.D_ME1.V7[ind1][ind] = TBME;
-	    
-	    ind1 = Chan.indvec[shell3];
-	    key1 = Chan.p_map[ind1][shell3];
-	    key2 = Chan.hhp_map[ind1][Hash3(shell1, shell2, shell4, Space.indtot)];
-	    ind = key1 * Chan.nhhp[ind1] + key2;
-	    Ints.D_ME1.V8[ind1][ind] = TBME;
-
-	    minus(tb, Space.qnums[shell3], Space.qnums[shell1]);
-	    ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
-	    key1 = Chan.hp2_map[ind1][Hash2(shell1, shell3, Space.indtot)];
-	    key2 = Chan.hp1_map[ind1][Hash2(shell2, shell4, Space.indtot)];
-	    ind = key1 * Chan.nhp1[ind1] + key2;
-	    Ints.D_ME1.V9[ind1][ind] = TBME;
-	    
-	    minus(tb, Space.qnums[shell4], Space.qnums[shell1]);
-	    ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
-	    key1 = Chan.hp2_map[ind1][Hash2(shell1, shell4, Space.indtot)];
-	    key2 = Chan.hp1_map[ind1][Hash2(shell2, shell3, Space.indtot)];
-	    ind = key1 * Chan.nhp1[ind1] + key2;
-	    Ints.D_ME1.V10[ind1][ind] = TBME;
-	  }
-	  if(Parameters.approx == "singles"){
-	    if(ptype == "hole" && qtype == "particle" && rtype == "particle" && stype == "particle"){
-	      ind1 = Chan.indvec[shell2];
-	      key1 = Chan.p_map[ind1][shell2];
-	      key2 = Chan.hpp_map[ind1][Hash3(shell1, shell3, shell4, Space.indtot)];
-	      ind = key1 * Chan.nhpp[ind1] + key2;
-	      Ints.S_ME1.V11[ind1][ind] = TBME;
-	      
-	      ind1 = Chan.indvec[shell3];
-	      key1 = Chan.p_map[ind1][shell3];
-	      key2 = Chan.hpp1_map[ind1][Hash3(shell1, shell2, shell4, Space.indtot)];
-	      ind = key2 * Chan.np[ind1] + key1;
-	      Ints.S_ME1.V13[ind1][ind] = TBME;
-	      
-	      minus(tb, Space.qnums[shell1], Space.qnums[shell3]);
-	      ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
-	      key1 = Chan.pp1_map[ind1][Hash2(shell4, shell2, Space.indtot)];
-	      key2 = Chan.hp1_map[ind1][Hash2(shell1, shell3, Space.indtot)];
-	      ind = key1 * Chan.nhp1[ind1] + key2;
-	      Ints.S_ME1.V16[ind1][ind] = TBME;
-	      
-	      ind1 = Chan.indvec[shell2];
-	      key1 = Chan.p_map[ind1][shell2];
-	      key2 = Chan.hpp_map[ind1][Hash3(shell1, shell3, shell4, Space.indtot)];
-	      ind = key2 * Chan.np[ind1] + key1;
-	      Ints.S_ME1.V17[ind1][ind] = TBME;
-	      
-	      plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
-	      ind1 = ChanInd_2b_dir(Parameters.basis, Space, tb);
-	      key1 = Chan.pp_map[ind1][Hash2(shell3, shell4, Space.indtot)];
-	      key3 = Chan.hp_map[ind1][Hash2(shell1, shell2, Space.indtot)];
-	      ind = key1 * Chan.nhp[ind1] + key3;
-	      Ints.S_ME1.V20[ind1][ind] = TBME;
-	    }
-	    else if(ptype == "hole" && qtype == "hole" && rtype == "hole" && stype == "particle"){
-	      ind1 = Chan.indvec[shell3];
-	      key1 = Chan.h_map[ind1][shell3];
-	      key2 = Chan.hhp_map[ind1][Hash3(shell1, shell2, shell4, Space.indtot)];
-	      ind = key1 * Chan.nhhp[ind1] + key2;
-	      Ints.S_ME1.V12[ind1][ind] = TBME;
-	      
-	      ind1 = Chan.indvec[shell1];
-	      key1 = Chan.h_map[ind1][shell1];
-	      key2 = Chan.hhp1_map[ind1][Hash3(shell2, shell3, shell4, Space.indtot)];
-	      ind = key2 * Chan.nh[ind1] + key1;
-	      Ints.S_ME1.V14[ind1][ind] = TBME;
-	      
-	      minus(tb, Space.qnums[shell1], Space.qnums[shell4]);
-	      ind1 = ChanInd_2b_cross(Parameters.basis, Space, tb);
-	      key1 = Chan.hh1_map[ind1][Hash2(shell3, shell2, Space.indtot)];
-	      key2 = Chan.hp1_map[ind1][Hash2(shell1, shell4, Space.indtot)];
-	      ind = key1 * Chan.nhp1[ind1] + key2;
-	      Ints.S_ME1.V15[ind1][ind] = TBME;
-	      
-	      ind1 = Chan.indvec[shell3];
-	      key1 = Chan.h_map[ind1][shell3];
-	      key2 = Chan.hhp_map[ind1][Hash3(shell1, shell2, shell4, Space.indtot)];
-	      ind = key2 * Chan.nh[ind1] + key1;
-	      Ints.S_ME1.V18[ind1][ind] = TBME;
-	      
-	      plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
-	      ind1 = ChanInd_2b_dir(Parameters.basis, Space, tb);
-	      key1 = Chan.hh_map[ind1][Hash2(shell1, shell2, Space.indtot)];
-	      key3 = Chan.hp_map[ind1][Hash2(shell3, shell4, Space.indtot)];
-	      ind = key3 * Chan.nhh[ind1] + key1;
-	      Ints.S_ME1.V19[ind1][ind] = TBME;
-	    }
+	    key3 = Chan.hp_map[ind1][Hash2(shell3, shell4, Space.indtot)];
+	    ind = key3 * Chan.nhh[ind1] + key1;
+	    Ints.S_ME1.V19[ind1][ind] = TBME;
 	  }
 	}
       }
@@ -1422,7 +1421,7 @@ void Get_Matrix_Elements_J(const Input_Parameters &Parameters, const HF_Channels
 {
   double TBME; // interaction two-body interaction ME and two-body COM ME
   int p, q, r, s; // interaction file contents
-  int ind, ind1, key1, key2, key3, key4, jmin;
+  int ind, ind1, key1, key2, key3, jmin;
   double pj, qj, rj, sj, tbj, J, X;
   std::string ptype, qtype, rtype, stype;
   State tb;
@@ -1620,7 +1619,7 @@ void Get_Matrix_Elements_JM(const Input_Parameters &Parameters, const HF_Channel
   int pind, qind, rind, sind;
   int p, q, r, s; // interaction file contents
   double pj, qj, rj, sj, coupj, pm, qm, rm, sm, coupm;
-  int ind, ind1, key1, key2, key3, key4;
+  int ind, ind1, key1, key2, key3;
   std::string ptype, qtype, rtype, stype;
   State tb;
   for(int chan = 0; chan < HF_Chan.size1; ++chan){

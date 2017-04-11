@@ -95,12 +95,12 @@ void Doubles_Step_J(const Model_Space &Space, const Channels &Chan, Interactions
 void Doubles_Step_2_J(const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps1, Amplitudes &Amps2);
 void Singles_Step_J(const Model_Space &Space, const Channels &Chan, Interactions &Int, Amplitudes &Amp1, Amplitudes &Amp2);
 
-void Random_Step(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps0, Amplitudes &Amps, Amplitudes &Amps2, Amplitudes &tempAmps, double &mix, bool &denom, double &width, double &error2);
+void Random_Step(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps0, Amplitudes &Amps, Amplitudes &Amps2, Amplitudes &tempAmps, double &mix, double &width, double &error2);
 void Randomize_Amps(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps0, Amplitudes &Amps, double &width);
 void Gather_Amps0(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, Amplitudes &Amps2, double &mix);
-void Gather_Amps(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, Amplitudes &Amps2, double &mix, bool &denom);
-void Gather_Amps2(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, Amplitudes &Amps2, double &mix, bool &denom, double &checkdot, int &N, double ***delp);
-void Gather_Amps3(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, Amplitudes &Amps2, double &mix, bool &denom, int &N, double ***p, double ***delp, double *B);
+void Gather_Amps(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, Amplitudes &Amps2, double &mix);
+void Gather_Amps2(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, Amplitudes &Amps2, double &mix, double &checkdot, int &N, double ***delp);
+void Gather_Amps3(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, Amplitudes &Amps2, double &mix, int &N, double ***p, double ***delp, double *B);
 void CC_Error(const Input_Parameters &Parameters, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, Amplitudes &Amps2, double &error);
 void Print_Amps(const Input_Parameters &Parameters, const Channels &Chan, Amplitudes &Amps);
 void Doubles_Step_explicit(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps1, Amplitudes &Amps2, double &error);
@@ -269,9 +269,11 @@ struct Channels{
 };
 
 struct Doubles_1{
-  int **Tmap;
-  int **TJnum;
-  int ****TJmap;
+  //int **Tmap;
+  //int **TJnum;
+  //int ****TJmap;
+  int **Tnum;
+  int ****Tmap;
   double **Evec;
   double **T1;
   double **T2;
@@ -308,14 +310,16 @@ struct Doubles_1{
   double get_T(int, int) const;
   void set_TJ(const Model_Space &Space, const Channels &Chan, int &chan, int &hhpp, int &i, int &j, int &a, int &b, double T);
   double get_TJ(const Model_Space &Space, const Channels &Chan, int &chan, int &hhpp, int &i, int &j, int &a, int &b) const;
-  void set_T_2J(const Channels &Chan, Interactions &Ints);
+  void set_T_2J(const Model_Space &Space, const Channels &Chan, Interactions &Ints);
 };
 
 struct Singles_1{
   int *Tmap;
-  int *Tmap2;
-  int *TJnum;
-  int **TJmap;
+  //int *Tmap2;
+  //int *TJnum;
+  //int **TJmap;
+  int *Tnum2;
+  int **Tmap2;
   double *Evec;
   double *T1;
   double **T2;
@@ -345,8 +349,14 @@ struct Singles_1{
   double **Q52;
   double **Q61;
   double **Q62;
-  int **Qmap1;
-  int **Qmap2;
+  int **Qnum1;
+  int **Qnum2;
+  int ***Qmap1;
+  int ***Qmap2;
+  //int **QJnum1;
+  //int **QJnum2;
+  //int ***QJmap1;
+  //int ***QJmap2;
   int *Qmap3;
   int *Qmap4;
   int **Qmap5;
