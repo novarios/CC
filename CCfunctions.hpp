@@ -45,17 +45,16 @@ struct Input_Parameters;
 struct State;
 struct Model_Space;
 struct Channels;
-struct Amplitudes;
-struct Interactions;
 
+struct Amplitudes;
 struct Doubles_1;
 struct Singles_1;
-struct Doubles_ME1;
-struct Singles_ME1;
 struct CC_Eff;
 
 struct HF_Channels;
 struct HF_Matrix_Elements;
+
+struct Interactions;
 
 int Hash2(const int &p, const int &q, const int &size);
 int Hash3(const int &p, const int &q, const int &r, const int &size);
@@ -67,24 +66,8 @@ int Index22(const int *vec1, const int *vec2, const int &num1, const int &num2, 
 int Index13(const int *vec1, const int *vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s);
 int Index31(const int *vec1, const int *vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s);
 
-int ChanInd_1b(const std::string &basis, const Model_Space &Space, const State &State);
-int ChanInd_2b_dir(const std::string &basis, const Model_Space &Space, const State &State);
-int ChanInd_2b_cross(const std::string &basis, const Model_Space &Space, const State &State);
-void plus(State &S, const State &S1, const State &S2);
-void minus(State &S, const State &S1, const State &S2);
-bool equal(const State &S1, const State &S2);
-
 void Get_Input_Parameters(std::string &infile, Input_Parameters &Parameters);
 void Print_Parameters(const Input_Parameters &Parameters, const Model_Space &Space);
-void Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space);
-void Build_Model_Space_J2(Input_Parameters &Parameters, Model_Space &Space);
-void CART_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space);
-void QD_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space);
-
-void Minnesota_Matrix_Elements(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints);
-void Coulomb_Inf_Matrix_Elements(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints);
-void Read_Matrix_Elements(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints);
-//void Read_Matrix_Elements_J(const Input_Parameters &Parameters, const Model_Space &Space, const Model_Space &Space_J, const Channels &Chan, Interactions &Ints);
 
 //void Perform_CC(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, const HF_Channels &HF_Chan, const HF_Matrix_Elements &HF_ME);
 void Perform_CC(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps);
@@ -108,12 +91,6 @@ void Doubles_Step_explicit2(const Input_Parameters &Parameters, const Model_Spac
 
 void HF(const Input_Parameters &Parameters, Model_Space &Space, const Channels &Chan, Interactions &Int);
 double E_Ref(const Input_Parameters &Parameters, Model_Space &Space, const Channels &Chan, const Interactions &Int);
-
-double vint_Minnesota_Momentum(const Model_Space &Space, const int &qi, const int &qj, const int &qk, const int &ql, const double &L);
-int kron_del(const int &i, const int &j);
-int spinExchangeMtxEle(const int &i, const int &j, const int &k, const int &l);
-double Coulomb_Inf(const Model_Space &Space, const int &qi, const int &qj, const int &qk, const int &ql, const double &L);
-double Coulomb_HO(const Input_Parameters &Parameters, const Model_Space &Space, const int &qi, const int &qj, const int &qk, const int &ql);
 
 void Build_CC_Eff(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, CC_Eff &V_Eff);
 void EE_EOM(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, const CC_Eff &V_Eff);
@@ -144,128 +121,6 @@ struct Input_Parameters{
   double M, T, Par;
 
   Input_Parameters(){};
-};
-
-struct State{
-  int t; // x2
-  int m; // x2
-  int nx;
-  int ny;
-  int nz;
-  int ml;
-  int n;
-  int j; // x2
-  int par; // -1,+1
-  double energy;
-  std::string type;
- 
-  State(){
-    t = 0;
-    m = 0;
-    nx = 0;
-    ny = 0;
-    nz = 0;
-    ml = 0;
-    n = 0;
-    j = 0;
-    par = 1;
-    energy = -100;
-    type = "none";
-  };
-};
-
-//Structure for holding all model space info
-struct Model_Space{
-  int indp; //number of proton orbits
-  int indn; //number of neutron orbits
-  int indpar; //number of particle orbits
-  int indhol; //number of hole orbits
-  int indtot; //number of total orbits
-  int indtotj;
-
-  State *qnums;
-  State qmins;
-  State qmaxs;
-  State qsizes;
-  State qsizes0;
-  int **shellsm; // for j
-
-  int Nmax;
-  int nmax;
-  std::unordered_map<int,int> map_1b;
-  std::unordered_map<int,int> map_2b_dir;
-  std::unordered_map<int,int> map_2b_cross;
-  int *map_2b;
-  int size_2b;
-  
-  Model_Space(){};
-  void delete_struct(Input_Parameters &Parameters);
-};
-
-//Structure for holding channel information
-struct Channels{
-  int size1;
-  int size2;
-  int size3;
-
-  State *qnums1;
-  State *qnums2;
-  State *qnums3;
-  
-  int *indvec;
-
-  int *nhh;
-  int *npp;
-  int *nhp;
-  int *nhp1;
-  int *nhp2;
-  int *nh;
-  int *np;
-  int *nhhp;
-  int *nhpp;
-  int *nhhp1;
-  int *nhpp1;
-  int *nhh1;
-  int *npp1;
-  int *nhhh;
-  int *nppp;
-
-  int **hhvec;
-  int **ppvec;
-  int **hpvec;
-  int **hp1vec;
-  int **hp2vec;
-  int **pvec;
-  int **hvec;
-  int **hhpvec;
-  int **hppvec;
-  int **hhp1vec;
-  int **hpp1vec;
-  int **hh1vec;
-  int **pp1vec;
-  int **hhhvec;
-  int **pppvec;
-
-  std::unordered_map<int,int> *hh_map;
-  std::unordered_map<int,int> *pp_map;
-  std::unordered_map<int,int> *hp_map;
-  std::unordered_map<int,int> *hp1_map;
-  std::unordered_map<int,int> *hp2_map;
-  std::unordered_map<int,int> *p_map;
-  std::unordered_map<int,int> *h_map;
-  std::unordered_map<int,int> *hhp_map;
-  std::unordered_map<int,int> *hpp_map;
-  std::unordered_map<int,int> *hhp1_map;
-  std::unordered_map<int,int> *hpp1_map;
-  std::unordered_map<int,int> *hh1_map;
-  std::unordered_map<int,int> *pp1_map;
-  std::unordered_map<int,int> *hhh_map;
-  std::unordered_map<int,int> *ppp_map;
-
-  int ind0; // index of i-i cross channel for singles
-  Channels(){};
-  Channels(const Input_Parameters &Parameters, const Model_Space &Space);
-  void delete_struct();
 };
 
 struct Doubles_1{
@@ -387,46 +242,6 @@ struct Amplitudes{
   void zero(const Input_Parameters &Parameters, const Channels &Chan);
   void zero1(const Input_Parameters &Parameters, const Channels &Chan);
   double get_energy(const Input_Parameters &Parameters, const Channels &Chan, const Interactions &Ints);
-};
-
-struct Doubles_ME1{
-  double **V1;
-  double **V2;
-  double **V3;
-  double **V4;
-  double **V5;
-  double **V6;
-  double **V7;
-  double **V8;
-  double **V9;
-  double **V10;
-  Doubles_ME1(){};
-  Doubles_ME1(const Channels &Chan);
-  void delete_struct(const Channels &Chan);
-};
-
-struct Singles_ME1{
-  double **V11;
-  double **V12;
-  double **V15;
-  double **V16;
-  double **V13;
-  double **V14;
-  double **V19;
-  double **V20;
-  double **V17;
-  double **V18;
-  Singles_ME1(){};
-  Singles_ME1(const Channels &Chan);
-  void delete_struct(const Channels &Chan);
-};
-
-struct Interactions{
-  Doubles_ME1 D_ME1; // for doubles only
-  Singles_ME1 S_ME1; // for singles part of singles
-  Interactions(){};
-  Interactions(const Input_Parameters &Parameters, const Channels &Chan);
-  void delete_struct(const Input_Parameters &Parameters, const Channels &Chan);
 };
 
 struct CC_Eff{

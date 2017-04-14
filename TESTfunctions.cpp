@@ -1,10 +1,9 @@
 #include "CCfunctions.hpp"
 #include "HFfunctions.hpp"
 #include "MATHfunctions.hpp"
-
-void Doubles_Step_explicit(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps1, Amplitudes &Amps2, double &error);
-void Doubles_Step_explicit2(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Amplitudes &Amps1, Amplitudes &Amps2, const HF_Channels &HF_Chan, const HF_Matrix_Elements &HF_ME, double &error);
-void CC_compare_JM(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, std::string &inputfile);
+#include "INTfunctions.hpp"
+#include "TESTfunctions.hpp"
+#include "BASISfunctions.hpp"
 
 void Doubles_Step_explicit(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps1, Amplitudes &Amps2, double &error)
 {
@@ -3640,17 +3639,14 @@ void CC_compare_JM(const Input_Parameters &Parameters, const Model_Space &Space,
   Print_Parameters(Parameters2, Space2);
   HF_Chan2 = HF_Channels(Parameters2, Space2);
   States2 = Single_Particle_States(Parameters2, Space2, HF_Chan2);
-  if(Parameters2.basis == "finite_J" || Parameters2.basis == "finite_JM"){ Read_Matrix_Elements_J(Parameters2, Space2, HF_Chan2, HF_ME2); }
-  else{ Read_Matrix_Elements_M(Parameters2, Space2, HF_Chan2, HF_ME2); }
+  Read_Matrix_Elements_J(Parameters2, Space2, HF_Chan2, HF_ME2);
   Hartree_Fock_States(Parameters2, Space2, HF_Chan2, States2, HF_ME2);
   Convert_To_HF_Matrix_Elements(HF_Chan2, States2, HF_ME2);
   States2.delete_struct(HF_Chan2);
   
-  if(Parameters2.basis == "finite_JM"){
-    Build_Model_Space_J2(Parameters2, Space2);
-    Parameters2.basis = "finite_M";
-    JM2 = 1;
-  }
+  Build_Model_Space_J2(Parameters2, Space2);
+  Parameters2.basis = "finite_M";
+  JM2 = 1;
    
   Chan2 = Channels(Parameters2, Space2);
   Amps2 = Amplitudes(Parameters2, Space2, Chan2);

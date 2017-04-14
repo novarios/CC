@@ -1,6 +1,9 @@
 #include "CCfunctions.hpp"
 #include "MATHfunctions.hpp"
 #include "HFfunctions.hpp"
+#include "INTfunctions.hpp"
+#include "TESTfunctions.hpp"
+#include "BASISfunctions.hpp"
 
 int main(int argc, char * argv[])
 {
@@ -30,6 +33,10 @@ int main(int argc, char * argv[])
     std::string inputfile;
     if(argc == 1){ inputfile = "input.dat"; }
     else{ inputfile = argv[1]; }
+    
+    int* testvec;
+    testvec = new int[0];
+    delete[] testvec;
 
     Get_Input_Parameters(inputfile, Parameters);
     if(Parameters.basis == "infinite"){ Parameters.approx == "doubles"; }
