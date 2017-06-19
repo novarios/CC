@@ -22,25 +22,6 @@
 
 const std::string PATH = "inputs/";
 
-//LAPACK functions
-extern "C" void dgemm_(char* ta,char* tb,int* m,int* n,int* k,double* al,double* a,int* la,double* b,int* lb,double* be,double* c,int* lc);
-extern "C" void dgetrf_(int* M,int* N,double* A,int* lda,int* ipiv,int* info);
-extern "C" void dgetri_(int* N,double* A,int* lda,int* ipiv,double* work,int* lwork,int* info);
-extern "C" void dgeev_(char* jobvl,char* jobvr,int* N,double* A,int* lda,double* wr,double* wi,double* vl,int* ldvl,double* vr,int* ldvr,double* work,int* lwork,int* info);
-
-extern "C" void dnaupd_(int* ido,char* bmat,int* N,char* which,int* nev,double* tol,double* resid,int* ncv,double* v,int* ldv,int* iparam,int* ipntr,double* workd,double* workl,int* lworkl,int* info);
-extern "C" void dneupd_(bool* rvec,char* howmny,int* select,double* dr,double* di,double* z,int* ldz,double* sigmar,double* sigmai,double* workev,char* bmat,int* N,char* which,int* nev,double* tol,double* resid,int* ncv,double* v,int* ldv,int* iparam,int* ipntr,double* workd,double* workl,int* lworkl,int* info);
-
-#define dgemm_NN(A, B, C, m, n, k, alpha, beta, transA, transB) dgemm_(transB, transA, n, m, k, alpha, B, n, A, k, beta, C, n)
-#define dgemm_NT(A, B, C, m, n, k, alpha, beta, transA, transB) dgemm_(transB, transA, n, m, k, alpha, B, k, A, k, beta, C, n)
-#define dgemm_TN(A, B, C, m, n, k, alpha, beta, transA, transB) dgemm_(transB, transA, n, m, k, alpha, B, n, A, m, beta, C, n)
-#define dgemm_TT(A, B, C, m, n, k, alpha, beta, transA, transB) dgemm_(transB, transA, n, m, k, alpha, B, k, A, m, beta, C, n)
-//#define RM_dgemm(A, B, C, m, n, k, alpha, beta, transf_A, transf_B) dgemm_(transf_B, transf_A, n, m, k, alpha, B, n, A, k, beta, C, n)
-//#define RMT_dgemm(A, B, C, m, n, k, alpha, beta, transf_A, transf_B) dgemm_(transf_B, transf_A, n, m, k, alpha, B, k, A, k, beta, C, n)
-
-#define min(a,b) (a <= b ? a : b)
-#define max(a,b) (a >= b ? a : b)
-
 struct Input_Parameters;
 struct State;
 struct Model_Space;
@@ -49,54 +30,66 @@ struct Channels;
 struct Amplitudes;
 struct Doubles_1;
 struct Singles_1;
-struct CC_Eff;
 
 struct HF_Channels;
 struct HF_Matrix_Elements;
 
 struct Interactions;
+struct Eff_Interactions;
 
-int Hash2(const int &p, const int &q, const int &size);
-int Hash3(const int &p, const int &q, const int &r, const int &size);
+int Hash2(int &p, int &q, int &size);
+int Hash3(int &p, int &q, int &r, int &size);
 
-int Index11(const int *vec1, const int *vec2, const int &num1, const int &num2, const int &p, const int &q);
-int Index2(const int *vec1, const int &num1, const int &p, const int &q);
-int Index1(const int *vec1, const int &num1, const int &p);
-int Index22(const int *vec1, const int *vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s);
-int Index13(const int *vec1, const int *vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s);
-int Index31(const int *vec1, const int *vec2, const int &num1, const int &num2, const int &p, const int &q, const int &r, const int &s);
+int Index11(int *vec1, int *vec2, int &num1, int &num2, int &p, int &q);
+int Index2(int *vec1, int &num1, int &p, int &q);
+int Index1(int *vec1, int &num1, int &p);
+int Index22(int *vec1, int *vec2, int &num1, int &num2, int &p, int &q, int &r, int &s);
+int Index13(int *vec1, int *vec2, int &num1, int &num2, int &p, int &q, int &r, int &s);
+int Index31(int *vec1, int *vec2, int &num1, int &num2, int &p, int &q, int &r, int &s);
 
 void Get_Input_Parameters(std::string &infile, Input_Parameters &Parameters);
-void Print_Parameters(const Input_Parameters &Parameters, const Model_Space &Space);
+void Print_Parameters(Input_Parameters &Parameters, Model_Space &Space);
 
-//void Perform_CC(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, const HF_Channels &HF_Chan, const HF_Matrix_Elements &HF_ME);
-void Perform_CC(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps);
-void Doubles_Step(const Model_Space &Space, const Channels &Chan, Interactions &Int, Amplitudes &Amp1, Amplitudes &Amp2);
-void Doubles_Step_2(const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps1, Amplitudes &Amps2);
-void Singles_Step(const Model_Space &Space, const Channels &Chan, Interactions &Int, Amplitudes &Amp1, Amplitudes &Amp2);
-void Doubles_Step_J(const Model_Space &Space, const Channels &Chan, Interactions &Int, Amplitudes &Amp1, Amplitudes &Amp2);
-void Doubles_Step_2_J(const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps1, Amplitudes &Amps2);
-void Singles_Step_J(const Model_Space &Space, const Channels &Chan, Interactions &Int, Amplitudes &Amp1, Amplitudes &Amp2);
+//void Perform_CC(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps, HF_Channels &HF_Chan, HF_Matrix_Elements &HF_ME);
+void Update_Heff_1(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps);
+void Update_Heff_2(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps);
+void Update_Heff_3(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps);
+void Doubles_Step(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps1, Amplitudes &Amps2);
+void Singles_Step(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps1, Amplitudes &Amps2);
+void Doubles_Step_2(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps1, Amplitudes &Amps2);
 
-void Random_Step(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps0, Amplitudes &Amps, Amplitudes &Amps2, Amplitudes &tempAmps, double &mix, double &width, double &error2);
-void Randomize_Amps(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps0, Amplitudes &Amps, double &width);
-void Gather_Amps0(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, Amplitudes &Amps2, double &mix);
-void Gather_Amps(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, Amplitudes &Amps2, double &mix);
-void Gather_Amps2(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, Amplitudes &Amps2, double &mix, double &checkdot, int &N, double ***delp);
-void Gather_Amps3(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, Amplitudes &Amps2, double &mix, int &N, double ***p, double ***delp, double *B);
-void CC_Error(const Input_Parameters &Parameters, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, Amplitudes &Amps2, double &error);
-void Print_Amps(const Input_Parameters &Parameters, const Channels &Chan, Amplitudes &Amps);
-void Doubles_Step_explicit(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps1, Amplitudes &Amps2, double &error);
-void Doubles_Step_explicit2(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Amplitudes &Amps1, Amplitudes &Amps2, const HF_Channels &HF_Chan, const HF_Matrix_Elements &HF_ME, double &error);
+void Perform_CC(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps);
+/*void Doubles_Step_2(Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps1, Amplitudes &Amps2);
+void Singles_Step(Model_Space &Space, Channels &Chan, Interactions &Int, Amplitudes &Amp1, Amplitudes &Amp2);
+void Doubles_Step_J(Model_Space &Space, Channels &Chan, Interactions &Int, Amplitudes &Amp1, Amplitudes &Amp2);
+void Doubles_Step_2_J(Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps1, Amplitudes &Amps2);
+void Singles_Step_J(Model_Space &Space, Channels &Chan, Interactions &Int, Amplitudes &Amp1, Amplitudes &Amp2);*/
 
-void HF(const Input_Parameters &Parameters, Model_Space &Space, const Channels &Chan, Interactions &Int);
-double E_Ref(const Input_Parameters &Parameters, Model_Space &Space, const Channels &Chan, const Interactions &Int);
+void Random_Step(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps0, Amplitudes &Amps, Amplitudes &Amps2, Amplitudes &tempAmps, double &mix, double &width, double &error, double &error2);
+void Randomize_Amps(Input_Parameters &Parameters, Channels &Chan, Interactions &Ints, Amplitudes &Amps0, Amplitudes &Amps, double &width);
+void Print_Amps(Input_Parameters &Parameters, Channels &Chan, Amplitudes &Amps);
+void Gather_Amps(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints, Amplitudes &Amps, Amplitudes &Amps2, double &mix);
+void CC_Error(Input_Parameters &Parameters, Channels &Chan, Interactions &Ints, Amplitudes &Amps, Amplitudes &Amps2, double &error);
 
-void Build_CC_Eff(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, CC_Eff &V_Eff);
-void EE_EOM(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, const CC_Eff &V_Eff);
-void PA_EOM(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, const CC_Eff &V_Eff, State *states, double *nums);
-void PR_EOM(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, const CC_Eff &V_Eff, State *states, double *nums);
-void CC_compare_JM(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan, Interactions &Ints, Amplitudes &Amps, std::string &inputfile);
+void HF(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Int);
+double E_Ref(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Int);
+
+void Initialize_DIIS(Input_Parameters &Parameters, Channels &Chan, Amplitudes &Amps, double *&p, double *&delp, double *&tempdelp, double *&B, int &maxl);
+void Delete_DIIS(Input_Parameters &Parameters, Channels &Chan, double *&p, double *&delp, double *&tempdelp, double *&B, int &maxl);
+void Perform_DIIS(Input_Parameters &Parameters, Channels &Chan, Amplitudes &Amps, Amplitudes &Amps0, double &mix, double *&p, double *&delp, double *&tempdelp, double *&B, int &N, int &maxl, int &DIIS_count);
+void Update_B1(Input_Parameters &Parameters, Channels &Chan, Amplitudes &Amps, int &N, double *&p, double *&delp, double *&tempdelp, double *&B);
+void Update_B2(Input_Parameters &Parameters, Channels &Chan, Amplitudes &Amps, int &N, double *&p, double *&delp, double *&tempdelp, double *&B);
+
+void PA_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints, State *states, double *nums);
+void PR_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints, State *states, double *nums);
+void CC_compare_JM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps, std::string &inputfile);
+
+
+void Map_4_count(Input_Parameters &Parameters, Model_Space &Space, int *map_index, int *map_num, int size, int type, int offset, int &length, int &count, int &p, int &q, int &r, int &s);
+void Map_4(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int *map_ind, double *map_fac1, double *map_fac2, int *map_index, int *map_num, int size, int type, int offset, int &count, std::unordered_map<int,int> *map1, std::unordered_map<int,int> *map2, int *num2, int &p, int &q, int &r, int &s, double &J);
+void Map_2(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int *map_ind, double *map_fac1, double *map_fac2, int &count, std::unordered_map<int,int> *map1, std::unordered_map<int,int> *map2, int *num2, int &p, int &q);
+void direct_state(Input_Parameters &Parameters, Model_Space &Space, int &p, int &q, int &r, int &s, int &jmin1, State &tb1);
+void cross_state(Input_Parameters &Parameters, Model_Space &Space, int &p, int &s, int &r, int &q, int &jmin2, State &tb2);
 
 //Structure for holding Input parameters
 struct Input_Parameters{
@@ -124,246 +117,89 @@ struct Input_Parameters{
 };
 
 struct Doubles_1{
-  //int **Tmap;
-  //int **TJnum;
-  //int ****TJmap;
-  int **Tnum;
-  int ****Tmap;
-  double **Evec;
-  double **T1;
-  double **T2;
-  double **T3;
-  double **T4;
-  double **T5;
-  double **T6;
-  double **T7;
-  double **T8;
-  double **T9;
-  double **S1;
-  double **S2;
-  double **S3;
-  double **S4;
-  double **S5;
-  double **S6;
-  double **S7;
-  double **Q11;
-  double **Q21;
-  double **Q12;
-  double **Q22;
-  int **Qmap1;
-  int **Qmap2;
+  int *Evec_chan;
+  int *Evec_ind;
+  double *T1;
+  double *T2_1;
+  double *T2_2;
+  double *T2_3;
+  double *T2_4;
+  double *T3_1;
+  double *T3_2;
+  double *T3_3;
+  double *T3_4;
+
+  int *T1_index;
+  int *T2_1_index;
+  int *T2_2_index;
+  int *T2_3_index;
+  int *T2_4_index;
+  int *T3_1_index;
+  int *T3_2_index;
+  int *T3_3_index;
+  int *T3_4_index;
+  int T1_length;
+  int T2_1_length;
+  int T2_2_length;
+  int T2_3_length;
+  int T2_4_length;
+  int T3_1_length;
+  int T3_2_length;
+  int T3_3_length;
+  int T3_4_length;
+
+  int *map_index;
+  int *map_chan;
+  int *map_ind;
+  int *map_num;
+  double *map_fac1;
+  double *map_fac2;
 
   Doubles_1(){}; //default constructor
-  Doubles_1(const Channels &Chan, const Doubles_1 &D1); //constructor
-  Doubles_1(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan); //constructor
-  void copy_Doubles_1(const Channels &Chan, const Doubles_1 &D1);
-  void delete_struct(const Channels &Chan);
-  void zero(const Channels &Chan);
-  void zero1(const Channels &Chan);
-  void set_T(int, int, double);
-  void set_T_2(const Channels &Chan, Interactions &Ints);
-  double get_T(int, int) const;
-  void set_TJ(const Model_Space &Space, const Channels &Chan, int &chan, int &hhpp, int &i, int &j, int &a, int &b, double T);
-  double get_TJ(const Model_Space &Space, const Channels &Chan, int &chan, int &hhpp, int &i, int &j, int &a, int &b) const;
-  void set_T_2J(const Model_Space &Space, const Channels &Chan, Interactions &Ints);
+  Doubles_1(Channels &Chan, Doubles_1 &D1); //constructor
+  Doubles_1(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan); //constructor
+  void copy_Doubles_1(Channels &Chan, Doubles_1 &D1);
+  void delete_struct(Channels &Chan);
+  void zero(Channels &Chan, bool flag);
+  void set_T(int &ind, double &T);
+  double get_T(int &ind);
 };
 
 struct Singles_1{
-  int *Tmap;
-  //int *Tmap2;
-  //int *TJnum;
-  //int **TJmap;
-  int *Tnum2;
-  int **Tmap2;
-  double *Evec;
-  double *T1;
-  double **T2;
-  double **T3;
-  double **S1;
-  double **S2;
-  double *S3;
-  double *S4;
-  double **E1;
-  double **E2;
-  double **E3;
-  double **E4;
-  double **E5;
-  double **E6;
-  double **E7;
-  double **E8;
-  double **E9;
-  double **Q11;
-  double **Q12;
-  double **Q21;
-  double **Q22;
-  double *Q31;
-  double **Q32;
-  double *Q41;
-  double **Q42;
-  double **Q51;
-  double **Q52;
-  double **Q61;
-  double **Q62;
-  int **Qnum1;
-  int **Qnum2;
-  int ***Qmap1;
-  int ***Qmap2;
-  //int **QJnum1;
-  //int **QJnum2;
-  //int ***QJmap1;
-  //int ***QJmap2;
-  int *Qmap3;
-  int *Qmap4;
-  int **Qmap5;
-  int **Qmap6;
+  int *evec_chan;
+  int *evec_ind;
+  double *t2;
+  double *t3;
+  
+  int *t3_index;
+  int t2_length;
+  int t3_length;
+
+  int *map_chan;
+  int *map_ind;
+  double *map_fac1;
+  double *map_fac2;
+
   Singles_1(){}; //default constructor
-  Singles_1(const Channels &Chan, const Singles_1 &S1); //constructor
-  Singles_1(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan); //constructor
-  void copy_Singles_1(const Channels &Chan, const Singles_1 &S1);
-  void delete_struct(const Channels &Chan);
-  void zero(const Channels &Chan);
-  void zero1(const Channels &Chan);
-  void set_T(int, double);
-  void set_T_2(const Channels &Chan, Interactions &Ints);
-  double get_T(int) const;
-  void set_TJ(const Model_Space &Space, int &hp, int &i, int &a, double T);
-  void set_T_2J(const Model_Space &Space, const Channels &Chan, Interactions &Ints);
-  double get_TJ(const Model_Space &Space, int &hp, int &i, int &a) const;
+  Singles_1(Channels &Chan, Singles_1 &S1); //constructor
+  Singles_1(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan); //constructor
+  void copy_Singles_1(Channels &Chan, Singles_1 &S1);
+  void delete_struct(Channels &Chan);
+  void zero(Channels &Chan, bool flag);
+  void set_T(int &ind, double &t);
+  double get_T(int &ind);
 };
 
 struct Amplitudes{
   Doubles_1 D1; // for doubles only
   Singles_1 S1; // for singles part of singles
   Amplitudes(){};
-  Amplitudes(const Input_Parameters &Parameters, const Channels &Chan, const Amplitudes &Amps);
-  Amplitudes(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan);
-  void copy_Amplitudes(const Input_Parameters &Parameters, const Channels &Chan, const Amplitudes &Amps);
-  void delete_struct(const Input_Parameters &Parameters, const Channels &Chan);
-  void zero(const Input_Parameters &Parameters, const Channels &Chan);
-  void zero1(const Input_Parameters &Parameters, const Channels &Chan);
-  double get_energy(const Input_Parameters &Parameters, const Channels &Chan, const Interactions &Ints);
+  Amplitudes(Input_Parameters &Parameters, Channels &Chan, Amplitudes &Amps);
+  Amplitudes(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan);
+  void copy_Amplitudes(Input_Parameters &Parameters, Channels &Chan, Amplitudes &Amps);
+  void delete_struct(Input_Parameters &Parameters, Channels &Chan);
+  void zero(Input_Parameters &Parameters, Channels &Chan, bool t1flag);
+  double get_energy(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints);
 };
-
-struct CC_Eff{
-  double *X_ia1;
-  double **X_ia2;
-  double **X_ia3;
-  int *Map_ia;
-
-  double *X_ab1;
-  double **X_ab2;
-  double **X_ab3;
-  int *Map_ab;
-
-  double *X_ij1;
-  double **X_ij2;
-  double **X_ij3;
-  double *X1_ij1;
-  double **X1_ij2;
-  double **X1_ij3;
-  int *Map_ij;
-
-  double *X_ai1;
-  double **X_ai2;
-  double **X_ai3;
-  int *Map_ai;
-
-  double **X_ijab1;
-
-  double **X1_iabc1;
-  double **X1_iabc2;
-  double **X1_iabc3;
-  double **X_iabc1;
-  double **X_iabc3;
-  double **X_iabc4;
-  double **X_iabc5;
-  int **Map_iabc;
-
-  double **X1_ijka1;
-  double **X1_ijka2;
-  double **X_ijka1;
-  double **X_ijka4;
-  double **X_ijka5;
-  int **Map_ijka;
-
-  double **X1_abcd1;
-  double **X1_abcd2;
-  double **X1_abcd3;
-  double **X_abcd1;
-  double **V_abcd;
-  int **Map_abcd;
-
-  double **X_ijkl1;
-  double **X_ijkl2;
-  double **X_ijkl3;
-  double **X_ijkl4;
-  double **V_ijkl;
-  int **Map_ijkl;
-
-  double **X1_iajb1;
-  double **X1_iajb2;
-  double **X1_iajb3;
-  double **X1_iajb4;
-  double **X3_iajb1;
-  double **X3_iajb2;
-  double **X3_iajb3;
-  double **X3_iajb5;
-  double **X_iajb1;
-  double **X_iajb3;
-  int **Map_iajb;
-
-  double **X_abic1;
-  double **X_abic2;
-  double **X_abic3;
-  double **X_abic4;
-  double **X_abic5;
-  double **X_abic6;
-  double **X_abic7;
-  int **Map_abic;
-
-  double **X2_iajk1;
-  double **X2_iajk2;
-  double **X2_iajk3;
-  double **X2_iajk4;
-  double **X2_iajk5;
-  double **X2_iajk6;
-  double **X2_iajk7;
-  double **X_iajk1;
-  int **Map_iajk;
-
-  CC_Eff(){};
-  CC_Eff(const Input_Parameters &Parameters, const Model_Space &Space, const Channels &Chan);
-  void delete_struct(const Channels &Chan);
-  void set_X_ia(const Channels &Chan);
-  void set_X_ab(const Channels &Chan);
-  void set_X_ij(const Channels &Chan);
-  void set_X1_ij(const Channels &Chan);
-  void set_X_ai(const Channels &Chan);
-  void set_X1_iabc(const Channels &Chan);
-  void set_X_iabc(const Channels &Chan);
-  void set_X1_ijka(const Channels &Chan);
-  void set_X_ijka(const Channels &Chan);
-  void set_X1_abcd(const Channels &Chan);
-  void set_X_ijkl(const Channels &Chan);
-  void set_X1_iajb(const Channels &Chan);
-  void set_X3_iajb(const Channels &Chan);
-  void set_X_iajb(const Channels &Chan);
-  void set_X_abic(const Channels &Chan);
-  void set_X2_iajk(const Channels &Chan);
-};
-
-/*struct V_Conv{  
-  std::vector<double> JME;
-  std::vector<std::vector<int> > JL;
-  std::vector<std::vector<int> > SzTz;
-  std::vector<std::vector<int> > Skhat0;
-  std::vector<std::vector<int> > Skhat1;
-
-  std::vector<std::vector<double> > Y1_JLSk;
-  std::vector<std::vector<double> > Y2_JLSk;
-  std::vector<std::vector<double> > V_JL;
-
-  V_Conv(Channels, Input_Parameters, Model_Space, int);
-};*/
 
 #endif

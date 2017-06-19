@@ -383,3 +383,118 @@ double rand_normal(double mean, double stddev)
     return n2*stddev + mean;
   }
 }
+
+void Asym_Diagonalize1(double *Ham, int &N, double &eigenvalue, double &norm1p, int &np0)
+{
+  int info = 0;
+  int ind;
+  char job1 = 'N';
+  char job2 = 'V';
+  int lwork = 10*N;
+  double *Vl = new double[N * N];
+  double *Vr = new double[N * N];
+  double *wr = new double[N];
+  double *wi = new double[N];
+  double *work = new double[lwork];
+  double tempen;
+  info = 0;
+  dgeev_(&job1, &job2, &N, Ham, &N, wr, wi, Vl, &N, Vr, &N, work, &lwork, &info);
+  
+  ind = -1;
+  tempen = 1000;
+  for(int i = 0; i < N; ++i){
+    if(wr[i] < tempen){
+      tempen = wr[i];
+      ind = i;
+    }
+  }
+  
+  norm1p = 0.0;
+  for(int i = 0; i < np0; ++i){ norm1p += Vr[N*ind + i] * Vr[N*ind + i]; }
+  norm1p = std::sqrt(norm1p);
+  eigenvalue = wr[ind];
+  
+  //std::cout << "! " << Chan.qnums3[chan].ml << " " << Chan.qnums3[chan].m << " : " << wr[ind] << " : " << norm1p << std::endl;
+  delete[] Vl;
+  delete[] Vr;
+  delete[] wr;
+  delete[] wi;
+  delete[] work;
+}
+
+void Asym_Diagonalize2(double *Ham, int &N, double &eigenvalue, double &norm1p, int &np0)
+{
+  int info = 0;
+  int ido = 0; // status integer is zero at start
+  char bmat[] = "I"; // standard eigenvalue problem
+  char which[] = "SR"; // smallest magnitude eigenvalues
+  int nev = 1; // number of eigenvalues to calculate
+  double tol = 1.0e-10; // error tolerance
+  double *resid = new double[N];
+  int ncv = 3*nev + 2; // number of lanczos vectors
+  if(ncv > N){ ncv = N; }
+  double *v = new double[N*ncv];
+  for(int i = 0; i < N*ncv; ++i){ v[i] = 0.0; }
+  int ldv = N;
+  double *workd = new double[3*N];
+  int lworkl = 4*ncv*(ncv + 2);
+  double *workl = new double[lworkl];
+  info = 0;
+  int iparam[11];
+  int ipntr[14];
+  int ishift = 1;
+  int mxiter = 5000;
+  int mode = 1;
+  iparam[0] = ishift;
+  iparam[2] = mxiter;
+  iparam[6] = mode;
+
+  do{
+    dnaupd_(&ido, bmat, &N, which, &nev, &tol, resid, &ncv, v, &ldv, iparam, ipntr, workd, workl, &lworkl, &info);	
+    if(ido != -1 && ido != 1){ break; }
+    
+    #pragma omp parallel for
+    for(int j = 0; j < N; ++j){
+      workd[ipntr[1]-1 + j] = 0.0;
+      for(int k = 0; k < N; ++k){
+	workd[ipntr[1]-1 + j] += Ham[N*k + j] * workd[ipntr[0]-1 + k];
+      }
+    }
+  } while(true);
+  
+  bool rvec = true;
+  char howmny = 'A';
+  int *select = new int[ncv];
+  double *dr = new double[nev + 1];
+  double *di = new double[nev + 1];
+  double *z = new double[N * (nev + 1)];
+  for(int i = 0; i < nev + 1; ++i){
+    dr[i] = 0.0;
+    di[i] = 0.0;
+    for(int j = 0; j < N; ++j){
+      z[N*i + j] = 0.0;
+    }
+  }
+  int ldz = N;
+  double sigmar;
+  double sigmai;
+  double *workev = new double[3 * ncv];
+  
+  dneupd_(&rvec, &howmny, select, dr, di, z, &ldz, &sigmar, &sigmai, workev, bmat, &N, which, &nev, &tol, resid, &ncv, v, &ldv, iparam, ipntr, workd, workl, &lworkl, &info);
+  
+  norm1p = 0.0;
+  for(int i = 0; i < np0; ++i){ norm1p += z[i] * z[i]; }
+  norm1p = std::sqrt(norm1p);
+  eigenvalue = dr[0];
+  
+  //std::cout << "! " << Chan.qnums3[chan].ml << " " << Chan.qnums3[chan].m << " : " << dr[0] << " : " << norm1p << std::endl;   
+  delete[] resid;
+  delete[] v;
+  delete[] workd;
+  delete[] workl;
+  delete[] select;
+  delete[] dr;
+  delete[] di;
+  delete[] z;
+  delete[] workev;
+}

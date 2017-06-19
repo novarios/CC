@@ -22,58 +22,72 @@ struct Input_Parameters;
 struct Model_Space;
 struct Channels;
 struct State;
+struct one_body;
+struct two_body;
 
 struct Single_Particle_States;
 struct HF_Channels;
 struct HF_Matrix_Elements;
 
-void Hartree_Fock_States(const Input_Parameters &Parameters, Model_Space &Space, const HF_Channels &Chan, Single_Particle_States &States, const HF_Matrix_Elements &ME);
-void Hartree_Fock_Step(const Input_Parameters &Parameters, Model_Space &Space, const HF_Channels &Chan, Single_Particle_States &HF, Single_Particle_States &HF2, const HF_Matrix_Elements &ME, const double &Bshift, double &error);
-void Randomize_HF(const HF_Channels &Chan, Single_Particle_States &HF, Single_Particle_States &HF2, double &width);
-void Convert_To_HF_Matrix_Elements(const HF_Channels &Chan, const Single_Particle_States &States, HF_Matrix_Elements &ME);
-void Setup_HF_Space(Model_Space &Space, const Single_Particle_States &States, const HF_Channels &Chan);
+void Hartree_Fock_States(Input_Parameters &Parameters, Model_Space &Space, HF_Channels &Chan, Single_Particle_States &States, HF_Matrix_Elements &ME);
+void Hartree_Fock_Step(Input_Parameters &Parameters, Model_Space &Space, HF_Channels &Chan, Single_Particle_States &HF, Single_Particle_States &HF2, HF_Matrix_Elements &ME, double &Bshift0, double &error);
+void Randomize_HF(HF_Channels &Chan, Single_Particle_States &HF, Single_Particle_States &HF2, double &width);
+void Convert_To_HF_Matrix_Elements(Input_Parameters &Parameters, HF_Channels &Chan, Model_Space &Space, Single_Particle_States &States, HF_Matrix_Elements &ME);
+void Setup_HF_Space(Model_Space &Space, Single_Particle_States &States, HF_Channels &Chan);
+
+void Initialize_DIIS_HF(HF_Channels &Chan, Single_Particle_States &HF, double *&p, double *&delp, double *&tempdelp, double *&B, int &maxl);
+void Delete_DIIS_HF(HF_Channels &Chan, double *&p, double *&delp, double *&tempdelp, double *&B, int &maxl);
+void Perform_DIIS_HF(HF_Channels &Chan, Single_Particle_States &HF, Single_Particle_States &HF0, double *&p, double *&delp, double *&tempdelp, double *&B, int &N, int &maxl, int &DIIS_count);
+void Update_B1_HF(HF_Channels &Chan, Single_Particle_States &HF, int &N, double *&p, double *&delp, double *&tempdelp, double *&B);
+void Update_B2_HF(HF_Channels &Chan, Single_Particle_States &HF, int &N, double *&p, double *&delp, double *&tempdelp, double *&B);
+void Random_Step_HF(Input_Parameters &Parameters, Model_Space &Space, HF_Channels &Chan, Single_Particle_States &HF0, Single_Particle_States &HF, Single_Particle_States &HF2, HF_Matrix_Elements &ME, double &width, double &error2, double &Bshift);
+void Randomize_HF(HF_Channels &Chan, Single_Particle_States &HF0, Single_Particle_States &HF, double &width);
 
 struct Single_Particle_States{
-  int hp;
-  int hn;
-  double*** holes; //list of sp hole states given as vectors of coefficients
-  double*** particles; //list of sp particle states given as vectors of coefficients
-  double** h_energies; //list of sp-hole energies
-  double** pt_energies; //list of sp-particle energies
-  double*** vectors; 
-  double** energies;
-  int* h; //number of holes in OBchan
-  int* p; //number of particles in OBchan
+  int* hole_size;
+  int* vector_size;
+  int* vector_index;
+  int* energy_index;
+  double* vectors; 
+  double* energies;
+  int vector_length;
+  int energy_length;
 
   Single_Particle_States(){};
-  Single_Particle_States(const Input_Parameters &Parameters, const Model_Space &Space, const HF_Channels &Chan);
-  void delete_struct(const HF_Channels &Chan);
-  void Separate(const HF_Channels &Chan);
+  Single_Particle_States(Input_Parameters &Parameters, Model_Space &Space, HF_Channels &Chan);
+  void delete_struct(HF_Channels &Chan);
+  void Separate(HF_Channels &Chan);
 };
 
 //Structure for holding channel information
 struct HF_Channels{
-  int size1;
   int size3;
-  State *qnums1;
   State *qnums3;
-  int *indvec;
-  int *ntb;
-  int **tbvec;
-  std::unordered_map<int, int> *tb_map;
   int *nob;
-  int **obvec;
+  one_body *ob_vec;
+  int *ob_index;
   std::unordered_map<int, int> *ob_map;
+
+  int size1;
+  State *qnums1;
+  int *ntb;
+  two_body *tb_vec;
+  int *tb_index;
+  std::unordered_map<int, int> *tb_map;
+
   HF_Channels(){};
-  HF_Channels(const Input_Parameters &Parameters, const Model_Space &Space);
+  HF_Channels(Input_Parameters &Parameters, Model_Space &Space);
   void delete_struct();
+  one_body ob_state(int &chan3, int &ind3);
+  two_body tb_state(int &chan1, int &ind1);
 };
 
 struct HF_Matrix_Elements{
-  double **V;
-  HF_Matrix_Elements(const HF_Channels &Chan);
+  double *V;
+  int *Index;
+  HF_Matrix_Elements(HF_Channels &Chan);
   HF_Matrix_Elements(){};
-  void delete_struct(const HF_Channels &Chan);
+  void delete_struct(HF_Channels &Chan);
 };
 
 #endif

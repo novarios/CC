@@ -7,13 +7,16 @@ struct Model_Space;
 struct State;
 struct Channels;
 
-void plus(State &S, const State &S1, const State &S2);
-void minus(State &S, const State &S1, const State &S2);
-bool equal(const State &S1, const State &S2);
+struct two_body;
+struct three_body;
 
-int ChanInd_1b(const std::string &basis, const Model_Space &Space, const State &State);
-int ChanInd_2b_dir(const std::string &basis, const Model_Space &Space, const State &State);
-int ChanInd_2b_cross(const std::string &basis, const Model_Space &Space, const State &State);
+void plus(State &S, State &S1, State &S2);
+void minus(State &S, State &S1, State &S2);
+bool equal(State &S1, State &S2);
+
+int ChanInd_1b(std::string &basis, Model_Space &Space, State &State);
+int ChanInd_2b_dir(std::string &basis, Model_Space &Space, State &State);
+int ChanInd_2b_cross(std::string &basis, Model_Space &Space, State &State);
 
 void Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space);
 void Build_Model_Space_J2(Input_Parameters &Parameters, Model_Space &Space);
@@ -44,37 +47,110 @@ struct State{
     n = 0;
     j = 0;
     par = 1;
-    energy = -100;
+    energy = -1000.0;
     type = "none";
   };
+
+  void minimize(){
+    t = -1000;
+    m = -1000;
+    nx = -1000;
+    ny = -1000;
+    nz = -1000;
+    ml = -1000;
+    n = -1000;
+    j = -1000;
+    par = -1000;
+  };
+
+  void maximize(){
+    t = 1000;
+    m = 1000;
+    nx = 1000;
+    ny = 1000;
+    nz = 1000;
+    ml = 1000;
+    n = 1000;
+    j = 1000;
+    par = 1000;
+  };
+
+  void divide_spins(){
+    t /= 2;
+    m /= 2;
+    j /= 2;
+  };
+
+  void add_one(){
+    ++t;
+    ++m;
+    ++nx;
+    ++ny;
+    ++nz;
+    ++ml;
+    ++n;
+    ++j;
+  };
+};
+
+struct one_body{
+  int v1;
+};
+
+struct two_body{
+  int v1;
+  int v2;
+};
+
+struct three_body{
+  int v1;
+  int v2;
+  int v3;
 };
 
 //Structure for holding all model space info
 struct Model_Space{
-  int indp; //number of proton orbits
-  int indn; //number of neutron orbits
-  int indpar; //number of particle orbits
-  int indhol; //number of hole orbits
-  int indtot; //number of total orbits
-  int indtotj;
+  int num_p; //number of proton orbits
+  int num_n; //number of neutron orbits
+  int num_par; //number of particle orbits
+  int num_hol; //number of hole orbits
+  int num_states; //number of total orbits
+  int num_jstates; //number of orbits in j-scheme
 
   State *qnums;
+
   State qmins;
   State qmaxs;
   State qsizes;
+  State qmins1;
+  State qmaxs1;
+  State qsizes1;
+  State qmins2;
+  State qmaxs2;
+  State qsizes2;
   State qsizes0;
-  int **shellsm; // for j
+
+  int **shellsm; // list of m-states for each j-orbit
 
   int Nmax;
   int nmax;
-  std::unordered_map<int,int> map_1b;
-  std::unordered_map<int,int> map_2b_dir;
-  std::unordered_map<int,int> map_2b_cross;
-  int *map_2b;
-  int size_2b;
+
+  std::unordered_map<int,int> map_state;
+
+  int size_1b;
+  int size_2b_dir;
+  int size_2b_cross;
   
   Model_Space(){};
+  void Determine_Shells(Input_Parameters &Parameters);
+  void Setup_Maps(Input_Parameters &Parameters);
   void delete_struct(Input_Parameters &Parameters);
+  int hash2(int &p, int &q, int &j);
+  int hash3(int &p, int &q, int &r, int &j);
+  int ind_state(std::string &basis, State &State);
+  int ind_1b(std::string &basis, State &State);
+  int ind_2b_dir(std::string &basis, State &State);
+  int ind_2b_cross(std::string &basis, State &State);
 };
 
 //Structure for holding channel information
@@ -86,61 +162,92 @@ struct Channels{
   State *qnums1;
   State *qnums2;
   State *qnums3;
-  
-  int *indvec;
 
-  int *nhh;
-  int *npp;
-  int *nhp;
-  int *nhp1;
-  int *nhp2;
   int *nh;
-  int *np;
-  int *nhhp;
-  int *nhpp;
-  int *nhhp1;
-  int *nhpp1;
-  int *nhh1;
-  int *npp1;
-  int *nhhh;
-  int *nppp;
-
-  int **hhvec;
-  int **ppvec;
-  int **hpvec;
-  int **hp1vec;
-  int **hp2vec;
-  int **pvec;
-  int **hvec;
-  int **hhpvec;
-  int **hppvec;
-  int **hhp1vec;
-  int **hpp1vec;
-  int **hh1vec;
-  int **pp1vec;
-  int **hhhvec;
-  int **pppvec;
-
-  std::unordered_map<int,int> *hh_map;
-  std::unordered_map<int,int> *pp_map;
-  std::unordered_map<int,int> *hp_map;
-  std::unordered_map<int,int> *hp1_map;
-  std::unordered_map<int,int> *hp2_map;
-  std::unordered_map<int,int> *p_map;
+  one_body *h_vec;
+  int *h_index;
   std::unordered_map<int,int> *h_map;
-  std::unordered_map<int,int> *hhp_map;
-  std::unordered_map<int,int> *hpp_map;
-  std::unordered_map<int,int> *hhp1_map;
-  std::unordered_map<int,int> *hpp1_map;
-  std::unordered_map<int,int> *hh1_map;
-  std::unordered_map<int,int> *pp1_map;
-  std::unordered_map<int,int> *hhh_map;
-  std::unordered_map<int,int> *ppp_map;
+  int *np;
+  one_body *p_vec;
+  int *p_index;
+  std::unordered_map<int,int> *p_map;
+  
+  int *nhh;
+  two_body *hh_vec;
+  int *hh_index;
+  std::unordered_map<int,int> *hh_map;
+  int *npp;
+  two_body *pp_vec;
+  int *pp_index;
+  std::unordered_map<int,int> *pp_map;
+  int *nhp1;
+  two_body *hp1_vec;
+  int *hp1_index;
+  std::unordered_map<int,int> *hp1_map;
+  int *nph1;
+  two_body *ph1_vec;
+  int *ph1_index;
+  std::unordered_map<int,int> *ph1_map;
 
+  int *nhhp;
+  three_body *hhp_vec;
+  int *hhp_index;
+  std::unordered_map<int,int> *hhp_map;
+  int *npph;
+  three_body *pph_vec;
+  int *pph_index;
+  std::unordered_map<int,int> *pph_map;
+
+  // For CCSD
+  int *nhp;
+  two_body *hp_vec;
+  int *hp_index;
+  std::unordered_map<int,int> *hp_map;
+  int *nhh1;
+  two_body *hh1_vec;
+  int *hh1_index;
+  std::unordered_map<int,int> *hh1_map;
+  int *npp1;
+  two_body *pp1_vec;
+  int *pp1_index;
+  std::unordered_map<int,int> *pp1_map;
+  int *nhph;
+  three_body *hph_vec;
+  int *hph_index;
+  std::unordered_map<int,int> *hph_map;
+  int *nhpp;
+  three_body *hpp_vec;
+  int *hpp_index;
+  std::unordered_map<int,int> *hpp_map;
+  int *nhhh;
+  three_body *hhh_vec;
+  int *hhh_index;
+  std::unordered_map<int,int> *hhh_map;
+  int *nppp;
+  three_body *ppp_vec;
+  int *ppp_index;
+  std::unordered_map<int,int> *ppp_map;
   int ind0; // index of i-i cross channel for singles
+  //////////////////////////
+
   Channels(){};
-  Channels(const Input_Parameters &Parameters, const Model_Space &Space);
-  void delete_struct();
+  Channels(Input_Parameters &Parameters, Model_Space &Space);
+  void delete_struct(Input_Parameters &Parameters);
+  one_body h_state(int &chan3, int &ind3);
+  one_body p_state(int &chan3, int &ind3);
+  two_body hh_state(int &chan1, int &ind1);
+  two_body pp_state(int &chan1, int &ind1);
+  two_body hp1_state(int &chan2, int &ind2);
+  two_body ph1_state(int &chan2, int &ind2);
+  three_body pph_state(int &chan3, int &ind3);
+  three_body hhp_state(int &chan3, int &ind3);
+  two_body hp_state(int &chan1, int &ind1);
+  two_body hh1_state(int &chan2, int &ind2);
+  two_body pp1_state(int &chan2, int &ind2);
+  three_body hph_state(int &chan3, int &ind3);
+  three_body hpp_state(int &chan3, int &ind3);
+  three_body hhh_state(int &chan3, int &ind3);
+  three_body ppp_state(int &chan3, int &ind3);
 };
 
 #endif

@@ -21,6 +21,20 @@
 #define eVs_in_Hartree 27.21138505 // eV
 #define fine_struct 0.007297352566355
 
+//LAPACK functions
+extern "C" void dgemm_(char* ta,char* tb,int* m,int* n,int* k,double* al,double* a,int* la,double* b,int* lb,double* be,double* c,int* lc);
+extern "C" void dgetrf_(int* M,int* N,double* A,int* lda,int* ipiv,int* info);
+extern "C" void dgetri_(int* N,double* A,int* lda,int* ipiv,double* work,int* lwork,int* info);
+extern "C" void dgeev_(char* jobvl,char* jobvr,int* N,double* A,int* lda,double* wr,double* wi,double* vl,int* ldvl,double* vr,int* ldvr,double* work,int* lwork,int* info);
+
+extern "C" void dnaupd_(int* ido,char* bmat,int* N,char* which,int* nev,double* tol,double* resid,int* ncv,double* v,int* ldv,int* iparam,int* ipntr,double* workd,double* workl,int* lworkl,int* info);
+extern "C" void dneupd_(bool* rvec,char* howmny,int* select,double* dr,double* di,double* z,int* ldz,double* sigmar,double* sigmai,double* workev,char* bmat,int* N,char* which,int* nev,double* tol,double* resid,int* ncv,double* v,int* ldv,int* iparam,int* ipntr,double* workd,double* workl,int* lworkl,int* info);
+
+#define dgemm_NN(A, B, C, m, n, k, alpha, beta, transA, transB) dgemm_(transB, transA, n, m, k, alpha, B, n, A, k, beta, C, n)
+#define dgemm_NT(A, B, C, m, n, k, alpha, beta, transA, transB) dgemm_(transB, transA, n, m, k, alpha, B, k, A, k, beta, C, n)
+#define dgemm_TN(A, B, C, m, n, k, alpha, beta, transA, transB) dgemm_(transB, transA, n, m, k, alpha, B, n, A, m, beta, C, n)
+#define dgemm_TT(A, B, C, m, n, k, alpha, beta, transA, transB) dgemm_(transB, transA, n, m, k, alpha, B, k, A, m, beta, C, n)
+
 long long factorial(const int &n);
 long long factorial(const double &n);
 double logfac(const int &n);
@@ -48,5 +62,7 @@ void projection(double *u, double *v, double *proj, const int &size);
 void GramSchmidt(double *Vectors, const int &size);
 void GramSchmidt(double **Vectors, const int &size);
 double rand_normal(double mean, double stddev);
+void Asym_Diagonalize1(double *Ham, int &N, double &eigenvalue, double &norm1p, int &np0);
+void Asym_Diagonalize2(double *Ham, int &N, double &eigenvalue, double &norm1p, int &np0);
 
 #endif
