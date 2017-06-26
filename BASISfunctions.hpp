@@ -38,7 +38,7 @@ struct State{
   std::string type;
  
   State(){
-    t = 0;
+    t = -1;
     m = 0;
     nx = 0;
     ny = 0;
@@ -130,7 +130,10 @@ struct Model_Space{
   State qsizes2;
   State qsizes0;
 
-  int **shellsm; // list of m-states for each j-orbit
+  // for jm scheme
+  int *shellsj; // list of j for each m-states
+  int *shellsnum; // number of m-states for each j-shell
+  int **shellsm; // list of m-states for each j-shell
 
   int Nmax;
   int nmax;

@@ -5,6 +5,19 @@
 #include "TESTfunctions.hpp"
 #include "BASISfunctions.hpp"
 
+void CC_Test_Full(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps1, Amplitudes &Amps2, int &print)
+{
+  CC_Test_T1(Parameters, Space, Chan, Ints, Eff_Ints, Amps1, Amps2, print);
+  CC_Test_T2_1(Parameters, Space, Chan, Ints, Eff_Ints, Amps1, Amps2, print);
+  CC_Test_T2_2(Parameters, Space, Chan, Ints, Eff_Ints, Amps1, Amps2, print);
+  CC_Test_T2_3(Parameters, Space, Chan, Ints, Eff_Ints, Amps1, Amps2, print);
+  CC_Test_T2_4(Parameters, Space, Chan, Ints, Eff_Ints, Amps1, Amps2, print);
+  CC_Test_T3_1(Parameters, Space, Chan, Ints, Eff_Ints, Amps1, Amps2, print);
+  CC_Test_T3_2(Parameters, Space, Chan, Ints, Eff_Ints, Amps1, Amps2, print);
+  CC_Test_T3_3(Parameters, Space, Chan, Ints, Eff_Ints, Amps1, Amps2, print);
+  CC_Test_T3_4(Parameters, Space, Chan, Ints, Eff_Ints, Amps1, Amps2, print);
+}
+
 void CC_Test_T1(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps1, Amplitudes &Amps2, int &print)
 {
   int ind1, chan1, chanind_T;
@@ -2632,4 +2645,976 @@ double Diagram_D_9(Input_Parameters &Parameters, Model_Space &Space, Channels &C
     if(print != 0){ std::cout << "D_9(2) = " << term << std::endl; }
   }
   return term;
+}
+
+
+void CC_Test_Full_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps)
+{
+  CC_Test_T1_J(ParametersJ, SpaceJ, ChanJ, IntsJ, AmpsJ, Parameters, Space, Chan, Ints, Amps);
+  CC_Test_T2_1_J(ParametersJ, SpaceJ, ChanJ, IntsJ, AmpsJ, Parameters, Space, Chan, Ints, Amps);
+  CC_Test_T2_2_J(ParametersJ, SpaceJ, ChanJ, IntsJ, AmpsJ, Parameters, Space, Chan, Ints, Amps);
+  CC_Test_T2_3_J(ParametersJ, SpaceJ, ChanJ, IntsJ, AmpsJ, Parameters, Space, Chan, Ints, Amps);
+  CC_Test_T2_4_J(ParametersJ, SpaceJ, ChanJ, IntsJ, AmpsJ, Parameters, Space, Chan, Ints, Amps);
+  CC_Test_T3_1_J(ParametersJ, SpaceJ, ChanJ, IntsJ, AmpsJ, Parameters, Space, Chan, Ints, Amps);
+  CC_Test_T3_2_J(ParametersJ, SpaceJ, ChanJ, IntsJ, AmpsJ, Parameters, Space, Chan, Ints, Amps);
+  CC_Test_T3_3_J(ParametersJ, SpaceJ, ChanJ, IntsJ, AmpsJ, Parameters, Space, Chan, Ints, Amps);
+  CC_Test_T3_4_J(ParametersJ, SpaceJ, ChanJ, IntsJ, AmpsJ, Parameters, Space, Chan, Ints, Amps);
+  CC_Test_t2_J(ParametersJ, SpaceJ, ChanJ, IntsJ, AmpsJ, Parameters, Space, Chan, Ints, Amps);
+  CC_Test_t3_J(ParametersJ, SpaceJ, ChanJ, IntsJ, AmpsJ, Parameters, Space, Chan, Ints, Amps);
+}
+
+void CC_Test_T1_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps)
+{
+  int ind1, chan1;
+  int nhh, npp;
+  int a, b, i, j;
+  two_body pp, hh;
+  double tJ;
+  int key_a, key_b, key_i, key_j;
+  int shell_a, shell_b, shell_i, shell_j;
+  int minJ, maxJ;
+  int chanind, chanJ1, chanJ2, chanind_J, keyJ1, keyJ2;
+  State stateJ1, stateJ2, state_a, state_b, state_i, state_j;
+  double j_a, j_b, j_i, j_j, J;
+  double m_a, m_b, m_i, m_j, M;
+  for(chan1 = 0; chan1 < Chan.size1; ++chan1){
+    npp = Chan.npp[chan1];
+    nhh = Chan.nhh[chan1];
+    chanind = Amps.D1.T1_index[chan1];
+    for(int pp_ind = 0; pp_ind < npp; ++pp_ind){
+      pp = Chan.pp_state(chan1, pp_ind);
+      a = pp.v1;
+      state_a = Space.qnums[a];
+      state_a.j = Space.shellsj[a];
+      key_a = SpaceJ.ind_state(ParametersJ.basis, state_a);
+      shell_a = SpaceJ.map_state[key_a];
+      b = pp.v2;
+      state_b = Space.qnums[b];
+      state_b.j = Space.shellsj[b];
+      key_b = SpaceJ.ind_state(ParametersJ.basis, state_b);
+      shell_b = SpaceJ.map_state[key_b];
+      if(a == b){ continue; }
+      for(int hh_ind = 0; hh_ind < nhh; ++hh_ind){
+	hh = Chan.hh_state(chan1, hh_ind);
+	i = hh.v1;
+	state_i = Space.qnums[i];
+	state_i.j = Space.shellsj[i];
+	key_i = SpaceJ.ind_state(ParametersJ.basis, state_i);
+	shell_i = SpaceJ.map_state[key_i];
+	j = hh.v2;
+	state_j = Space.qnums[j];
+	state_j.j = Space.shellsj[j];
+	key_j = SpaceJ.ind_state(ParametersJ.basis, state_j);
+	shell_j = SpaceJ.map_state[key_j];
+	if(i == j){ continue; }
+	ind1 = pp_ind * nhh + hh_ind;
+
+	j_a = Space.shellsj[a];
+	m_a = Space.qnums[a].m;
+	j_b = Space.shellsj[b];
+	m_b = Space.qnums[b].m;
+	j_i = Space.shellsj[i];
+	m_i = Space.qnums[i].m;
+	j_j = Space.shellsj[j];
+	m_j = Space.qnums[j].m;
+
+	minJ = abs(j_a - j_b);
+	if( abs(j_i - j_j) > minJ ){ minJ = abs(j_i - j_j); }
+	maxJ = j_a + j_b;
+	if( j_i + j_j < maxJ ){ maxJ = j_i + j_j; }
+
+	j_a *= 0.5;
+	j_b *= 0.5;
+	j_i *= 0.5;
+	j_j *= 0.5;
+	m_a *= 0.5;
+	m_b *= 0.5;
+	m_i *= 0.5;
+	m_j *= 0.5;
+	M = m_a + m_b;
+
+	tJ = 0.0;
+	for(int j0 = minJ; j0 <= maxJ; j0+=2){
+	  J = 0.5 * j0;
+	  if( std::fabs(M) > J ){ continue; }
+	  plus(stateJ1, SpaceJ.qnums[shell_a], SpaceJ.qnums[shell_b]);
+	  plus(stateJ2, SpaceJ.qnums[shell_i], SpaceJ.qnums[shell_j]);
+	  stateJ1.j = j0;
+	  stateJ2.j = j0;
+	  chanJ1 = SpaceJ.ind_2b_dir(ParametersJ.basis, stateJ1);
+	  chanJ2 = SpaceJ.ind_2b_dir(ParametersJ.basis, stateJ2);
+	  if( chanJ1 != chanJ2 ){ continue; }
+	  chanind_J = AmpsJ.D1.T1_index[chanJ1];
+	  keyJ1 = ChanJ.pp_map[chanJ1][SpaceJ.hash2(shell_a, shell_b, j0)];
+	  keyJ2 = ChanJ.hh_map[chanJ2][SpaceJ.hash2(shell_i, shell_j, j0)];
+	  tJ += CGC(j_a, m_a, j_b, m_b, J, M) * CGC(j_i, m_i, j_j, m_j, J, M) * AmpsJ.D1.T1[chanind_J + (keyJ1*ChanJ.nhh[chanJ1] + keyJ2)];
+	}
+	if( std::fabs((tJ - Amps.D1.T1[chanind + ind1])/(std::fabs(tJ) + 1e-12)) > 1e-8 && std::fabs(tJ) > 1e-12 ){
+	  std::cout << "!! T1 < " << a << "," << b << " |t| " << i << "," << j << " > !! -- " << Amps.D1.T1[chanind + ind1] << " " << tJ << std::endl;
+	}
+      }
+    }
+  }
+}
+
+void CC_Test_T2_1_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps)
+{
+  int ind2, chan2;
+  int nph1, nhp1;
+  int a, b, i, j;
+  two_body ph1, hp1;
+  double tJ;
+  int key_a, key_b, key_i, key_j;
+  int shell_a, shell_b, shell_i, shell_j;
+  int minJ, maxJ;
+  int chanind, chanJ1, chanJ2, chanind_J, keyJ1, keyJ2;
+  State stateJ1, stateJ2, state_a, state_b, state_i, state_j;
+  double j_a, j_b, j_i, j_j, J;
+  double m_a, m_b, m_i, m_j, M;
+  for(chan2 = 0; chan2 < Chan.size2; ++chan2){
+    nph1 = Chan.nph1[chan2];
+    nhp1 = Chan.nhp1[chan2];
+    chanind = Amps.D1.T2_1_index[chan2];
+    for(int ph1_ind = 0; ph1_ind < nph1; ++ph1_ind){
+      ph1 = Chan.ph1_state(chan2, ph1_ind);
+      a = ph1.v1;
+      state_a = Space.qnums[a];
+      state_a.j = Space.shellsj[a];
+      key_a = SpaceJ.ind_state(ParametersJ.basis, state_a);
+      shell_a = SpaceJ.map_state[key_a];
+      j = ph1.v2;
+      state_j = Space.qnums[j];
+      state_j.j = Space.shellsj[j];
+      key_j = SpaceJ.ind_state(ParametersJ.basis, state_j);
+      shell_j = SpaceJ.map_state[key_j];
+      for(int hp1_ind = 0; hp1_ind < nhp1; ++hp1_ind){
+	hp1 = Chan.hp1_state(chan2, hp1_ind);
+	i = hp1.v1;
+	state_i = Space.qnums[i];
+	state_i.j = Space.shellsj[i];
+	key_i = SpaceJ.ind_state(ParametersJ.basis, state_i);
+	shell_i = SpaceJ.map_state[key_i];
+	b = hp1.v2;
+	state_b = Space.qnums[b];
+	state_b.j = Space.shellsj[b];
+	key_b = SpaceJ.ind_state(ParametersJ.basis, state_b);
+	shell_b = SpaceJ.map_state[key_b];
+	if(a == b || i == j){ continue; }
+	ind2 = ph1_ind * nhp1 + hp1_ind;
+
+	j_a = Space.shellsj[a];
+	m_a = Space.qnums[a].m;
+	j_b = Space.shellsj[b];
+	m_b = Space.qnums[b].m;
+	j_i = Space.shellsj[i];
+	m_i = Space.qnums[i].m;
+	j_j = Space.shellsj[j];
+	m_j = Space.qnums[j].m;
+
+	minJ = abs(j_a - j_j);
+	if( abs(j_i - j_b) > minJ ){ minJ = abs(j_i - j_b); }
+	maxJ = j_a + j_j;
+	if( j_i + j_b < maxJ ){ maxJ = j_i + j_b; }
+
+	j_a *= 0.5;
+	j_b *= 0.5;
+	j_i *= 0.5;
+	j_j *= 0.5;
+	m_a *= 0.5;
+	m_b *= -0.5;
+	m_i *= 0.5;
+	m_j *= -0.5;
+	M = m_a + m_j;
+
+	tJ = 0.0;
+	for(int j0 = minJ; j0 <= maxJ; j0+=2){
+	  J = 0.5 * j0;
+	  if( std::fabs(M) > J ){ continue; }
+	  minus(stateJ1, SpaceJ.qnums[shell_a], SpaceJ.qnums[shell_j]);
+	  minus(stateJ2, SpaceJ.qnums[shell_i], SpaceJ.qnums[shell_b]);
+	  stateJ1.j = j0;
+	  stateJ2.j = j0;
+	  chanJ1 = SpaceJ.ind_2b_cross(ParametersJ.basis, stateJ1);
+	  chanJ2 = SpaceJ.ind_2b_cross(ParametersJ.basis, stateJ2);
+	  if( chanJ1 != chanJ2 ){ continue; }
+	  chanind_J = AmpsJ.D1.T2_1_index[chanJ1];
+	  keyJ1 = ChanJ.ph1_map[chanJ1][SpaceJ.hash2(shell_a, shell_j, j0)];
+	  keyJ2 = ChanJ.hp1_map[chanJ2][SpaceJ.hash2(shell_i, shell_b, j0)];
+	  tJ += -1.0 * std::pow(-1.0, j_b + m_b + j_j + m_j) * CGC(j_a, m_a, j_j, m_j, J, M) * CGC(j_i, m_i, j_b, m_b, J, M) * AmpsJ.D1.T2_1[chanind_J + (keyJ1*ChanJ.nhp1[chanJ1] + keyJ2)];
+	}
+	if( std::fabs((tJ - Amps.D1.T2_1[chanind + ind2])/(std::fabs(tJ) + 1e-12)) > 1e-8 && std::fabs(tJ) > 1e-12 ){
+	  std::cout << "!! T2_1 < " << a << "," << b << " |t| " << i << "," << j << " > -- < " << shell_a << "," << shell_b << " |t| " << shell_i << "," << shell_j << " > (" << minJ << "," << maxJ << ")  :  " << Amps.D1.T2_1[chanind + ind2] << " " << tJ << std::endl;
+	}
+      }
+    }
+  }
+}
+
+void CC_Test_T2_2_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps)
+{
+  int ind2, chan2;
+  int nph1, nhp1;
+  int a, b, i, j;
+  two_body ph1, hp1;
+  double tJ;
+  int key_a, key_b, key_i, key_j;
+  int shell_a, shell_b, shell_i, shell_j;
+  int minJ, maxJ;
+  int chanind, chanJ1, chanJ2, chanind_J, keyJ1, keyJ2;
+  State stateJ1, stateJ2, state_a, state_b, state_i, state_j;
+  double j_a, j_b, j_i, j_j, J;
+  double m_a, m_b, m_i, m_j, M;
+  for(chan2 = 0; chan2 < Chan.size2; ++chan2){
+    nph1 = Chan.nph1[chan2];
+    nhp1 = Chan.nhp1[chan2];
+    chanind = Amps.D1.T2_2_index[chan2];
+    for(int ph1_ind = 0; ph1_ind < nph1; ++ph1_ind){
+      ph1 = Chan.ph1_state(chan2, ph1_ind);
+      b = ph1.v1;
+      state_b = Space.qnums[b];
+      state_b.j = Space.shellsj[b];
+      key_b = SpaceJ.ind_state(ParametersJ.basis, state_b);
+      shell_b = SpaceJ.map_state[key_b];
+      i = ph1.v2;
+      state_i = Space.qnums[i];
+      state_i.j = Space.shellsj[i];
+      key_i = SpaceJ.ind_state(ParametersJ.basis, state_i);
+      shell_i = SpaceJ.map_state[key_i];
+      for(int hp1_ind = 0; hp1_ind < nhp1; ++hp1_ind){
+	hp1 = Chan.hp1_state(chan2, hp1_ind);
+	j = hp1.v1;
+	state_j = Space.qnums[j];
+	state_j.j = Space.shellsj[j];
+	key_j = SpaceJ.ind_state(ParametersJ.basis, state_j);
+	shell_j = SpaceJ.map_state[key_j];
+	a = hp1.v2;
+	state_a = Space.qnums[a];
+	state_a.j = Space.shellsj[a];
+	key_a = SpaceJ.ind_state(ParametersJ.basis, state_a);
+	shell_a = SpaceJ.map_state[key_a];
+	if(a == b || i == j){ continue; }
+	ind2 = ph1_ind * nhp1 + hp1_ind;
+
+	j_a = Space.shellsj[a];
+	m_a = Space.qnums[a].m;
+	j_b = Space.shellsj[b];
+	m_b = Space.qnums[b].m;
+	j_i = Space.shellsj[i];
+	m_i = Space.qnums[i].m;
+	j_j = Space.shellsj[j];
+	m_j = Space.qnums[j].m;
+
+	minJ = abs(j_b - j_i);
+	if( abs(j_j - j_a) > minJ ){ minJ = abs(j_j - j_a); }
+	maxJ = j_b + j_i;
+	if( j_j + j_a < maxJ ){ maxJ = j_j + j_a; }
+
+	j_a *= 0.5;
+	j_b *= 0.5;
+	j_i *= 0.5;
+	j_j *= 0.5;
+	m_a *= -0.5;
+	m_b *= 0.5;
+	m_i *= -0.5;
+	m_j *= 0.5;
+	M = m_b + m_i;
+
+	tJ = 0.0;
+	for(int j0 = minJ; j0 <= maxJ; j0+=2){
+	  J = 0.5 * j0;
+	  if( std::fabs(M) > J ){ continue; }
+	  minus(stateJ1, SpaceJ.qnums[shell_b], SpaceJ.qnums[shell_i]);
+	  minus(stateJ2, SpaceJ.qnums[shell_j], SpaceJ.qnums[shell_a]);
+	  stateJ1.j = j0;
+	  stateJ2.j = j0;
+	  chanJ1 = SpaceJ.ind_2b_cross(ParametersJ.basis, stateJ1);
+	  chanJ2 = SpaceJ.ind_2b_cross(ParametersJ.basis, stateJ2);
+	  if( chanJ1 != chanJ2 ){ continue; }
+	  chanind_J = AmpsJ.D1.T2_2_index[chanJ1];
+	  keyJ1 = ChanJ.ph1_map[chanJ1][SpaceJ.hash2(shell_b, shell_i, j0)];
+	  keyJ2 = ChanJ.hp1_map[chanJ2][SpaceJ.hash2(shell_j, shell_a, j0)];
+	  tJ += -1.0 * std::pow(-1.0, j_a + m_a + j_i + m_i) * CGC(j_b, m_b, j_i, m_i, J, M) * CGC(j_j, m_j, j_a, m_a, J, M) * AmpsJ.D1.T2_2[chanind_J + (keyJ1*ChanJ.nhp1[chanJ1] + keyJ2)];
+	}
+	if( std::fabs((tJ - Amps.D1.T2_2[chanind + ind2])/(std::fabs(tJ) + 1e-12)) > 1e-8 && std::fabs(tJ) > 1e-12 ){
+	  std::cout << "!! T2_2 < " << a << "," << b << " |t| " << i << "," << j << " > -- < " << shell_a << "," << shell_b << " |t| " << shell_i << "," << shell_j << " > (" << minJ << "," << maxJ << ")  :  " << Amps.D1.T2_2[chanind + ind2] << " " << tJ << std::endl;
+	}
+      }
+    }
+  }
+}
+
+void CC_Test_T2_3_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps)
+{
+  int ind2, chan2;
+  int nph1, nhp1;
+  int a, b, i, j;
+  two_body ph1, hp1;
+  double tJ;
+  int key_a, key_b, key_i, key_j;
+  int shell_a, shell_b, shell_i, shell_j;
+  int minJ, maxJ;
+  int chanind, chanJ1, chanJ2, chanind_J, keyJ1, keyJ2;
+  State stateJ1, stateJ2, state_a, state_b, state_i, state_j;
+  double j_a, j_b, j_i, j_j, J;
+  double m_a, m_b, m_i, m_j, M;
+  for(chan2 = 0; chan2 < Chan.size2; ++chan2){
+    nph1 = Chan.nph1[chan2];
+    nhp1 = Chan.nhp1[chan2];
+    chanind = Amps.D1.T2_3_index[chan2];
+    for(int ph1_ind = 0; ph1_ind < nph1; ++ph1_ind){
+      ph1 = Chan.ph1_state(chan2, ph1_ind);
+      a = ph1.v1;
+      state_a = Space.qnums[a];
+      state_a.j = Space.shellsj[a];
+      key_a = SpaceJ.ind_state(ParametersJ.basis, state_a);
+      shell_a = SpaceJ.map_state[key_a];
+      i = ph1.v2;
+      state_i = Space.qnums[i];
+      state_i.j = Space.shellsj[i];
+      key_i = SpaceJ.ind_state(ParametersJ.basis, state_i);
+      shell_i = SpaceJ.map_state[key_i];
+      for(int hp1_ind = 0; hp1_ind < nhp1; ++hp1_ind){
+	hp1 = Chan.hp1_state(chan2, hp1_ind);
+	j = hp1.v1;
+	state_j = Space.qnums[j];
+	state_j.j = Space.shellsj[j];
+	key_j = SpaceJ.ind_state(ParametersJ.basis, state_j);
+	shell_j = SpaceJ.map_state[key_j];
+	b = hp1.v2;
+	state_b = Space.qnums[b];
+	state_b.j = Space.shellsj[b];
+	key_b = SpaceJ.ind_state(ParametersJ.basis, state_b);
+	shell_b = SpaceJ.map_state[key_b];
+	if(a == b || i == j){ continue; }
+	ind2 = ph1_ind * nhp1 + hp1_ind;
+
+	j_a = Space.shellsj[a];
+	m_a = Space.qnums[a].m;
+	j_b = Space.shellsj[b];
+	m_b = Space.qnums[b].m;
+	j_i = Space.shellsj[i];
+	m_i = Space.qnums[i].m;
+	j_j = Space.shellsj[j];
+	m_j = Space.qnums[j].m;
+
+	minJ = abs(j_a - j_i);
+	if( abs(j_j - j_b) > minJ ){ minJ = abs(j_j - j_b); }
+	maxJ = j_a + j_i;
+	if( j_j + j_b < maxJ ){ maxJ = j_j + j_b; }
+
+	j_a *= 0.5;
+	j_b *= 0.5;
+	j_i *= 0.5;
+	j_j *= 0.5;
+	m_a *= 0.5;
+	m_b *= -0.5;
+	m_i *= -0.5;
+	m_j *= 0.5;
+	M = m_a + m_i;
+
+	tJ = 0.0;
+	for(int j0 = minJ; j0 <= maxJ; j0+=2){
+	  J = 0.5 * j0;
+	  if( std::fabs(M) > J ){ continue; }
+	  minus(stateJ1, SpaceJ.qnums[shell_a], SpaceJ.qnums[shell_i]);
+	  minus(stateJ2, SpaceJ.qnums[shell_j], SpaceJ.qnums[shell_b]);
+	  stateJ1.j = j0;
+	  stateJ2.j = j0;
+	  chanJ1 = SpaceJ.ind_2b_cross(ParametersJ.basis, stateJ1);
+	  chanJ2 = SpaceJ.ind_2b_cross(ParametersJ.basis, stateJ2);
+	  if( chanJ1 != chanJ2 ){ continue; }
+	  chanind_J = AmpsJ.D1.T2_3_index[chanJ1];
+	  keyJ1 = ChanJ.ph1_map[chanJ1][SpaceJ.hash2(shell_a, shell_i, j0)];
+	  keyJ2 = ChanJ.hp1_map[chanJ2][SpaceJ.hash2(shell_j, shell_b, j0)];
+	  tJ += std::pow(-1.0, j_b + m_b + j_i + m_i) * CGC(j_a, m_a, j_i, m_i, J, M) * CGC(j_j, m_j, j_b, m_b, J, M) * AmpsJ.D1.T2_3[chanind_J + (keyJ1*ChanJ.nhp1[chanJ1] + keyJ2)];
+	}
+	if( std::fabs((tJ - Amps.D1.T2_3[chanind + ind2])/(std::fabs(tJ) + 1e-12)) > 1e-8 && std::fabs(tJ) > 1e-12 ){
+	  std::cout << "!! T2_3 < " << a << "," << b << " |t| " << i << "," << j << " > -- < " << shell_a << "," << shell_b << " |t| " << shell_i << "," << shell_j << " > (" << minJ << "," << maxJ << ")  :  " << Amps.D1.T2_3[chanind + ind2] << " " << tJ << std::endl;
+	}
+      }
+    }
+  }
+}
+
+void CC_Test_T2_4_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps)
+{
+  int ind2, chan2;
+  int nph1, nhp1;
+  int a, b, i, j;
+  two_body ph1, hp1;
+  double tJ;
+  int key_a, key_b, key_i, key_j;
+  int shell_a, shell_b, shell_i, shell_j;
+  int minJ, maxJ;
+  int chanind, chanJ1, chanJ2, chanind_J, keyJ1, keyJ2;
+  State stateJ1, stateJ2, state_a, state_b, state_i, state_j;
+  double j_a, j_b, j_i, j_j, J;
+  double m_a, m_b, m_i, m_j, M;
+  for(chan2 = 0; chan2 < Chan.size2; ++chan2){
+    nph1 = Chan.nph1[chan2];
+    nhp1 = Chan.nhp1[chan2];
+    chanind = Amps.D1.T2_4_index[chan2];
+    for(int ph1_ind = 0; ph1_ind < nph1; ++ph1_ind){
+      ph1 = Chan.ph1_state(chan2, ph1_ind);
+      b = ph1.v1;
+      state_b = Space.qnums[b];
+      state_b.j = Space.shellsj[b];
+      key_b = SpaceJ.ind_state(ParametersJ.basis, state_b);
+      shell_b = SpaceJ.map_state[key_b];
+      j = ph1.v2;
+      state_j = Space.qnums[j];
+      state_j.j = Space.shellsj[j];
+      key_j = SpaceJ.ind_state(ParametersJ.basis, state_j);
+      shell_j = SpaceJ.map_state[key_j];
+      for(int hp1_ind = 0; hp1_ind < nhp1; ++hp1_ind){
+	hp1 = Chan.hp1_state(chan2, hp1_ind);
+	i = hp1.v1;
+	state_i = Space.qnums[i];
+	state_i.j = Space.shellsj[i];
+	key_i = SpaceJ.ind_state(ParametersJ.basis, state_i);
+	shell_i = SpaceJ.map_state[key_i];
+	a = hp1.v2;
+	state_a = Space.qnums[a];
+	state_a.j = Space.shellsj[a];
+	key_a = SpaceJ.ind_state(ParametersJ.basis, state_a);
+	shell_a = SpaceJ.map_state[key_a];
+	if(a == b || i == j){ continue; }
+	ind2 = ph1_ind * nhp1 + hp1_ind;
+
+	j_a = Space.shellsj[a];
+	m_a = Space.qnums[a].m;
+	j_b = Space.shellsj[b];
+	m_b = Space.qnums[b].m;
+	j_i = Space.shellsj[i];
+	m_i = Space.qnums[i].m;
+	j_j = Space.shellsj[j];
+	m_j = Space.qnums[j].m;
+
+	minJ = abs(j_b - j_j);
+	if( abs(j_i - j_a) > minJ ){ minJ = abs(j_i - j_a); }
+	maxJ = j_b + j_j;
+	if( j_i + j_a < maxJ ){ maxJ = j_i + j_a; }
+
+	j_a *= 0.5;
+	j_b *= 0.5;
+	j_i *= 0.5;
+	j_j *= 0.5;
+	m_a *= -0.5;
+	m_b *= 0.5;
+	m_i *= 0.5;
+	m_j *= -0.5;
+	M = m_b + m_j;
+
+	tJ = 0.0;
+	for(int j0 = minJ; j0 <= maxJ; j0+=2){
+	  J = 0.5 * j0;
+	  if( std::fabs(M) > J ){ continue; }
+	  minus(stateJ1, SpaceJ.qnums[shell_b], SpaceJ.qnums[shell_j]);
+	  minus(stateJ2, SpaceJ.qnums[shell_i], SpaceJ.qnums[shell_a]);
+	  stateJ1.j = j0;
+	  stateJ2.j = j0;
+	  chanJ1 = SpaceJ.ind_2b_cross(ParametersJ.basis, stateJ1);
+	  chanJ2 = SpaceJ.ind_2b_cross(ParametersJ.basis, stateJ2);
+	  if( chanJ1 != chanJ2 ){ continue; }
+	  chanind_J = AmpsJ.D1.T2_4_index[chanJ1];
+	  keyJ1 = ChanJ.ph1_map[chanJ1][SpaceJ.hash2(shell_b, shell_j, j0)];
+	  keyJ2 = ChanJ.hp1_map[chanJ2][SpaceJ.hash2(shell_i, shell_a, j0)];
+	  tJ += std::pow(-1.0, j_a + m_a + j_j + m_j) * CGC(j_b, m_b, j_j, m_j, J, M) * CGC(j_i, m_i, j_a, m_a, J, M) * AmpsJ.D1.T2_4[chanind_J + (keyJ1*ChanJ.nhp1[chanJ1] + keyJ2)];
+	}
+	if( std::fabs((tJ - Amps.D1.T2_4[chanind + ind2])/(std::fabs(tJ) + 1e-12)) > 1e-8 && std::fabs(tJ) > 1e-12 ){
+	  std::cout << "!! T2_4 < " << a << "," << b << " |t| " << i << "," << j << " > -- < " << shell_a << "," << shell_b << " |t| " << shell_i << "," << shell_j << " > (" << minJ << "," << maxJ << ")  :  " << Amps.D1.T2_4[chanind + ind2] << " " << tJ << std::endl;
+	}
+      }
+    }
+  }
+}
+
+void CC_Test_T3_1_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps)
+{
+  int ind3, chan3;
+  int np, nhhp;
+  int a, b, i, j;
+  one_body p;
+  three_body hhp;
+  double tJ;
+  int key_a, key_b, key_i, key_j;
+  int shell_a, shell_b, shell_i, shell_j;
+  int minJ, maxJ;
+  int chanind, chanJ1, chanJ2, chanind_J, keyJ1, keyJ2;
+  State stateJ1, stateJ2, state_a, state_b, state_i, state_j;
+  double j_a, j_b, j_i, j_j, J;
+  double m_a, m_b, m_i, m_j, M;
+  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
+    np = Chan.np[chan3];
+    nhhp = Chan.nhhp[chan3];
+    chanind = Amps.D1.T3_1_index[chan3];
+    for(int p_ind = 0; p_ind < np; ++p_ind){
+      p = Chan.p_state(chan3, p_ind);
+      a = p.v1;
+      state_a = Space.qnums[a];
+      state_a.j = Space.shellsj[a];
+      key_a = SpaceJ.ind_state(ParametersJ.basis, state_a);
+      shell_a = SpaceJ.map_state[key_a];
+      for(int hhp_ind = 0; hhp_ind < nhhp; ++hhp_ind){
+	hhp = Chan.hhp_state(chan3, hhp_ind);
+	i = hhp.v1;
+	state_i = Space.qnums[i];
+	state_i.j = Space.shellsj[i];
+	key_i = SpaceJ.ind_state(ParametersJ.basis, state_i);
+	shell_i = SpaceJ.map_state[key_i];
+	j = hhp.v2;
+	state_j = Space.qnums[j];
+	state_j.j = Space.shellsj[j];
+	key_j = SpaceJ.ind_state(ParametersJ.basis, state_j);
+	shell_j = SpaceJ.map_state[key_j];
+	b = hhp.v3;
+	state_b = Space.qnums[b];
+	state_b.j = Space.shellsj[b];
+	key_b = SpaceJ.ind_state(ParametersJ.basis, state_b);
+	shell_b = SpaceJ.map_state[key_b];
+	if(a == b || i == j){ continue; }
+	ind3 = p_ind * nhhp + hhp_ind;
+
+	j_a = Space.shellsj[a];
+	m_a = Space.qnums[a].m;
+	j_b = Space.shellsj[b];
+	m_b = Space.qnums[b].m;
+	j_i = Space.shellsj[i];
+	m_i = Space.qnums[i].m;
+	j_j = Space.shellsj[j];
+	m_j = Space.qnums[j].m;
+
+	minJ = abs(j_a - j_b);
+	if( abs(j_i - j_j) > minJ ){ minJ = abs(j_i - j_j); }
+	maxJ = j_a + j_b;
+	if( j_i + j_j < maxJ ){ maxJ = j_i + j_j; }
+
+	j_a *= 0.5;
+	j_b *= 0.5;
+	j_i *= 0.5;
+	j_j *= 0.5;
+	m_a *= 0.5;
+	m_b *= -0.5;
+	m_i *= 0.5;
+	m_j *= 0.5;
+	M = m_i + m_j;
+
+	tJ = 0.0;
+	for(int j0 = minJ; j0 <= maxJ; j0+=2){
+	  J = 0.5 * j0;
+	  if( std::fabs(M) > J ){ continue; }
+	  chanJ1 = SpaceJ.ind_1b(ParametersJ.basis, SpaceJ.qnums[shell_a]);
+	  plus(stateJ1, SpaceJ.qnums[shell_i], SpaceJ.qnums[shell_j]);
+	  stateJ1.j = j0;
+	  minus(stateJ2, stateJ1, SpaceJ.qnums[shell_b]);
+	  stateJ2.j = SpaceJ.qnums[shell_a].j;
+	  chanJ2 = SpaceJ.ind_1b(ParametersJ.basis, stateJ2);
+	  if( chanJ1 != chanJ2 ){ continue; }
+	  chanind_J = AmpsJ.D1.T3_1_index[chanJ1];
+	  keyJ1 = ChanJ.p_map[chanJ1][shell_a];
+	  keyJ2 = ChanJ.hhp_map[chanJ2][SpaceJ.hash3(shell_i, shell_j, shell_b, j0)];
+	  tJ += std::pow(-1.0, j_b + m_b) * CGC(J, M, j_b, m_b, j_a, m_a) * CGC(j_i, m_i, j_j, m_j, J, M) * AmpsJ.D1.T3_1[chanind_J + (keyJ1*ChanJ.nhhp[chanJ1] + keyJ2)];
+	}
+	if( std::fabs((tJ - Amps.D1.T3_1[chanind + ind3])/(std::fabs(tJ) + 1e-12)) > 1e-8 && std::fabs(tJ) > 1e-12 ){
+	  std::cout << "!! T3_1 < " << a << "," << b << " |t| " << i << "," << j << " > !! -- " << Amps.D1.T3_1[chanind + ind3] << " " << tJ << std::endl;
+	}
+      }
+    }
+  }
+}
+
+void CC_Test_T3_2_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps)
+{
+  int ind3, chan3;
+  int np, nhhp;
+  int a, b, i, j;
+  one_body p;
+  three_body hhp;
+  double tJ;
+  int key_a, key_b, key_i, key_j;
+  int shell_a, shell_b, shell_i, shell_j;
+  int minJ, maxJ;
+  int chanind, chanJ1, chanJ2, chanind_J, keyJ1, keyJ2;
+  State stateJ1, stateJ2, state_a, state_b, state_i, state_j;
+  double j_a, j_b, j_i, j_j, J;
+  double m_a, m_b, m_i, m_j, M;
+  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
+    np = Chan.np[chan3];
+    nhhp = Chan.nhhp[chan3];
+    chanind = Amps.D1.T3_2_index[chan3];
+    for(int p_ind = 0; p_ind < np; ++p_ind){
+      p = Chan.p_state(chan3, p_ind);
+      b = p.v1;
+      state_b = Space.qnums[b];
+      state_b.j = Space.shellsj[b];
+      key_b = SpaceJ.ind_state(ParametersJ.basis, state_b);
+      shell_b = SpaceJ.map_state[key_b];
+      for(int hhp_ind = 0; hhp_ind < nhhp; ++hhp_ind){
+	hhp = Chan.hhp_state(chan3, hhp_ind);
+	i = hhp.v1;
+	state_i = Space.qnums[i];
+	state_i.j = Space.shellsj[i];
+	key_i = SpaceJ.ind_state(ParametersJ.basis, state_i);
+	shell_i = SpaceJ.map_state[key_i];
+	j = hhp.v2;
+	state_j = Space.qnums[j];
+	state_j.j = Space.shellsj[j];
+	key_j = SpaceJ.ind_state(ParametersJ.basis, state_j);
+	shell_j = SpaceJ.map_state[key_j];
+	a = hhp.v3;
+	state_a = Space.qnums[a];
+	state_a.j = Space.shellsj[a];
+	key_a = SpaceJ.ind_state(ParametersJ.basis, state_a);
+	shell_a = SpaceJ.map_state[key_a];
+	if(a == b || i == j){ continue; }
+	ind3 = p_ind * nhhp + hhp_ind;
+
+	j_a = Space.shellsj[a];
+	m_a = Space.qnums[a].m;
+	j_b = Space.shellsj[b];
+	m_b = Space.qnums[b].m;
+	j_i = Space.shellsj[i];
+	m_i = Space.qnums[i].m;
+	j_j = Space.shellsj[j];
+	m_j = Space.qnums[j].m;
+
+	minJ = abs(j_a - j_b);
+	if( abs(j_i - j_j) > minJ ){ minJ = abs(j_i - j_j); }
+	maxJ = j_a + j_b;
+	if( j_i + j_j < maxJ ){ maxJ = j_i + j_j; }
+
+	j_a *= 0.5;
+	j_b *= 0.5;
+	j_i *= 0.5;
+	j_j *= 0.5;
+	m_a *= -0.5;
+	m_b *= 0.5;
+	m_i *= 0.5;
+	m_j *= 0.5;
+	M = m_i + m_j;
+
+	tJ = 0.0;
+	for(int j0 = minJ; j0 <= maxJ; j0+=2){
+	  J = 0.5 * j0;
+	  if( std::fabs(M) > J ){ continue; }
+	  chanJ1 = SpaceJ.ind_1b(ParametersJ.basis, SpaceJ.qnums[shell_b]);
+	  plus(stateJ1, SpaceJ.qnums[shell_i], SpaceJ.qnums[shell_j]);
+	  stateJ1.j = j0;
+	  minus(stateJ2, stateJ1, SpaceJ.qnums[shell_a]);
+	  stateJ2.j = SpaceJ.qnums[shell_b].j;
+	  chanJ2 = SpaceJ.ind_1b(ParametersJ.basis, stateJ2);
+	  if( chanJ1 != chanJ2 ){ continue; }
+	  chanind_J = AmpsJ.D1.T3_2_index[chanJ1];
+	  keyJ1 = ChanJ.p_map[chanJ1][shell_b];
+	  keyJ2 = ChanJ.hhp_map[chanJ2][SpaceJ.hash3(shell_i, shell_j, shell_a, j0)];
+	  tJ += -1.0 * std::pow(-1.0, j_a + m_a) * CGC(J, M, j_a, m_a, j_b, m_b) * CGC(j_i, m_i, j_j, m_j, J, M) * AmpsJ.D1.T3_2[chanind_J + (keyJ1*ChanJ.nhhp[chanJ1] + keyJ2)];
+	}
+	if( std::fabs((tJ - Amps.D1.T3_2[chanind + ind3])/(std::fabs(tJ) + 1e-12)) > 1e-8 && std::fabs(tJ) > 1e-12 ){
+	  std::cout << "!! T3_2 < " << a << "," << b << " |t| " << i << "," << j << " > !! -- " << Amps.D1.T3_2[chanind + ind3] << " " << tJ << std::endl;
+	}
+      }
+    }
+  }
+}
+
+void CC_Test_T3_3_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps)
+{
+  int ind3, chan3;
+  int npph, nh;
+  int a, b, i, j;
+  three_body pph;
+  one_body h;
+  double tJ;
+  int key_a, key_b, key_i, key_j;
+  int shell_a, shell_b, shell_i, shell_j;
+  int minJ, maxJ;
+  int chanind, chanJ1, chanJ2, chanind_J, keyJ1, keyJ2;
+  State stateJ1, stateJ2, state_a, state_b, state_i, state_j;
+  double j_a, j_b, j_i, j_j, J;
+  double m_a, m_b, m_i, m_j, M;
+  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
+    npph = Chan.npph[chan3];
+    nh = Chan.nh[chan3];
+    chanind = Amps.D1.T3_3_index[chan3];
+    for(int pph_ind = 0; pph_ind < npph; ++pph_ind){
+      pph = Chan.pph_state(chan3, pph_ind);
+      a = pph.v1;
+      state_a = Space.qnums[a];
+      state_a.j = Space.shellsj[a];
+      key_a = SpaceJ.ind_state(ParametersJ.basis, state_a);
+      shell_a = SpaceJ.map_state[key_a];
+      b = pph.v2;
+      state_b = Space.qnums[b];
+      state_b.j = Space.shellsj[b];
+      key_b = SpaceJ.ind_state(ParametersJ.basis, state_b);
+      shell_b = SpaceJ.map_state[key_b];
+      j = pph.v3;
+      state_j = Space.qnums[j];
+      state_j.j = Space.shellsj[j];
+      key_j = SpaceJ.ind_state(ParametersJ.basis, state_j);
+      shell_j = SpaceJ.map_state[key_j];
+      for(int h_ind = 0; h_ind < nh; ++h_ind){
+	h = Chan.h_state(chan3, h_ind);
+	i = h.v1;
+	state_i = Space.qnums[i];
+	state_i.j = Space.shellsj[i];
+	key_i = SpaceJ.ind_state(ParametersJ.basis, state_i);
+	shell_i = SpaceJ.map_state[key_i];
+	if(a == b || i == j){ continue; }
+	ind3 = pph_ind * nh + h_ind;
+
+	j_a = Space.shellsj[a];
+	m_a = Space.qnums[a].m;
+	j_b = Space.shellsj[b];
+	m_b = Space.qnums[b].m;
+	j_i = Space.shellsj[i];
+	m_i = Space.qnums[i].m;
+	j_j = Space.shellsj[j];
+	m_j = Space.qnums[j].m;
+
+	minJ = abs(j_a - j_b);
+	if( abs(j_i - j_j) > minJ ){ minJ = abs(j_i - j_j); }
+	maxJ = j_a + j_b;
+	if( j_i + j_j < maxJ ){ maxJ = j_i + j_j; }
+
+	j_a *= 0.5;
+	j_b *= 0.5;
+	j_i *= 0.5;
+	j_j *= 0.5;
+	m_a *= 0.5;
+	m_b *= 0.5;
+	m_i *= 0.5;
+	m_j *= -0.5;
+	M = m_a + m_b;
+
+	tJ = 0.0;
+	for(int j0 = minJ; j0 <= maxJ; j0+=2){
+	  J = 0.5 * j0;
+	  if( std::fabs(M) > J ){ continue; }
+	  chanJ1 = SpaceJ.ind_1b(ParametersJ.basis, SpaceJ.qnums[shell_i]);
+	  plus(stateJ1, SpaceJ.qnums[shell_a], SpaceJ.qnums[shell_b]);
+	  stateJ1.j = j0;
+	  minus(stateJ2, stateJ1, SpaceJ.qnums[shell_j]);
+	  stateJ2.j = SpaceJ.qnums[shell_i].j;
+	  chanJ2 = SpaceJ.ind_1b(ParametersJ.basis, stateJ2);
+	  if( chanJ1 != chanJ2 ){ continue; }
+	  chanind_J = AmpsJ.D1.T3_3_index[chanJ1];
+	  keyJ1 = ChanJ.pph_map[chanJ1][SpaceJ.hash3(shell_a, shell_b, shell_j, j0)];
+	  keyJ2 = ChanJ.h_map[chanJ2][shell_i];
+	  tJ += std::pow(-1.0, j_j + m_j) * CGC(J, M, j_j, m_j, j_i, m_i) * CGC(j_a, m_a, j_b, m_b, J, M) * AmpsJ.D1.T3_3[chanind_J + (keyJ1*ChanJ.nh[chanJ1] + keyJ2)];
+	}
+	if( std::fabs((tJ - Amps.D1.T3_3[chanind + ind3])/(std::fabs(tJ) + 1e-12)) > 1e-8 && std::fabs(tJ) > 1e-12 ){
+	  std::cout << "!! T3_3 < " << a << "," << b << " |t| " << i << "," << j << " > !! -- " << Amps.D1.T3_3[chanind + ind3] << " " << tJ << std::endl;
+	}
+      }
+    }
+  }
+}
+
+void CC_Test_T3_4_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps)
+{
+  int ind3, chan3;
+  int npph, nh;
+  int a, b, i, j;
+  three_body pph;
+  one_body h;
+  double tJ;
+  int key_a, key_b, key_i, key_j;
+  int shell_a, shell_b, shell_i, shell_j;
+  int minJ, maxJ;
+  int chanind, chanJ1, chanJ2, chanind_J, keyJ1, keyJ2;
+  State stateJ1, stateJ2, state_a, state_b, state_i, state_j;
+  double j_a, j_b, j_i, j_j, J;
+  double m_a, m_b, m_i, m_j, M;
+  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
+    npph = Chan.npph[chan3];
+    nh = Chan.nh[chan3];
+    chanind = Amps.D1.T3_4_index[chan3];
+    for(int pph_ind = 0; pph_ind < npph; ++pph_ind){
+      pph = Chan.pph_state(chan3, pph_ind);
+      a = pph.v1;
+      state_a = Space.qnums[a];
+      state_a.j = Space.shellsj[a];
+      key_a = SpaceJ.ind_state(ParametersJ.basis, state_a);
+      shell_a = SpaceJ.map_state[key_a];
+      b = pph.v2;
+      state_b = Space.qnums[b];
+      state_b.j = Space.shellsj[b];
+      key_b = SpaceJ.ind_state(ParametersJ.basis, state_b);
+      shell_b = SpaceJ.map_state[key_b];
+      i = pph.v3;
+      state_i = Space.qnums[i];
+      state_i.j = Space.shellsj[i];
+      key_i = SpaceJ.ind_state(ParametersJ.basis, state_i);
+      shell_i = SpaceJ.map_state[key_i];
+      for(int h_ind = 0; h_ind < nh; ++h_ind){
+	h = Chan.h_state(chan3, h_ind);
+	j = h.v1;
+	state_j = Space.qnums[j];
+	state_j.j = Space.shellsj[j];
+	key_j = SpaceJ.ind_state(ParametersJ.basis, state_j);
+	shell_j = SpaceJ.map_state[key_j];
+	if(a == b || i == j){ continue; }
+	ind3 = pph_ind * nh + h_ind;
+
+	j_a = Space.shellsj[a];
+	m_a = Space.qnums[a].m;
+	j_b = Space.shellsj[b];
+	m_b = Space.qnums[b].m;
+	j_i = Space.shellsj[i];
+	m_i = Space.qnums[i].m;
+	j_j = Space.shellsj[j];
+	m_j = Space.qnums[j].m;
+
+	minJ = abs(j_a - j_b);
+	if( abs(j_i - j_j) > minJ ){ minJ = abs(j_i - j_j); }
+	maxJ = j_a + j_b;
+	if( j_i + j_j < maxJ ){ maxJ = j_i + j_j; }
+
+	j_a *= 0.5;
+	j_b *= 0.5;
+	j_i *= 0.5;
+	j_j *= 0.5;
+	m_a *= 0.5;
+	m_b *= 0.5;
+	m_i *= -0.5;
+	m_j *= 0.5;
+	M = m_a + m_b;
+
+	tJ = 0.0;
+	for(int j0 = minJ; j0 <= maxJ; j0+=2){
+	  J = 0.5 * j0;
+	  if( std::fabs(M) > J ){ continue; }
+	  chanJ1 = SpaceJ.ind_1b(ParametersJ.basis, SpaceJ.qnums[shell_j]);
+	  plus(stateJ1, SpaceJ.qnums[shell_a], SpaceJ.qnums[shell_b]);
+	  stateJ1.j = j0;
+	  minus(stateJ2, stateJ1, SpaceJ.qnums[shell_i]);
+	  stateJ2.j = SpaceJ.qnums[shell_j].j;
+	  chanJ2 = SpaceJ.ind_1b(ParametersJ.basis, stateJ2);
+	  if( chanJ1 != chanJ2 ){ continue; }
+	  chanind_J = AmpsJ.D1.T3_4_index[chanJ1];
+	  keyJ1 = ChanJ.pph_map[chanJ1][SpaceJ.hash3(shell_a, shell_b, shell_i, j0)];
+	  keyJ2 = ChanJ.h_map[chanJ2][shell_j];
+	  tJ += -1.0 * std::pow(-1.0, j_i + m_i) * CGC(J, M, j_i, m_i, j_j, m_j) * CGC(j_a, m_a, j_b, m_b, J, M) * AmpsJ.D1.T3_4[chanind_J + (keyJ1*ChanJ.nh[chanJ1] + keyJ2)];
+	}
+	if( std::fabs((tJ - Amps.D1.T3_4[chanind + ind3])/(std::fabs(tJ) + 1e-12)) > 1e-8 && std::fabs(tJ) > 1e-12 ){
+	  std::cout << "!! T3_4 < " << a << "," << b << " |t| " << i << "," << j << " > !! -- " << Amps.D1.T3_4[chanind + ind3] << " " << tJ << std::endl;
+	}
+      }
+    }
+  }
+}
+
+void CC_Test_t2_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps)
+{
+  int ind2, chan2;
+  int nph1;
+  int a, i;
+  two_body ph1;
+  double tJ;
+  int key_a, key_i;
+  int shell_a, shell_i;
+  int chanJ1, keyJ1;
+  State state_a, state_i;
+  int j0;
+  double j_a, j_i, J;
+  double m_a, m_i, M;
+  chan2 = Chan.ind0;
+  nph1 = Chan.nph1[chan2];
+  for(int ph1_ind = 0; ph1_ind < nph1; ++ph1_ind){
+    ph1 = Chan.ph1_state(chan2, ph1_ind);
+    a = ph1.v1;
+    state_a = Space.qnums[a];
+    state_a.j = Space.shellsj[a];
+    key_a = SpaceJ.ind_state(ParametersJ.basis, state_a);
+    shell_a = SpaceJ.map_state[key_a];
+    i = ph1.v2;
+    state_i = Space.qnums[i];
+    state_i.j = Space.shellsj[i];
+    key_i = SpaceJ.ind_state(ParametersJ.basis, state_i);
+    shell_i = SpaceJ.map_state[key_i];
+    ind2 = ph1_ind;
+
+    j_a = Space.shellsj[a];
+    m_a = Space.qnums[a].m;
+    j_i = Space.shellsj[i];
+    m_i = Space.qnums[i].m;
+
+    if( j_a != j_i || m_a != m_i ){ continue; }
+    
+    j_a *= 0.5;
+    j_i *= 0.5;
+    m_a *= 0.5;
+    m_i *= -0.5;
+
+    j0 = 0;
+    J = 0.0;
+    M = 0.0;
+    chanJ1 = ChanJ.ind0;
+    keyJ1 = ChanJ.ph1_map[chanJ1][SpaceJ.hash2(shell_a, shell_i, j0)];
+    tJ = std::pow(-1.0, j_i + m_i) * CGC(j_a, m_a, j_i, m_i, J, M) * AmpsJ.S1.t2[keyJ1];
+    if( std::fabs((tJ - Amps.S1.t2[ph1_ind])/(std::fabs(tJ) + 1e-12)) > 1e-8 && std::fabs(tJ) > 1e-12 ){
+      std::cout << "!! t2 < " << a << " |t| " << i << " > !! -- " << Amps.S1.t2[ph1_ind] << " " << tJ << std::endl;
+    }
+  }
+}
+
+void CC_Test_t3_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps)
+{
+  int ind3, chan3;
+  int nh, np;
+  int a, i;
+  one_body p, h;
+  double tJ;
+  int key_a, key_i;
+  int shell_a, shell_i;
+  int chanind, chanJ1, chanJ2, chanind_J, keyJ1, keyJ2;
+  State stateJ1, stateJ2, state_a, state_i;
+  double j_a, j_i;
+  double m_a, m_i;
+  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
+    np = Chan.np[chan3];
+    nh = Chan.nh[chan3];
+    chanind = Amps.S1.t3_index[chan3];
+    for(int p_ind = 0; p_ind < np; ++p_ind){
+      p = Chan.p_state(chan3, p_ind);
+      a = p.v1;
+      state_a = Space.qnums[a];
+      state_a.j = Space.shellsj[a];
+      key_a = SpaceJ.ind_state(ParametersJ.basis, state_a);
+      shell_a = SpaceJ.map_state[key_a];
+      for(int h_ind = 0; h_ind < nh; ++h_ind){
+	h = Chan.h_state(chan3, h_ind);
+	i = h.v1;
+	state_i = Space.qnums[i];
+	state_i.j = Space.shellsj[i];
+	key_i = SpaceJ.ind_state(ParametersJ.basis, state_i);
+	shell_i = SpaceJ.map_state[key_i];
+	ind3 = p_ind * nh + h_ind;
+
+	j_a = Space.shellsj[a];
+	m_a = Space.qnums[a].m;
+	j_i = Space.shellsj[i];
+	m_i = Space.qnums[i].m;
+
+	if( j_a != j_i || m_a != m_i ){ continue; }
+
+	j_a *= 0.5;
+	j_i *= 0.5;
+	m_a *= 0.5;
+	m_i *= 0.5;
+
+	chanJ1 = SpaceJ.ind_1b(ParametersJ.basis, SpaceJ.qnums[shell_a]);
+	chanJ2 = SpaceJ.ind_1b(ParametersJ.basis, SpaceJ.qnums[shell_i]);
+	if( chanJ1 != chanJ2 ){ continue; }
+	chanind_J = AmpsJ.S1.t3_index[chanJ1];
+	keyJ1 = ChanJ.p_map[chanJ1][shell_a];
+	keyJ2 = ChanJ.h_map[chanJ2][shell_i];
+	tJ = AmpsJ.S1.t3[chanind_J + (keyJ1*ChanJ.nh[chanJ1] + keyJ2)];
+	if( std::fabs((tJ - Amps.S1.t3[chanind + ind3])/(std::fabs(tJ) + 1e-12)) > 1e-8 && std::fabs(tJ) > 1e-12 ){
+	  std::cout << "!! t3 < " << a << " |t| " << i << " > !! -- " << Amps.S1.t3[chanind + ind3] << " " << tJ << std::endl;
+	}
+      }
+    }
+  }
 }

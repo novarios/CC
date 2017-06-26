@@ -119,7 +119,8 @@ double loggamma(const double &x){
 double CGC(double j1, double m1, double j2, double m2, double jtot, double mtot)
 {
   if(fabs(m1 + m2 - mtot) > 0.1){ std::cout << "CGC1" << std::endl; return 0.0; } //projections must add correctly
-  else if((jtot < fabs(j1 - j2)) || (jtot > j1 + j2)){ std::cout << "CGC2" << std::endl; return 0.0; } //triangle rule
+  else if((jtot < fabs(j1 - j2)) || (jtot > j1 + j2)){
+    std::cout << "j1,j2,J = " << j1 << " " << j2 << " " << jtot << ", CGC2" << std::endl; return 0.0; } //triangle rule
   else if((fabs(m1) > j1) || (fabs(m2) > j2) || (fabs(mtot) > jtot)){ std::cout << "CGC3" << std::endl; return 0.0; } //unphysical
 
   double num1, den1, fac1, num2_1, num2_2, num2_3, fac2, den3_2, den3_1, den3_3, den3_4, den3_5, fac3; //numerators, denominators, and factors for CGC
@@ -181,6 +182,8 @@ double CGC6(const double &j1, const double &j2, const double &j3, const double &
       }
     }
   }
+  //if( !std::isfinite(sixj) )
+  //{ std::cerr << std::endl << "SixJSymbol, " << j1 << "," << j2 << "," << j3 << "," << j4 << "," << j5 << "," << j6 << std::endl; }
   return sixj;
 }
 

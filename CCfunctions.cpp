@@ -614,8 +614,7 @@ void Print_Parameters(Input_Parameters &Parameters, Model_Space &Space)
     if(Parameters.MatrixElements.size() > 0){ std::cout << "Interaction = " << Parameters.MatrixElements << std::endl; }
   }
   if(Parameters.calc_case == "nuclear"){
-    if(Parameters.basis == "finite_J" || Parameters.basis == "finite_JM"){ std::cout << "Total States = " << Space.num_states << std::endl; }
-    else{ std::cout << "Number of Shells = " << Parameters.Shells << ", Total States = " << Space.num_states << std::endl; }
+    std::cout << "Number of Shells = " << Parameters.Shells << ", Total States = " << Space.num_states << std::endl;
     std::cout << "Proton Shells = " << Parameters.Pshells << ", Neutron Shells = " << Parameters.Nshells << std::endl;
     std::cout << "Protons = " << Parameters.P << ", Neutrons = " << Parameters.N << std::endl;
     if(Parameters.calc_case == "infinite"){ std::cout << "Density = " << Parameters.density << std::endl; }
@@ -663,39 +662,20 @@ void Perform_CC(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan
 
   // Initialize Amplitudes //
   mix = mixmin;
-  Amps0.copy_Amplitudes(Parameters, Chan, Amps);
-  Amps2.copy_Amplitudes(Parameters, Chan, Amps);
-  tempAmps.copy_Amplitudes(Parameters, Chan, Amps);
-
   while(error > 1e-12 && ind < 10000){
+    Update_CC(Parameters, Space, Chan, Ints, Eff_Ints, Amps, tempAmps);
 
-    Eff_Ints.zero(Parameters, Chan, false);
-    tempAmps.zero(Parameters, Chan, false);
-    //  Build Effective Hamiltonian
-    Update_Heff_1(Parameters, Space, Chan, Ints, Eff_Ints, Amps);
-    if(Parameters.approx == "singles"){
-      Update_Heff_2(Parameters, Space, Chan, Ints, Eff_Ints, Amps);
-    }
-    //  Solve Amplitude Equations
-    Eff_Ints.diagonalize(Parameters, Chan);
-    Doubles_Step(Parameters, Space, Chan, Ints, Eff_Ints, Amps, tempAmps);
-    if(Parameters.approx == "singles"){
-      Singles_Step(Parameters, Space, Chan, Ints, Eff_Ints, Amps, tempAmps);
-      Doubles_Step_2(Parameters, Space, Chan, Ints, Eff_Ints, Amps, tempAmps);
-    }
+    //Print_Amps(Parameters, Chan, tempAmps);
     Amps2.copy_Amplitudes(Parameters, Chan, Amps);
     Amps2.zero(Parameters, Chan, true);
-
     Gather_Amps(Parameters, Space, Chan, Eff_Ints, Amps2, tempAmps, mix);
+    //Print_Amps(Parameters, Chan, Amps2);
+    
     CC_Error(Parameters, Chan, Ints, Amps, Amps2, error);
     error /= mix;
-    if( !std::isfinite(CCoutE) || !std::isfinite(error) ){
-      std::cerr << std::endl << ind << " : CC Solution Diverged!!" << std::endl; exit(1);
-    }
-    if( ind > 1000 && double(Rand_count)/double(ind) > 0.9 ){
-      std::cerr << std::endl << ind << " : CC Solution Not Converged!!" << std::endl; exit(1);
-    }
-
+    if( !std::isfinite(error) ){ std::cerr << std::endl << ind << ", error = " << error << " : CC Solution Diverged!! " << std::endl; exit(1); }
+    if( ind > 1000 && double(Rand_count)/double(ind) > 0.9 ){ std::cerr << std::endl << ind << " : CC Solution Not Converged!!" << std::endl; exit(1); }
+    
     if( error < error2 || error > 1.0 ){
       if( error < error2 ){ mix = std::pow(mixmax, 0.035) * std::pow(mix, 0.965); }
       Amps0.copy_Amplitudes(Parameters, Chan, Amps);
@@ -711,7 +691,8 @@ void Perform_CC(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan
     }
 
     CCoutE = Amps.get_energy(Parameters, Space, Chan, Ints);
-    std::cout << "Iteration Number = " << ind << ", CC Energy = " << CCoutE << ", error = " << error << ", mix = " << mix << ", ";
+    if( !std::isfinite(CCoutE) ){ std::cerr << std::endl << ind << ", Energy = " << CCoutE << " : CC Solution Diverged!! " << std::endl; exit(1); }
+    std::cout << "Iteration Number = " << ind << ", Energy = " << CCoutE << ", error = " << error << ", mix = " << mix << ", ";
     std::cout << "Random = " << Rand_count << ", DIIS = " << DIIS_count << std::endl;
     ++ind;
   }
@@ -725,6 +706,118 @@ void Perform_CC(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan
   Amps2.delete_struct(Parameters, Chan);
   tempAmps.delete_struct(Parameters, Chan);
   Delete_DIIS(Parameters, Chan, p, delp, tempdelp, B, maxl);
+}
+
+void Perform_CC_Test(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps)
+{
+  double mix = 1.0;
+  int ind = 0;
+  double CCoutE, CCoutEM;
+  Amplitudes Amps2 = Amplitudes(Parameters, Space, Chan);
+  Amplitudes tempAmps = Amplitudes(Parameters, Space, Chan);
+
+  /// For J-Testing ///
+  Input_Parameters ParametersM;
+  Model_Space SpaceM;
+  Channels ChanM;
+  Amplitudes AmpsM;
+  Interactions IntsM;
+  Eff_Interactions Eff_IntsM;
+  HF_Channels HF_ChanM;
+  HF_Matrix_Elements HF_MEM;
+  Single_Particle_States StatesM;
+  ParametersM = Parameters;
+  ParametersM.basis = "finite_JM";
+  Build_Model_Space(ParametersM, SpaceM);
+  HF_ChanM = HF_Channels(ParametersM, SpaceM);
+  StatesM = Single_Particle_States(ParametersM, SpaceM, HF_ChanM);
+  Read_Matrix_Elements_J(ParametersM, SpaceM, HF_ChanM, HF_MEM);
+  if(Parameters.HF == 1){
+    Hartree_Fock_States(ParametersM, SpaceM, HF_ChanM, StatesM, HF_MEM);
+    Convert_To_HF_Matrix_Elements(ParametersM, HF_ChanM, SpaceM, StatesM, HF_MEM);
+  }
+  ParametersM.basis = "finite_M";
+  Build_Model_Space_J2(ParametersM, SpaceM);
+  ChanM = Channels(ParametersM, SpaceM);
+  AmpsM = Amplitudes(ParametersM, SpaceM, ChanM);
+  IntsM = Interactions(ParametersM, ChanM);
+  if(Parameters.HF == 0){ Get_Fock_Matrix(ParametersM, HF_ChanM, HF_MEM, StatesM, SpaceM, ChanM, IntsM); }
+  Eff_IntsM = Eff_Interactions(ParametersM, SpaceM, ChanM);
+  Get_Matrix_Elements_JM(ParametersM, HF_ChanM, HF_MEM, SpaceM, ChanM, IntsM);
+  Amplitudes Amps2M = Amplitudes(ParametersM, SpaceM, ChanM);
+  Amplitudes tempAmpsM = Amplitudes(ParametersM, SpaceM, ChanM);
+  /////////////////////
+
+  while( ind < 10 ){
+    // J
+    Update_CC(Parameters, Space, Chan, Ints, Eff_Ints, Amps, tempAmps);
+    // M
+    Update_CC(ParametersM, SpaceM, ChanM, IntsM, Eff_IntsM, AmpsM, tempAmpsM);
+
+
+    std::cout << " ****  tempAmps  **** " << std::endl;
+    CC_Test_Full_J(Parameters, Space, Chan, Ints, tempAmps, ParametersM, SpaceM, ChanM, IntsM, tempAmpsM);
+
+
+    // J
+    Amps2.copy_Amplitudes(Parameters, Chan, Amps);
+    Amps2.zero(Parameters, Chan, true);
+    Gather_Amps(Parameters, Space, Chan, Eff_Ints, Amps2, tempAmps, mix);
+    // M
+    Amps2M.copy_Amplitudes(ParametersM, ChanM, AmpsM);
+    Amps2M.zero(ParametersM, ChanM, true);
+    Gather_Amps(ParametersM, SpaceM, ChanM, Eff_IntsM, Amps2M, tempAmpsM, mix);
+
+
+    // J
+    Amps.copy_Amplitudes(Parameters, Chan, Amps2);
+    // M
+    AmpsM.copy_Amplitudes(ParametersM, ChanM, Amps2M);
+
+
+    std::cout << " ****  Amps  **** " << std::endl;
+    CC_Test_Full_J(Parameters, Space, Chan, Ints, Amps, ParametersM, SpaceM, ChanM, IntsM, AmpsM);
+
+
+    // J
+    CCoutE = Amps.get_energy(Parameters, Space, Chan, Ints);
+    // M
+    CCoutEM = AmpsM.get_energy(ParametersM, SpaceM, ChanM, IntsM);
+    std::cout << "Iteration Number = " << ind << ", EnergyJ = " << CCoutE << ", EnergyM = " << CCoutEM << std::endl;
+    ++ind;
+  }
+
+  // J
+  Amps2.delete_struct(Parameters, Chan);
+  tempAmps.delete_struct(Parameters, Chan);
+  // M
+  StatesM.delete_struct(HF_ChanM);
+  HF_MEM.delete_struct(HF_ChanM);
+  HF_ChanM.delete_struct();
+  IntsM.delete_struct(ParametersM, ChanM);
+  AmpsM.delete_struct(ParametersM, ChanM);
+  Amps2M.delete_struct(ParametersM, ChanM);
+  tempAmpsM.delete_struct(ParametersM, ChanM);
+  ChanM.delete_struct(ParametersM);
+  SpaceM.delete_struct(ParametersM);
+}
+
+void Update_CC(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps, Amplitudes &tempAmps)
+{
+  Eff_Ints.zero(Parameters, Chan, false);
+  tempAmps.zero(Parameters, Chan, false);
+  //  Build Effective Hamiltonian
+  Update_Heff_1(Parameters, Space, Chan, Ints, Eff_Ints, Amps);
+  if(Parameters.approx == "singles"){
+    Update_Heff_2(Parameters, Space, Chan, Ints, Eff_Ints, Amps);
+  }
+  //  Solve Amplitude Equations
+  Eff_Ints.diagonalize(Parameters, Chan);
+  Doubles_Step(Parameters, Space, Chan, Ints, Eff_Ints, Amps, tempAmps);
+  if(Parameters.approx == "singles"){
+    Singles_Step(Parameters, Space, Chan, Ints, Eff_Ints, Amps, tempAmps);
+    Doubles_Step_2(Parameters, Space, Chan, Ints, Eff_Ints, Amps, tempAmps);
+  }
 }
 
 void Gather_Amps(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints, Amplitudes &Amps, Amplitudes &Amps2, double &mix)
@@ -800,7 +893,7 @@ void Print_Amps(Input_Parameters &Parameters, Channels &Chan, Amplitudes &Amps)
 	hh = Chan.hh_state(chan1, hh1);
 	i = hh.v1;
 	j = hh.v2;
-	std::cout << "! < " << a << "," << b << " |t| " << i << "," << j << " > = " << Amps.D1.T1[chanind + (pp1*nhh + hh1)] << ",";
+	std::cout << "! < " << a << "," << b << " |t| " << i << "," << j << " >^ " << Chan.qnums1[chan1].j << " = " << chanind << " " << (pp1*nhh + hh1) << ", " << Amps.D1.T1[chanind + (pp1*nhh + hh1)] << ",";
 	for(int n = 0; n < Amps.D1.map_num[8*ind]; ++n){
 	  index = Amps.D1.map_index[8*ind] + n;
 	  std::cout << " " << Amps.D1.T2_1[Amps.D1.T2_1_index[Amps.D1.map_chan[index]] + Amps.D1.map_ind[index]];
@@ -1181,6 +1274,7 @@ void Update_Heff_1(Input_Parameters &Parameters, Model_Space &Space, Channels &C
   int p_ind, h_ind;
   int chan_ind1, chan_ind2, chan_ind3;
   char N = 'N';
+  
   for(int chan3 = 0; chan3 < Chan.size3; ++chan3){
     nh = Chan.nh[chan3];
     np = Chan.np[chan3];
@@ -1191,8 +1285,8 @@ void Update_Heff_1(Input_Parameters &Parameters, Model_Space &Space, Channels &C
       chan_ind1 = Eff_Ints.Xpp.X_3_index[chan3];
       // Xpp3(a|b){a,b}  <-  fpp(a|a) del_(ab)
       for(int p = 0; p < np; ++p){
-	p_ind = Chan.p_state(chan3, p).v1;
-	Eff_Ints.Xpp.X_3[chan_ind1 + (p*np + p)] += Space.qnums[p_ind].energy;
+ 	p_ind = Chan.p_state(chan3, p).v1;
+ 	Eff_Ints.Xpp.X_3[chan_ind1 + (p*np + p)] += Space.qnums[p_ind].energy;
       }
     }
     else if(Parameters.HF == 0){
@@ -1323,10 +1417,11 @@ void Update_Heff_1(Input_Parameters &Parameters, Model_Space &Space, Channels &C
       chan_ind3 = Eff_Ints.Xhphp.X_2_1_index[chan2];
       // Xhphp2_1(ia|jb){ib',ja'}  <-  -(+)(1/2) Vhhpp2_1(ik|cb){ib',ck'}.T2_1(ca|jk){ck',ja'}
       dgemm_NN((Ints.Vhhpp.V_2_1 + chan_ind1), (Amps.D1.T2_1 + chan_ind2), (Eff_Ints.Xhphp.X_2_1 + chan_ind3), &nhp1, &nhp1, &nph1, &fac, &p1, &N, &N);
+      //dgemm_NN((Ints.Vhhpp.V_2_1 + chan_ind1), (Amps.D1.T2_1 + chan_ind2), (Eff_Ints.Xhphp.X_2_1 + chan_ind3), &nhp1, &nhp1, &nph1, &m12, &p1, &N, &N);
     }
   }
 
-  //////////////   Xpphp   ///////////////
+  //////////// Xpphp   ///////////////
   for(int chan3 = 0; chan3 < Chan.size3; ++chan3){
     nh = Chan.nh[chan3];
     nppp = Chan.nppp[chan3];
@@ -1339,7 +1434,7 @@ void Update_Heff_1(Input_Parameters &Parameters, Model_Space &Space, Channels &C
     }
   }
 
-  //////////////   Xhphh   ///////////////
+  //////////// Xhphh   ///////////////
   for(int chan3 = 0; chan3 < Chan.size3; ++chan3){
     nh = Chan.nh[chan3];
     np = Chan.np[chan3];
@@ -1365,7 +1460,7 @@ void Update_Heff_2(Input_Parameters &Parameters, Model_Space &Space, Channels &C
   int nhh0 = Chan.nhh1[Chan.ind0];
   char N = 'N';
 
-  //////////////   Xhp   ///////////////
+  ////////////   Xhp   ///////////////
   if(nhp0 != 0){
     if(Parameters.HF == 0){
       // Xhp2(i|a){ia'}  <-  fhp(i|a){ia'}
@@ -1378,7 +1473,7 @@ void Update_Heff_2(Input_Parameters &Parameters, Model_Space &Space, Channels &C
     dgemm_NN((Ints.Vhhpp.V_2_3 + chan_ind1), Amps.S1.t2, Eff_Ints.Xhp.X_2, &nhp0, &one, &nph0, &p1, &p1, &N, &N);
   }
   Eff_Ints.Xhp.X_gather(Parameters, Chan);
-
+ 
   //////////////   Xpp   ///////////////
   if(nph0 * npp0 != 0){
     chan_ind1 = Ints.Vhppp.V_2_4_index[Chan.ind0];
@@ -1425,34 +1520,15 @@ void Update_Heff_2(Input_Parameters &Parameters, Model_Space &Space, Channels &C
     nh = Chan.nh[chan3];
     np = Chan.np[chan3];
     npph = Chan.npph[chan3];
-
-    chan_ind1 = Amps.S1.t3_index[chan3];
-    chan_ind2 = Ints.Vhhpp.V_3_2_index[chan3];
-    chan_ind3 = Eff_Ints.Xhppp.X_3_2_index[chan3];
-    /*std::cout << "t3" << std::endl;
-    for(int i = 0; i < np*nh; ++i){
-      std::cout << Amps.S1.t3[chan_ind1 + i] << " ";
-    }
-    std::cout << std::endl << std::endl;
-    std::cout << "Vhhpp.V_3_2" << std::endl;
-    for(int i = 0; i < nh*npph; ++i){
-      std::cout << Ints.Vhhpp.V_3_2[chan_ind2 + i] << " ";
-    }
-    std::cout << std::endl << std::endl;*/
-
     if(nh * np * npph != 0){
+      chan_ind1 = Amps.S1.t3_index[chan3];
+      chan_ind2 = Ints.Vhhpp.V_3_2_index[chan3];
+      chan_ind3 = Eff_Ints.Xhppp.X_3_2_index[chan3];
       // X1hppp3_2(ia|bc){a,bci'}  <-  - (1/2) t3(a|k){a,k}.Vhhpp3_2(ik|bc){k,bci'}
       dgemm_NN((Amps.S1.t3 + chan_ind1), (Ints.Vhhpp.V_3_2 + chan_ind2), (Eff_Ints.Xhppp.X1_3_2 + chan_ind3), &np, &npph, &nh, &m12, &p1, &N, &N);
       // Xhppp3_2(ia|bc){a,bci'}  <-  - t3(a|k){a,k}.Vhhpp3_2(ik|bc){k,bci'}
       dgemm_NN((Amps.S1.t3 + chan_ind1), (Ints.Vhhpp.V_3_2 + chan_ind2), (Eff_Ints.Xhppp.X_3_2 + chan_ind3), &np, &npph, &nh, &m1, &p1, &N, &N);
     }
-
-    /*std::cout << "Xhppp.X_3_2" << std::endl;
-    for(int i = 0; i < np*npph; ++i){
-      std::cout << Eff_Ints.Xhppp.X_3_2[chan_ind3 + i] << " ";
-    }
-    std::cout << std::endl << std::endl;*/
-
   }
   Eff_Ints.Xhppp.X1_gather(Parameters, Chan);
   Eff_Ints.Xhppp.X_gather(Parameters, Chan);
@@ -1591,9 +1667,9 @@ void Update_Heff_2(Input_Parameters &Parameters, Model_Space &Space, Channels &C
 
 void Doubles_Step(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps1, Amplitudes &Amps2)
 {
-  double p1 = 1.0, p12 = 0.5, m1 = -1.0, fac;
+  double p1 = 1.0, p12 = 0.5, m1 = -1.0, fac1, fac2;
   int nh, np, npph, nhhp, nhh, npp, nhp1, nph1, length;
-  int chan_ind1, chan_ind2, chan_ind3, chan_ind4;
+  int chan_ind1, chan_ind2, chan_ind3, chan_ind4, chan_ind5;
   char N = 'N';
   for(int chan1 = 0; chan1 < Chan.size1; ++chan1){
     nhh = Chan.nhh[chan1];
@@ -1615,33 +1691,31 @@ void Doubles_Step(Input_Parameters &Parameters, Model_Space &Space, Channels &Ch
       dgemm_NN((Amps1.D1.T1 + chan_ind1), (Eff_Ints.Xhhhh.X_1 + chan_ind3), (Amps2.D1.T1 + chan_ind1), &npp, &nhh, &nhh, &p12, &p1, &N, &N);
     }
   }
-  if(Parameters.basis != "finite_J"){ fac = m1; }
-  else{ fac = p1; }
+  if(Parameters.basis != "finite_J"){ fac1 = m1; }
+  else{ fac1 = p1; }
   for(int chan2 = 0; chan2 < Chan.size2; ++chan2){
     nph1 = Chan.nph1[chan2];
     nhp1 = Chan.nhp1[chan2];
     length = nph1 * nhp1;
     if(length != 0){
       chan_ind1 = Amps1.D1.T2_1_index[chan2];
-      chan_ind2 = Eff_Ints.Xhphp.X_2_1_index[chan2];
-      //T2_1(ab|ij){aj',ib'}  =  -(+) T2_1(ac|kj){aj',kc'}.Xhphp2_1(kb|ic){kc',ib'}
-      dgemm_NN((Amps1.D1.T2_1 + chan_ind1), (Eff_Ints.Xhphp.X_2_1 + chan_ind2), (Amps2.D1.T2_1 + chan_ind1), &nph1, &nhp1, &nhp1, &fac, &p1, &N, &N);
-
       chan_ind2 = Amps1.D1.T2_2_index[chan2];
       chan_ind3 = Amps1.D1.T2_3_index[chan2];
       chan_ind4 = Amps1.D1.T2_4_index[chan2];
+      chan_ind5 = Eff_Ints.Xhphp.X_2_1_index[chan2];
+      //T2_1(ab|ij){aj',ib'}  =  -(+) T2_1(ac|kj){aj',kc'}.Xhphp2_1(kb|ic){kc',ib'}
+      dgemm_NN((Amps1.D1.T2_1 + chan_ind1), (Eff_Ints.Xhphp.X_2_1 + chan_ind5), (Amps2.D1.T2_1 + chan_ind1), &nph1, &nhp1, &nhp1, &fac1, &p1, &N, &N);
       //T2_2(ab|ij){bi',ja'}  =  -(+) T2_1(bc|ki){bi',kc'}.Xhphp2_1(ka|jc){kc',ja'}
-      //T2_3(ab|ij){ai',jb'}  =  +(+) T2_1(ac|ki){ai',kc'}.Xhphp2_1(kb|jc){kc',jb'}
-      //T2_4(ab|ij){bj',ia'}  =  +(+) T2_1(bc|kj){bj',kc'}.Xhphp2_1(ka|ic){kc',ia'}
-      for(int ind = 0; ind < length; ++ind){
-	Amps2.D1.T2_2[chan_ind2 + ind] += Amps2.D1.T2_1[chan_ind1 + ind];
-	Amps2.D1.T2_3[chan_ind3 + ind] += fac * Amps2.D1.T2_1[chan_ind1 + ind];
-	Amps2.D1.T2_4[chan_ind4 + ind] += fac * Amps2.D1.T2_1[chan_ind1 + ind];
-      }
+      dgemm_NN((Amps1.D1.T2_1 + chan_ind1), (Eff_Ints.Xhphp.X_2_1 + chan_ind5), (Amps2.D1.T2_2 + chan_ind2), &nph1, &nhp1, &nhp1, &fac1, &p1, &N, &N);
+      //T2_3(ab|ij){ai',jb'}  =   T2_1(ac|ki){ai',kc'}.Xhphp2_1(kb|jc){kc',jb'}
+      dgemm_NN((Amps1.D1.T2_1 + chan_ind1), (Eff_Ints.Xhphp.X_2_1 + chan_ind5), (Amps2.D1.T2_3 + chan_ind3), &nph1, &nhp1, &nhp1, &p1, &p1, &N, &N);
+      //T2_4(ab|ij){bj',ia'}  =   T2_1(bc|kj){bj',kc'}.Xhphp2_1(ka|ic){kc',ia'}
+      dgemm_NN((Amps1.D1.T2_1 + chan_ind1), (Eff_Ints.Xhphp.X_2_1 + chan_ind5), (Amps2.D1.T2_4 + chan_ind4), &nph1, &nhp1, &nhp1, &p1, &p1, &N, &N);
     }
   }
-  if(Parameters.basis != "finite_J"){ fac = m1; }
-  else{ fac = p1; }
+
+  if(Parameters.basis != "finite_J"){ fac1 = m1; fac2 = p1; }
+  else{ fac1 = p1; fac2 = m1; }
   for(int chan3 = 0; chan3 < Chan.size3; ++chan3){
     nh = Chan.nh[chan3];
     np = Chan.np[chan3];
@@ -1655,7 +1729,7 @@ void Doubles_Step(Input_Parameters &Parameters, Model_Space &Space, Channels &Ch
       //T3_1(ab|ij){a,ijb'}  =  +(+) Xpp3_od(a|c){a,c}.T3_1(cb|ij){c,ijb'}
       dgemm_NN((Eff_Ints.Xpp.X_3od + chan_ind3), (Amps1.D1.T3_1 + chan_ind1), (Amps2.D1.T3_1 + chan_ind1), &np, &nhhp, &np, &p1, &p1, &N, &N);
       //T3_2(ab|ij){b,ija'}  =  -(+) Xpp3_od(b|c){b,c}.T3_1(ca|ij){c,ija'}
-      for(int ind = 0; ind < length; ++ind){ Amps2.D1.T3_2[chan_ind2 + ind] += fac * Amps2.D1.T3_1[chan_ind1 + ind]; }
+      dgemm_NN((Eff_Ints.Xpp.X_3od + chan_ind3), (Amps1.D1.T3_1 + chan_ind1), (Amps2.D1.T3_2 + chan_ind2), &np, &nhhp, &np, &fac1, &p1, &N, &N);
     }
     length = nh * npph;
     if(length != 0){
@@ -1664,8 +1738,8 @@ void Doubles_Step(Input_Parameters &Parameters, Model_Space &Space, Channels &Ch
       chan_ind3 = Eff_Ints.Xhh.X_3_index[chan3];
       //T3_3(ab|ij){abj',i}  =  -(-) T3_3(ab|kj){abj',k}.Xhh3_od(k|i){k,i}
       dgemm_NN((Amps1.D1.T3_3 + chan_ind1), (Eff_Ints.Xhh.X_3od + chan_ind3), (Amps2.D1.T3_3 + chan_ind1), &npph, &nh, &nh, &m1, &p1, &N, &N);
-      //T3_4(ab|ij){abi',j}  =  +(-) T3_3(ab|ki){abi',k}.Xhh3_od(k|ij{k,j}
-      for(int ind = 0; ind < length; ++ind){ Amps2.D1.T3_4[chan_ind2 + ind] += fac * Amps2.D1.T3_3[chan_ind1 + ind]; }
+      //T3_4(ab|ij){abi',j}  =  +(-) T3_3(ab|ki){abi',k}.Xhh3_od(k|j){k,j}
+      dgemm_NN((Amps1.D1.T3_3 + chan_ind1), (Eff_Ints.Xhh.X_3od + chan_ind3), (Amps2.D1.T3_4 + chan_ind2), &npph, &nh, &nh, &fac2, &p1, &N, &N);
     }
   }
 }
@@ -1932,28 +2006,6 @@ void Update_Heff_3(Input_Parameters &Parameters, Model_Space &Space, Channels &C
     }
   }
   Eff_Ints.Xpphp.X_gather(Parameters, Chan);
-
-  /*std::cout << " Xhphh1 " << std::endl;
-  for(int i = 0; i < Eff_Ints.Xhphh.X_1_length; ++i){ std::cout << Eff_Ints.Xhphh.X_1[i] << " "; }
-  std::cout << std::endl;
-  std::cout << " Xhphh2_1 " << std::endl;
-  for(int i = 0; i < Eff_Ints.Xhphh.X_2_1_length; ++i){ std::cout << Eff_Ints.Xhphh.X_2_1[i] << " "; }
-  std::cout << std::endl;
-  std::cout << " Xhphh2_3 " << std::endl;
-  for(int i = 0; i < Eff_Ints.Xhphh.X_2_3_length; ++i){ std::cout << Eff_Ints.Xhphh.X_2_3[i] << " "; }
-  std::cout << std::endl;
-  std::cout << " Xhphh3_1 " << std::endl;
-  for(int i = 0; i < Eff_Ints.Xhphh.X_3_1_length; ++i){ std::cout << Eff_Ints.Xhphh.X_3_1[i] << " "; }
-  std::cout << std::endl;
-  std::cout << " Xhphh3_2 " << std::endl;
-  for(int i = 0; i < Eff_Ints.Xhphh.X_3_2_length; ++i){ std::cout << Eff_Ints.Xhphh.X_3_2[i] << " "; }
-  std::cout << std::endl;
-  std::cout << " Xhphh3_3 " << std::endl;
-  for(int i = 0; i < Eff_Ints.Xhphh.X_3_3_length; ++i){ std::cout << Eff_Ints.Xhphh.X_3_3[i] << " "; }
-  std::cout << std::endl;
-  std::cout << " Xhphh3_4 " << std::endl;
-  for(int i = 0; i < Eff_Ints.Xhphh.X_3_4_length; ++i){ std::cout << Eff_Ints.Xhphh.X_3_4[i] << " "; }
-  std::cout << std::endl;*/
 
   //////////////   Xhphh   ///////////////
   if(Parameters.basis != "finite_J"){ fac = m1; }
@@ -2566,45 +2618,49 @@ void Map_4(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int 
   for(int n = 0; n < num; ++n){
     if(type == 1){
       cross_state(Parameters, Space, p, s, r, q, jmin, tb);
-      chan = Space.ind_2b_cross(Parameters.basis, tb);
       tb.j -= 2*n;
+      chan = Space.ind_2b_cross(Parameters.basis, tb);
       key1 = map1[chan][Space.hash2(p, s, tb.j)];
       key2 = map2[chan][Space.hash2(r, q, tb.j)];
-      if(Parameters.basis != "finite_J"){ J1 = 0.0; X = 1.0; }
-      else{ J1 = 0.5 * tb.j; X = -1.0 * CGC6(p, q, J, r, s, J1); }
+      J1 = 0.5 * tb.j;
+      if( jp == 0.0 ){ X = 1.0; }
+      else{ X = -1.0 * CGC6(jp, jq, J, jr, js, J1); }
       map_fac1[index + n] = (2.0 * J + 1) * X;
       map_fac2[index + n] = (2.0 * J1 + 1) * X;
     }
     else if(type == 2){
       cross_state(Parameters, Space, q, r, s, p, jmin, tb);
-      chan = Space.ind_2b_cross(Parameters.basis, tb);
       tb.j -= 2*n;
+      chan = Space.ind_2b_cross(Parameters.basis, tb);
       key1 = map1[chan][Space.hash2(q, r, tb.j)];
       key2 = map2[chan][Space.hash2(s, p, tb.j)];
-      if(Parameters.basis != "finite_J"){ J1 = 0.0; X = 1.0; }
-      else{ J1 = 0.5 * tb.j; X = -1.0 * std::pow(-1.0, jp + jq + jr + js) * CGC6(q, p, J, s, r, J1); }
+      J1 = 0.5 * tb.j;
+      if( jp == 0.0 ){ X = 1.0; }
+      else{ X = -1.0 * std::pow(-1.0, jp + jq + jr + js) * CGC6(jq, jp, J, js, jr, J1); }
       map_fac1[index + n] = (2.0 * J + 1) * X;
       map_fac2[index + n] = (2.0 * J1 + 1) * X;
     }
     else if(type == 3){
       cross_state(Parameters, Space, p, r, s, q, jmin, tb);
-      chan = Space.ind_2b_cross(Parameters.basis, tb);
       tb.j -= 2*n;
+      chan = Space.ind_2b_cross(Parameters.basis, tb);
       key1 = map1[chan][Space.hash2(p, r, tb.j)];
       key2 = map2[chan][Space.hash2(s, q, tb.j)];
-      if(Parameters.basis != "finite_J"){ J1 = 0.0; X = 1.0; }
-      else{ J1 = 0.5 * tb.j; X = std::pow(-1.0, jr + js - J) * CGC6(p, q, J, s, r, J1); }
+      J1 = 0.5 * tb.j;
+      if( jp == 0.0 ){ X = 1.0; }
+      else{ X = std::pow(-1.0, jr + js - J) * CGC6(jp, jq, J, js, jr, J1); }
       map_fac1[index + n] = (2.0 * J + 1) * X;
       map_fac2[index + n] = (2.0 * J1 + 1) * X;
     }
     else if(type == 4){
       cross_state(Parameters, Space, q, s, r, p, jmin, tb);
-      chan = Space.ind_2b_cross(Parameters.basis, tb);
       tb.j -= 2*n;
+      chan = Space.ind_2b_cross(Parameters.basis, tb);
       key1 = map1[chan][Space.hash2(q, s, tb.j)];
       key2 = map2[chan][Space.hash2(r, p, tb.j)];
-      if(Parameters.basis != "finite_J"){ J1 = 0.0; X = 1.0; }
-      else{ J1 = 0.5 * tb.j; X = std::pow(-1.0, jp + jq - J) * CGC6(q, p, J, r, s, J1); }
+      J1 = 0.5 * tb.j;
+      if( jp == 0.0 ){ X = 1.0; }
+      else{ X = std::pow(-1.0, jp + jq - J) * CGC6(jq, jp, J, jr, js, J1); }
       map_fac1[index + n] = (2.0 * J + 1) * X;
       map_fac2[index + n] = (2.0 * J1 + 1) * X;
     }
@@ -2612,7 +2668,7 @@ void Map_4(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int 
       chan = Space.ind_1b(Parameters.basis, Space.qnums[p]);
       key1 = map1[chan][p];
       key2 = map2[chan][Space.hash3(r, s, q, J2)];
-      if(Parameters.basis != "finite_J"){ X = 1.0; }
+      if( jp == 0.0 ){ X = 1.0; }
       else{ X = std::pow(-1.0, jp + jq - J) * std::sqrt((2.0 * J + 1)/(2.0 * jp + 1)); }
       map_fac1[index + n] = X;
       map_fac2[index + n] = 1.0 / X;
@@ -2621,7 +2677,7 @@ void Map_4(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int 
       chan = Space.ind_1b(Parameters.basis, Space.qnums[q]);
       key1 = map1[chan][q];
       key2 = map2[chan][Space.hash3(r, s, p, J2)];
-      if(Parameters.basis != "finite_J"){ X = 1.0; }
+      if( jp == 0.0 ){ X = 1.0; }
       else{ X = -1.0 * std::sqrt((2.0 * J + 1)/(2.0 * jq + 1)); }
       map_fac1[index + n] = X;
       map_fac2[index + n] = 1.0 / X;
@@ -2630,7 +2686,7 @@ void Map_4(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int 
       chan = Space.ind_1b(Parameters.basis, Space.qnums[r]);
       key2 = map2[chan][r];
       key1 = map1[chan][Space.hash3(p, q, s, J2)];
-      if(Parameters.basis != "finite_J"){ X = 1.0; }
+      if( jp == 0.0 ){ X = 1.0; }
       else{ X = std::pow(-1.0, jr + js - J) * std::sqrt((2.0 * J + 1)/(2.0 * jr + 1)); }
       map_fac1[index + n] = X;
       map_fac2[index + n] = 1.0 / X;
@@ -2639,7 +2695,7 @@ void Map_4(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int 
       chan = Space.ind_1b(Parameters.basis, Space.qnums[s]);
       key2 = map2[chan][s];
       key1 = map1[chan][Space.hash3(p, q, r, J2)];
-      if(Parameters.basis != "finite_J"){ X = 1.0; }
+      if( jp == 0.0 ){ X = 1.0; }
       else{ X = -1.0 * std::sqrt((2.0 * J + 1)/(2.0 * js + 1)); }
       map_fac1[index + n] = X;
       map_fac2[index + n] = 1.0 / X;
@@ -2658,8 +2714,7 @@ void Map_2(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int 
   key1 = map1[chan][p];
   key2 = map2[chan][q];
   ind = key1 * num2[chan] + key2;
-  if(Parameters.basis != "finite_J"){ X = 1.0; }
-  else{ X = std::sqrt(jp); }
+  X = std::sqrt(2.0 * jp + 1);
   map_chan[count] = chan;
   map_ind[count] = ind;
   map_fac1[count] = 1.0/X;
@@ -2669,27 +2724,15 @@ void Map_2(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int 
 void direct_state(Input_Parameters &Parameters, Model_Space &Space, int &p, int &q, int &r, int &s, int &jmin1, State &tb1)
 {
   plus(tb1, Space.qnums[p], Space.qnums[q]);
-  if(Parameters.basis != "finite_J"){
-    jmin1 = 0;
-    tb1.j = 0;
-  }
-  else{
-    jmin1 = abs(Space.qnums[p].j - Space.qnums[q].j);
-    if(abs(Space.qnums[r].j - Space.qnums[s].j) > jmin1){ jmin1 = abs(Space.qnums[r].j - Space.qnums[s].j); }
-    if(Space.qnums[r].j + Space.qnums[s].j < tb1.j){ tb1.j = Space.qnums[r].j + Space.qnums[s].j; }
-  }
+  jmin1 = abs(Space.qnums[p].j - Space.qnums[q].j);
+  if(abs(Space.qnums[r].j - Space.qnums[s].j) > jmin1){ jmin1 = abs(Space.qnums[r].j - Space.qnums[s].j); }
+  if(Space.qnums[r].j + Space.qnums[s].j < tb1.j){ tb1.j = Space.qnums[r].j + Space.qnums[s].j; }
 }
 
 void cross_state(Input_Parameters &Parameters, Model_Space &Space, int &p, int &s, int &r, int &q, int &jmin2, State &tb2)
 {
   minus(tb2, Space.qnums[p], Space.qnums[s]);
-  if(Parameters.basis != "finite_J"){
-    jmin2 = 0;
-    tb2.j = 0;
-  }
-  else{
-    jmin2 = abs(Space.qnums[p].j - Space.qnums[s].j);
-    if(abs(Space.qnums[r].j - Space.qnums[q].j) > jmin2){ jmin2 = abs(Space.qnums[r].j - Space.qnums[q].j); }
-    if(Space.qnums[r].j + Space.qnums[q].j < tb2.j){ tb2.j = Space.qnums[r].j + Space.qnums[q].j; }
-  }
+  jmin2 = abs(Space.qnums[p].j - Space.qnums[s].j);
+  if(abs(Space.qnums[r].j - Space.qnums[q].j) > jmin2){ jmin2 = abs(Space.qnums[r].j - Space.qnums[q].j); }
+  if(Space.qnums[r].j + Space.qnums[q].j < tb2.j){ tb2.j = Space.qnums[r].j + Space.qnums[q].j; }
 }

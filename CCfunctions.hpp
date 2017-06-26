@@ -50,7 +50,7 @@ int Index31(int *vec1, int *vec2, int &num1, int &num2, int &p, int &q, int &r, 
 void Get_Input_Parameters(std::string &infile, Input_Parameters &Parameters);
 void Print_Parameters(Input_Parameters &Parameters, Model_Space &Space);
 
-//void Perform_CC(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps, HF_Channels &HF_Chan, HF_Matrix_Elements &HF_ME);
+void Update_CC(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps, Amplitudes &tempAmps);
 void Update_Heff_1(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps);
 void Update_Heff_2(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps);
 void Update_Heff_3(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps);
@@ -59,11 +59,7 @@ void Singles_Step(Input_Parameters &Parameters, Model_Space &Space, Channels &Ch
 void Doubles_Step_2(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps1, Amplitudes &Amps2);
 
 void Perform_CC(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps);
-/*void Doubles_Step_2(Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps1, Amplitudes &Amps2);
-void Singles_Step(Model_Space &Space, Channels &Chan, Interactions &Int, Amplitudes &Amp1, Amplitudes &Amp2);
-void Doubles_Step_J(Model_Space &Space, Channels &Chan, Interactions &Int, Amplitudes &Amp1, Amplitudes &Amp2);
-void Doubles_Step_2_J(Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps1, Amplitudes &Amps2);
-void Singles_Step_J(Model_Space &Space, Channels &Chan, Interactions &Int, Amplitudes &Amp1, Amplitudes &Amp2);*/
+void Perform_CC_Test(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps);
 
 void Random_Step(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps0, Amplitudes &Amps, Amplitudes &Amps2, Amplitudes &tempAmps, double &mix, double &width, double &error, double &error2);
 void Randomize_Amps(Input_Parameters &Parameters, Channels &Chan, Interactions &Ints, Amplitudes &Amps0, Amplitudes &Amps, double &width);

@@ -2634,13 +2634,13 @@ void Read_Matrix_Elements_J(Input_Parameters &Parameters, Model_Space &Space, HF
     getline(interaction, interactionline);
     std::istringstream(interactionline) >> coupT >> par >> coupJ >> shell1 >> shell2 >> shell3 >> shell4 >> TBME >> hom >> r2 >> p2;
     //TBME *= Parameters.tbstrength;
-    //std::cout << coupT << " " << par << " " << coupJ << " " << shell1 << " " << shell2 << " " << shell3 << " " << shell4 << ", " << TBME << std::endl;
     shell1 -= 1;
     shell2 -= 1;
     shell3 -= 1;
     shell4 -= 1;
     if(shell1 == shell2){ TBME *= std::sqrt(2.0); } // !! check
     if(shell3 == shell4){ TBME *= std::sqrt(2.0); } // !! check
+    //std::cout << coupT << " " << par << " " << coupJ << " " << shell1 << " " << shell2 << " " << shell3 << " " << shell4 << ", " << TBME << std::endl;
     plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
     tb.j = coupJ;
     chan1 = Space.ind_2b_dir(Parameters.basis, tb);
@@ -3713,200 +3713,206 @@ void Get_Matrix_Elements_J(Input_Parameters &Parameters, HF_Channels &HF_Chan, H
 	/*if(p < q && r < s && p <= r){
 	  std::cout << std::setprecision(12) << "V_hf: " << p << " " << q << " " << r << " " << s << ", " << 0.5*HF_Chan.qnums1[chan].j << " = " << TBME << std::endl;
 	  }*/
-	if(ptype == "particle" && qtype == "particle" && rtype == "particle" && stype == "particle"){
-	  key1 = Chan.pp_map[chan1][Space.hash2(p, q, Chan.qnums1[chan1].j)];
-	  key2 = Chan.pp_map[chan1][Space.hash2(r, s, Chan.qnums1[chan1].j)];
-	  chan_ind = Ints.Vpppp.V_1_index[chan1];
-	  ind = key1 * Chan.npp[chan1] + key2;
-	  Ints.Vpppp.V_1[chan_ind + ind] = TBME;
-
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[r]);
-	  key1 = Chan.ppp_map[chan][Space.hash3(p, q, s, Chan.qnums1[chan1].j)];
-	  key2 = Chan.p_map[chan][r];
-	  chan_ind = Ints.Vpppp.V_3_3_index[chan];
-	  ind = key1 * Chan.np[chan] + key2;
-	  Ints.Vpppp.V_3_3[chan_ind + ind] = std::pow(-1.0, rj + sj - J) * std::sqrt((2.0*J + 1)/(2.0*rj + 1)) * TBME;
-	}
-	else if(ptype == "hole" && qtype == "hole" && rtype == "hole" && stype == "hole"){
-	  key1 = Chan.hh_map[chan1][Space.hash2(p, q, Chan.qnums1[chan1].j)];
-	  key2 = Chan.hh_map[chan1][Space.hash2(r, s, Chan.qnums1[chan1].j)];
-	  chan_ind = Ints.Vhhhh.V_1_index[chan1];
-	  ind = key1 * Chan.nhh[chan1] + key2;
-	  Ints.Vhhhh.V_1[chan_ind + ind] = TBME;
-
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[q]);
-	  key1 = Chan.h_map[chan][q];
-	  key2 = Chan.hhh_map[chan][Space.hash3(r, s, p, Chan.qnums1[chan1].j)];
-	  chan_ind = Ints.Vhhhh.V_3_2_index[chan];
-	  ind = key1 * Chan.nhhh[chan] + key2;
-	  Ints.Vhhhh.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((2.0*J + 1)/(2.0*qj + 1)) * TBME;
-	}
-	else if(ptype == "hole" && qtype == "particle" && rtype == "hole" && stype == "particle"){
-	  minus(tb, Space.qnums[p], Space.qnums[s]);
-	  if(Space.qnums[r].j + Space.qnums[q].j < tb.j){ tb.j = Space.qnums[r].j + Space.qnums[q].j; }
-	  jmin = abs(Space.qnums[p].j - Space.qnums[s].j);
-	  if(abs(Space.qnums[r].j - Space.qnums[q].j) > jmin){ jmin = abs(Space.qnums[r].j - Space.qnums[q].j); }
-	  while(tb.j >= jmin){
-	    tbj = 0.5 * tb.j;
-	    chan = Space.ind_2b_cross(Parameters.basis, tb);
-	    key1 = Chan.hp1_map[chan][Space.hash2(p, s, tb.j)];
-	    key2 = Chan.hp1_map[chan][Space.hash2(r, q, tb.j)];
-	    chan_ind = Ints.Vhphp.V_2_1_index[chan];
-	    ind = key1 * Chan.nhp1[chan] + key2;
-	    X = -1.0 * (2.0 * J + 1) * CGC6(pj,qj,J,rj,sj,tbj);
-	    Ints.Vhphp.V_2_1[chan_ind + ind] += X * TBME;
-	    tb.j -= 2;
+	if(rtype == "particle" && stype == "particle"){
+	  if(ptype == "particle" && qtype == "particle"){
+	    key1 = Chan.pp_map[chan1][Space.hash2(p, q, Chan.qnums1[chan1].j)];
+	    key2 = Chan.pp_map[chan1][Space.hash2(r, s, Chan.qnums1[chan1].j)];
+	    chan_ind = Ints.Vpppp.V_1_index[chan1];
+	    ind = key1 * Chan.npp[chan1] + key2;
+	    Ints.Vpppp.V_1[chan_ind + ind] = TBME;
+	    
+	    chan = Space.ind_1b(Parameters.basis, Space.qnums[r]);
+	    key1 = Chan.ppp_map[chan][Space.hash3(p, q, s, Chan.qnums1[chan1].j)];
+	    key2 = Chan.p_map[chan][r];
+	    chan_ind = Ints.Vpppp.V_3_3_index[chan];
+	    ind = key1 * Chan.np[chan] + key2;
+	    Ints.Vpppp.V_3_3[chan_ind + ind] = std::pow(-1.0, rj + sj - J) * std::sqrt((2.0*J + 1)/(2.0*rj + 1)) * TBME;
 	  }
-
-	  minus(tb, Space.qnums[q], Space.qnums[r]);
-	  if(Space.qnums[s].j + Space.qnums[p].j < tb.j){ tb.j = Space.qnums[s].j + Space.qnums[p].j; }
-	  jmin = abs(Space.qnums[q].j - Space.qnums[r].j);
-	  if(abs(Space.qnums[s].j - Space.qnums[p].j) > jmin){ jmin = abs(Space.qnums[s].j - Space.qnums[p].j); }
-	  while(tb.j >= jmin){
-	    tbj = 0.5 * tb.j;
-	    chan = Space.ind_2b_cross(Parameters.basis, tb);
-	    key1 = Chan.ph1_map[chan][Space.hash2(q, r, tb.j)];
-	    key2 = Chan.ph1_map[chan][Space.hash2(s, p, tb.j)];
-	    chan_ind = Ints.Vhphp.V_2_2_index[chan];
-	    ind = key1 * Chan.nph1[chan] + key2;
-	    X = -1.0 * std::pow(-1.0, pj + qj + rj + sj) * (2.0 * J + 1) * CGC6(qj,pj,J,sj,rj,tbj);
-	    Ints.Vhphp.V_2_2[chan_ind + ind] += X * TBME;
-	    tb.j -= 2;
+	  else if(ptype == "hole" && qtype == "particle"){
+	    chan = Space.ind_1b(Parameters.basis, Space.qnums[q]);
+	    key1 = Chan.p_map[chan][q];
+	    key2 = Chan.pph_map[chan][Space.hash3(r, s, p, Chan.qnums1[chan1].j)];
+	    chan_ind = Ints.Vhppp.V_3_2_index[chan];
+	    ind = key1 * Chan.npph[chan] + key2;
+	    Ints.Vhppp.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((2.0*J + 1)/(2.0*qj + 1)) * TBME;
+	    
+	    minus(tb, Space.qnums[q], Space.qnums[s]);
+	    if(Space.qnums[r].j + Space.qnums[p].j < tb.j){ tb.j = Space.qnums[r].j + Space.qnums[p].j; }
+	    jmin = abs(Space.qnums[q].j - Space.qnums[s].j);
+	    if(abs(Space.qnums[r].j - Space.qnums[p].j) > jmin){ jmin = abs(Space.qnums[r].j - Space.qnums[p].j); }
+	    while(tb.j >= jmin){
+	      tbj = 0.5 * tb.j;
+	      chan = Space.ind_2b_cross(Parameters.basis, tb);
+	      key1 = Chan.pp1_map[chan][Space.hash2(q, s, tb.j)];
+	      key2 = Chan.ph1_map[chan][Space.hash2(r, p, tb.j)];
+	      chan_ind = Ints.Vhppp.V_2_4_index[chan];
+	      ind = key1 * Chan.nph1[chan] + key2;
+	      X = std::pow(-1.0, pj + qj - J) * (2.0 * J + 1) * CGC6(qj,pj,J,rj,sj,tbj);
+	      Ints.Vhppp.V_2_4[chan_ind + ind] += X * TBME;
+	      tb.j -= 2;
+	    }	  
+	    
+	    // Vpphp -> rspq
+	    chan = Space.ind_1b(Parameters.basis, Space.qnums[p]);
+	    key1 = Chan.ppp_map[chan][Space.hash3(r, s, q, Chan.qnums1[chan1].j)];
+	    key2 = Chan.h_map[chan][p];
+	    chan_ind = Ints.Vpphp.V_3_3_index[chan];
+	    ind = key1 * Chan.nh[chan] + key2;
+	    Ints.Vpphp.V_3_3[chan_ind + ind] = std::pow(-1.0, pj + qj - J) * std::sqrt((2.0*J + 1)/(2.0*pj + 1)) * TBME;
 	  }
-	}
-	else if(ptype == "hole" && qtype == "hole" && rtype == "particle" && stype == "particle"){
-	  key1 = Chan.hh_map[chan1][Space.hash2(p, q, Chan.qnums1[chan1].j)];
-	  key2 = Chan.pp_map[chan1][Space.hash2(r, s, Chan.qnums1[chan1].j)];
-	  chan_ind = Ints.Vhhpp.V_1_index[chan1];
-	  ind = key1 * Chan.npp[chan1] + key2;
-	  Ints.Vhhpp.V_1[chan_ind + ind] = TBME;
-	  chan_ind = Ints.Vpphh.V_1_index[chan1];
-	  ind = key2 * Chan.nhh[chan1] + key1;
-	  Ints.Vpphh.V_1[chan_ind + ind] = TBME;
-
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[p]);
-	  key1 = Chan.h_map[chan][p];
-	  key2 = Chan.pph_map[chan][Space.hash3(r, s, q, Chan.qnums1[chan1].j)];
-	  chan_ind = Ints.Vhhpp.V_3_1_index[chan];
-	  ind = key1 * Chan.npph[chan] + key2;
-	  Ints.Vhhpp.V_3_1[chan_ind + ind] = std::pow(-1.0, pj + qj - J) * std::sqrt((2.0*J + 1)/(2.0*pj + 1)) * TBME;
-
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[r]);
- 	  key1 = Chan.hhp_map[chan][Space.hash3(p, q, s, Chan.qnums1[chan1].j)];
-	  key2 = Chan.p_map[chan][r];
-	  chan_ind = Ints.Vhhpp.V_3_3_index[chan];
-	  ind = key1 * Chan.np[chan] + key2;
-	  Ints.Vhhpp.V_3_3[chan_ind + ind] = std::pow(-1.0, rj + sj - J) * std::sqrt((2.0*J + 1)/(2.0*rj + 1)) * TBME;
-	   
-	  minus(tb, Space.qnums[p], Space.qnums[s]);
-	  if(Space.qnums[r].j + Space.qnums[q].j < tb.j){ tb.j = Space.qnums[r].j + Space.qnums[q].j; }
-	  jmin = abs(Space.qnums[p].j - Space.qnums[s].j);
-	  if(abs(Space.qnums[r].j - Space.qnums[q].j) > jmin){ jmin = abs(Space.qnums[r].j - Space.qnums[q].j); }
-	  while(tb.j >= jmin){
-	    tbj = 0.5 * tb.j;
-	    chan = Space.ind_2b_cross(Parameters.basis, tb);
-	    key1 = Chan.hp1_map[chan][Space.hash2(p, s, tb.j)];
-	    key2 = Chan.ph1_map[chan][Space.hash2(r, q, tb.j)];
-	    chan_ind = Ints.Vhhpp.V_2_1_index[chan];
-	    ind = key1 * Chan.nph1[chan] + key2;
-	    X = -1.0 * (2.0 * J + 1) * CGC6(pj,qj,J,rj,sj,tbj);
-	    Ints.Vhhpp.V_2_1[chan_ind + ind] += X * TBME;
-	    tb.j -= 2;
-	  }
-
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[q]);
-	  key1 = Chan.h_map[chan][q];
-	  key2 = Chan.pph_map[chan][Space.hash3(r, s, p, Chan.qnums1[chan1].j)];
-	  chan_ind = Ints.Vhhpp.V_3_2_index[chan];
-	  ind = key1 * Chan.npph[chan] + key2;
-	  Ints.Vhhpp.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((2.0*J + 1)/(2.0*qj + 1)) * TBME;
-	  
-	  minus(tb, Space.qnums[p], Space.qnums[r]);
-	  if(Space.qnums[s].j + Space.qnums[q].j < tb.j){ tb.j = Space.qnums[s].j + Space.qnums[q].j; }
-	  jmin = abs(Space.qnums[p].j - Space.qnums[r].j);
-	  if(abs(Space.qnums[s].j - Space.qnums[q].j) > jmin){ jmin = abs(Space.qnums[s].j - Space.qnums[q].j); }
-	  while(tb.j >= jmin){
-	    tbj = 0.5 * tb.j;
-	    chan = Space.ind_2b_cross(Parameters.basis, tb);
-	    key1 = Chan.hp1_map[chan][Space.hash2(p, r, tb.j)];
-	    key2 = Chan.ph1_map[chan][Space.hash2(s, q, tb.j)];
-	    chan_ind = Ints.Vhhpp.V_2_3_index[chan];
-	    ind = key1 * Chan.nph1[chan] + key2;
-	    X = std::pow(-1.0, rj + sj - J) * (2.0 * J + 1) * CGC6(pj,qj,J,sj,rj,tbj);
-	    Ints.Vhhpp.V_2_3[chan_ind + ind] += X * TBME;
-	    tb.j -= 2;
+	  else if(ptype == "hole" && qtype == "hole"){
+	    key1 = Chan.hh_map[chan1][Space.hash2(p, q, Chan.qnums1[chan1].j)];
+	    key2 = Chan.pp_map[chan1][Space.hash2(r, s, Chan.qnums1[chan1].j)];
+	    chan_ind = Ints.Vhhpp.V_1_index[chan1];
+	    ind = key1 * Chan.npp[chan1] + key2;
+	    Ints.Vhhpp.V_1[chan_ind + ind] = TBME;
+	    chan_ind = Ints.Vpphh.V_1_index[chan1];
+	    ind = key2 * Chan.nhh[chan1] + key1;
+	    Ints.Vpphh.V_1[chan_ind + ind] = TBME;
+	    
+	    chan = Space.ind_1b(Parameters.basis, Space.qnums[p]);
+	    key1 = Chan.h_map[chan][p];
+	    key2 = Chan.pph_map[chan][Space.hash3(r, s, q, Chan.qnums1[chan1].j)];
+	    chan_ind = Ints.Vhhpp.V_3_1_index[chan];
+	    ind = key1 * Chan.npph[chan] + key2;
+	    Ints.Vhhpp.V_3_1[chan_ind + ind] = std::pow(-1.0, pj + qj - J) * std::sqrt((2.0*J + 1)/(2.0*pj + 1)) * TBME;
+	    
+	    chan = Space.ind_1b(Parameters.basis, Space.qnums[r]);
+	    key1 = Chan.hhp_map[chan][Space.hash3(p, q, s, Chan.qnums1[chan1].j)];
+	    key2 = Chan.p_map[chan][r];
+	    chan_ind = Ints.Vhhpp.V_3_3_index[chan];
+	    ind = key1 * Chan.np[chan] + key2;
+	    Ints.Vhhpp.V_3_3[chan_ind + ind] = std::pow(-1.0, rj + sj - J) * std::sqrt((2.0*J + 1)/(2.0*rj + 1)) * TBME;
+	    
+	    minus(tb, Space.qnums[p], Space.qnums[s]);
+	    if(Space.qnums[r].j + Space.qnums[q].j < tb.j){ tb.j = Space.qnums[r].j + Space.qnums[q].j; }
+	    jmin = abs(Space.qnums[p].j - Space.qnums[s].j);
+	    if(abs(Space.qnums[r].j - Space.qnums[q].j) > jmin){ jmin = abs(Space.qnums[r].j - Space.qnums[q].j); }
+	    while(tb.j >= jmin){
+	      tbj = 0.5 * tb.j;
+	      chan = Space.ind_2b_cross(Parameters.basis, tb);
+	      key1 = Chan.hp1_map[chan][Space.hash2(p, s, tb.j)];
+	      key2 = Chan.ph1_map[chan][Space.hash2(r, q, tb.j)];
+	      chan_ind = Ints.Vhhpp.V_2_1_index[chan];
+	      ind = key1 * Chan.nph1[chan] + key2;
+	      X = -1.0 * (2.0 * J + 1) * CGC6(pj,qj,J,rj,sj,tbj);
+	      Ints.Vhhpp.V_2_1[chan_ind + ind] += X * TBME;
+	      tb.j -= 2;
+	    }
+	    
+	    chan = Space.ind_1b(Parameters.basis, Space.qnums[q]);
+	    key1 = Chan.h_map[chan][q];
+	    key2 = Chan.pph_map[chan][Space.hash3(r, s, p, Chan.qnums1[chan1].j)];
+	    chan_ind = Ints.Vhhpp.V_3_2_index[chan];
+	    ind = key1 * Chan.npph[chan] + key2;
+	    Ints.Vhhpp.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((2.0*J + 1)/(2.0*qj + 1)) * TBME;
+	    
+	    minus(tb, Space.qnums[p], Space.qnums[r]);
+	    if(Space.qnums[s].j + Space.qnums[q].j < tb.j){ tb.j = Space.qnums[s].j + Space.qnums[q].j; }
+	    jmin = abs(Space.qnums[p].j - Space.qnums[r].j);
+	    if(abs(Space.qnums[s].j - Space.qnums[q].j) > jmin){ jmin = abs(Space.qnums[s].j - Space.qnums[q].j); }
+	    while(tb.j >= jmin){
+	      tbj = 0.5 * tb.j;
+	      chan = Space.ind_2b_cross(Parameters.basis, tb);
+	      key1 = Chan.hp1_map[chan][Space.hash2(p, r, tb.j)];
+	      key2 = Chan.ph1_map[chan][Space.hash2(s, q, tb.j)];
+	      chan_ind = Ints.Vhhpp.V_2_3_index[chan];
+	      ind = key1 * Chan.nph1[chan] + key2;
+	      X = std::pow(-1.0, rj + sj - J) * (2.0 * J + 1) * CGC6(pj,qj,J,sj,rj,tbj);
+	      Ints.Vhhpp.V_2_3[chan_ind + ind] += X * TBME;
+	      tb.j -= 2;
+	    }
 	  }
 	}
-	else if(ptype == "hole" && qtype == "particle" && rtype == "particle" && stype == "particle"){
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[q]);
-	  key1 = Chan.p_map[chan][q];
-	  key2 = Chan.pph_map[chan][Space.hash3(r, s, p, Chan.qnums1[chan1].j)];
-	  chan_ind = Ints.Vhppp.V_3_2_index[chan];
-	  ind = key1 * Chan.npph[chan] + key2;
-	  Ints.Vhppp.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((2.0*J + 1)/(2.0*qj + 1)) * TBME;
-	  
-	  minus(tb, Space.qnums[q], Space.qnums[s]);
-	  if(Space.qnums[r].j + Space.qnums[p].j < tb.j){ tb.j = Space.qnums[r].j + Space.qnums[p].j; }
-	  jmin = abs(Space.qnums[q].j - Space.qnums[s].j);
-	  if(abs(Space.qnums[r].j - Space.qnums[p].j) > jmin){ jmin = abs(Space.qnums[r].j - Space.qnums[p].j); }
-	  while(tb.j >= jmin){
-	    tbj = 0.5 * tb.j;
-	    chan = Space.ind_2b_cross(Parameters.basis, tb);
-	    key1 = Chan.pp1_map[chan][Space.hash2(q, s, tb.j)];
-	    key2 = Chan.ph1_map[chan][Space.hash2(r, p, tb.j)];
-	    chan_ind = Ints.Vhppp.V_2_4_index[chan];
-	    ind = key1 * Chan.nph1[chan] + key2;
-	    X = std::pow(-1.0, pj + qj - J) * (2.0 * J + 1) * CGC6(qj,pj,J,rj,sj,tbj);
-	    Ints.Vhppp.V_2_4[chan_ind + ind] += X * TBME;
-	    tb.j -= 2;
-	  }	  
-
-	  // Vpphp -> rspq
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[p]);
-	  key1 = Chan.ppp_map[chan][Space.hash3(r, s, q, Chan.qnums1[chan1].j)];
-	  key2 = Chan.h_map[chan][p];
-	  chan_ind = Ints.Vpphp.V_3_3_index[chan];
-	  ind = key1 * Chan.nh[chan] + key2;
-	  Ints.Vpphp.V_3_3[chan_ind + ind] = std::pow(-1.0, pj + qj - J) * std::sqrt((2.0*J + 1)/(2.0*pj + 1)) * TBME;
-	}
-	else if(ptype == "hole" && qtype == "hole" && rtype == "hole" && stype == "particle"){
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[r]);
-	  key1 = Chan.hhp_map[chan][Space.hash3(p, q, s, Chan.qnums1[chan1].j)];
-	  key2 = Chan.h_map[chan][r];
-	  chan_ind = Ints.Vhhhp.V_3_3_index[chan];
-	  ind = key1 * Chan.nh[chan] + key2;
-	  Ints.Vhhhp.V_3_3[chan_ind + ind] = std::pow(-1.0, rj + sj - J) * std::sqrt((2.0*J + 1)/(2.0*rj + 1)) * TBME;
-	  
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[q]);
-	  key1 = Chan.h_map[chan][q];
-	  key2 = Chan.hph_map[chan][Space.hash3(r, s, p, Chan.qnums1[chan1].j)];
-	  chan_ind = Ints.Vhhhp.V_3_2_index[chan];
-	  ind = key1 * Chan.nhph[chan] + key2;
-	  Ints.Vhhhp.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((2.0*J + 1)/(2.0*qj + 1)) * TBME;
-	  
-	  minus(tb, Space.qnums[p], Space.qnums[r]);
-	  if(Space.qnums[s].j + Space.qnums[q].j < tb.j){ tb.j = Space.qnums[s].j + Space.qnums[q].j; }
-	  jmin = abs(Space.qnums[p].j - Space.qnums[r].j);
-	  if(abs(Space.qnums[s].j - Space.qnums[q].j) > jmin){ jmin = abs(Space.qnums[s].j - Space.qnums[q].j); }
-	  while(tb.j >= jmin){
-	    tbj = 0.5 * tb.j;
-	    chan = Space.ind_2b_cross(Parameters.basis, tb);
-	    key1 = Chan.hh1_map[chan][Space.hash2(p, r, tb.j)];
-	    key2 = Chan.ph1_map[chan][Space.hash2(s, q, tb.j)];
-	    chan_ind = Ints.Vhhhp.V_2_3_index[chan];
-	    ind = key1 * Chan.nph1[chan] + key2;
-	    X = std::pow(-1.0, rj + sj - J) * (2.0 * J + 1) * CGC6(pj,qj,J,sj,rj,tbj);
-	    Ints.Vhhhp.V_2_3[chan_ind + ind] += X * TBME;
-	    tb.j -= 2;
+	else if(rtype == "hole" && stype == "particle"){
+	  if(ptype == "hole" && qtype == "particle"){
+	    minus(tb, Space.qnums[p], Space.qnums[s]);
+	    if(Space.qnums[r].j + Space.qnums[q].j < tb.j){ tb.j = Space.qnums[r].j + Space.qnums[q].j; }
+	    jmin = abs(Space.qnums[p].j - Space.qnums[s].j);
+	    if(abs(Space.qnums[r].j - Space.qnums[q].j) > jmin){ jmin = abs(Space.qnums[r].j - Space.qnums[q].j); }
+	    while(tb.j >= jmin){
+	      tbj = 0.5 * tb.j;
+	      chan = Space.ind_2b_cross(Parameters.basis, tb);
+	      key1 = Chan.hp1_map[chan][Space.hash2(p, s, tb.j)];
+	      key2 = Chan.hp1_map[chan][Space.hash2(r, q, tb.j)];
+	      chan_ind = Ints.Vhphp.V_2_1_index[chan];
+	      ind = key1 * Chan.nhp1[chan] + key2;
+	      X = -1.0 * (2.0 * J + 1) * CGC6(pj,qj,J,rj,sj,tbj);
+	      Ints.Vhphp.V_2_1[chan_ind + ind] += X * TBME;
+	      tb.j -= 2;
+	    }
+	    
+	    minus(tb, Space.qnums[q], Space.qnums[r]);
+	    if(Space.qnums[s].j + Space.qnums[p].j < tb.j){ tb.j = Space.qnums[s].j + Space.qnums[p].j; }
+	    jmin = abs(Space.qnums[q].j - Space.qnums[r].j);
+	    if(abs(Space.qnums[s].j - Space.qnums[p].j) > jmin){ jmin = abs(Space.qnums[s].j - Space.qnums[p].j); }
+	    while(tb.j >= jmin){
+	      tbj = 0.5 * tb.j;
+	      chan = Space.ind_2b_cross(Parameters.basis, tb);
+	      key1 = Chan.ph1_map[chan][Space.hash2(q, r, tb.j)];
+	      key2 = Chan.ph1_map[chan][Space.hash2(s, p, tb.j)];
+	      chan_ind = Ints.Vhphp.V_2_2_index[chan];
+	      ind = key1 * Chan.nph1[chan] + key2;
+	      X = -1.0 * std::pow(-1.0, pj + qj + rj + sj) * (2.0 * J + 1) * CGC6(qj,pj,J,sj,rj,tbj);
+	      Ints.Vhphp.V_2_2[chan_ind + ind] += X * TBME;
+	      tb.j -= 2;
+	    }
 	  }
-
-	  // Vhphh -> rspq
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[s]);
-	  key1 = Chan.p_map[chan][s];
-	  key2 = Chan.hhh_map[chan][Space.hash3(p, q, r, Chan.qnums1[chan1].j)];
-	  chan_ind = Ints.Vhphh.V_3_2_index[chan];
-	  ind = key1 * Chan.nhhh[chan] + key2;
-	  Ints.Vhphh.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((2.0*J + 1)/(2.0*sj + 1)) * TBME;
+	  else if(ptype == "hole" && qtype == "hole"){
+	    chan = Space.ind_1b(Parameters.basis, Space.qnums[r]);
+	    key1 = Chan.hhp_map[chan][Space.hash3(p, q, s, Chan.qnums1[chan1].j)];
+	    key2 = Chan.h_map[chan][r];
+	    chan_ind = Ints.Vhhhp.V_3_3_index[chan];
+	    ind = key1 * Chan.nh[chan] + key2;
+	    Ints.Vhhhp.V_3_3[chan_ind + ind] = std::pow(-1.0, rj + sj - J) * std::sqrt((2.0*J + 1)/(2.0*rj + 1)) * TBME;
+	    
+	    chan = Space.ind_1b(Parameters.basis, Space.qnums[q]);
+	    key1 = Chan.h_map[chan][q];
+	    key2 = Chan.hph_map[chan][Space.hash3(r, s, p, Chan.qnums1[chan1].j)];
+	    chan_ind = Ints.Vhhhp.V_3_2_index[chan];
+	    ind = key1 * Chan.nhph[chan] + key2;
+	    Ints.Vhhhp.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((2.0*J + 1)/(2.0*qj + 1)) * TBME;
+	    
+	    minus(tb, Space.qnums[p], Space.qnums[r]);
+	    if(Space.qnums[s].j + Space.qnums[q].j < tb.j){ tb.j = Space.qnums[s].j + Space.qnums[q].j; }
+	    jmin = abs(Space.qnums[p].j - Space.qnums[r].j);
+	    if(abs(Space.qnums[s].j - Space.qnums[q].j) > jmin){ jmin = abs(Space.qnums[s].j - Space.qnums[q].j); }
+	    while(tb.j >= jmin){
+	      tbj = 0.5 * tb.j;
+	      chan = Space.ind_2b_cross(Parameters.basis, tb);
+	      key1 = Chan.hh1_map[chan][Space.hash2(p, r, tb.j)];
+	      key2 = Chan.ph1_map[chan][Space.hash2(s, q, tb.j)];
+	      chan_ind = Ints.Vhhhp.V_2_3_index[chan];
+	      ind = key1 * Chan.nph1[chan] + key2;
+	      X = std::pow(-1.0, rj + sj - J) * (2.0 * J + 1) * CGC6(pj,qj,J,sj,rj,tbj);
+	      Ints.Vhhhp.V_2_3[chan_ind + ind] += X * TBME;
+	      tb.j -= 2;
+	    }
+	    
+	    // Vhphh -> rspq
+	    chan = Space.ind_1b(Parameters.basis, Space.qnums[s]);
+	    key1 = Chan.p_map[chan][s];
+	    key2 = Chan.hhh_map[chan][Space.hash3(p, q, r, Chan.qnums1[chan1].j)];
+	    chan_ind = Ints.Vhphh.V_3_2_index[chan];
+	    ind = key1 * Chan.nhhh[chan] + key2;
+	    Ints.Vhphh.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((2.0*J + 1)/(2.0*sj + 1)) * TBME;
+	  }
+	}
+	else if(rtype == "hole" && stype == "hole"){
+	  if(ptype == "hole" && qtype == "hole"){
+	    key1 = Chan.hh_map[chan1][Space.hash2(p, q, Chan.qnums1[chan1].j)];
+	    key2 = Chan.hh_map[chan1][Space.hash2(r, s, Chan.qnums1[chan1].j)];
+	    chan_ind = Ints.Vhhhh.V_1_index[chan1];
+	    ind = key1 * Chan.nhh[chan1] + key2;
+	    Ints.Vhhhh.V_1[chan_ind + ind] = TBME;
+	    
+	    chan = Space.ind_1b(Parameters.basis, Space.qnums[q]);
+	    key1 = Chan.h_map[chan][q];
+	    key2 = Chan.hhh_map[chan][Space.hash3(r, s, p, Chan.qnums1[chan1].j)];
+	    chan_ind = Ints.Vhhhh.V_3_2_index[chan];
+	    ind = key1 * Chan.nhhh[chan] + key2;
+	    Ints.Vhhhh.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((2.0*J + 1)/(2.0*qj + 1)) * TBME;
+	  }
 	}
       }
     }
@@ -3915,12 +3921,15 @@ void Get_Matrix_Elements_J(Input_Parameters &Parameters, HF_Channels &HF_Chan, H
 
 void Get_Matrix_Elements_JM(Input_Parameters &Parameters, HF_Channels &HF_Chan, HF_Matrix_Elements &HF_ME, Model_Space &Space, Channels &Chan, Interactions &Ints)
 {
-  double J;
+  double J, J2;
+  int J0 = 0;
   int ntb, length;
+
   for(int chan1 = 0; chan1 < HF_Chan.size1; ++chan1){
     ntb = HF_Chan.ntb[chan1];
     length = ntb * ntb;
-    J = 0.5 * HF_Chan.qnums1[chan1].j;
+    J2 = HF_Chan.qnums1[chan1].j;
+    J = 0.5 * J2;
     #pragma omp parallel
     {
       int p, q, r, s, pind, qind, rind, sind, tb1_ind, tb2_ind, chan_ind;
@@ -3941,36 +3950,36 @@ void Get_Matrix_Elements_JM(Input_Parameters &Parameters, HF_Channels &HF_Chan, 
 	tb2 = HF_Chan.tb_state(chan1, tb2_ind);
 	p = tb1.v1;
 	q = tb1.v2;
-	pj = 0.5 * Space.qnums[Space.shellsm[p][0]].j;
-	qj = 0.5 * Space.qnums[Space.shellsm[q][0]].j;
-	ptype = Space.qnums[Space.shellsm[p][0]].type;
-	qtype = Space.qnums[Space.shellsm[q][0]].type;
 	r = tb2.v1;
 	s = tb2.v2;
-	rj = 0.5 * Space.qnums[Space.shellsm[r][0]].j;
-	sj = 0.5 * Space.qnums[Space.shellsm[s][0]].j;
-	rtype = Space.qnums[Space.shellsm[r][0]].type;
-	stype = Space.qnums[Space.shellsm[s][0]].type;
 	TBME0 = HF_ME.V[HF_ME.Index[chan1] + (tb1_ind*ntb + tb2_ind)];
 
-	for(int jz = -HF_Chan.qnums1[chan1].j; jz <= HF_Chan.qnums1[chan1].j; jz+=2){
+	for(int jz = -J2; jz <= J2; jz+=2){
 	  M = 0.5 * jz;
-	  for(int p1 = 0; p1 < -1*Space.qnums[Space.shellsm[p][0]].m + 1; ++p1){
+	  for(int p1 = 0; p1 < Space.shellsnum[p]; ++p1){
 	    pind = Space.shellsm[p][p1];
+	    pj = 0.5 * Space.shellsj[pind];
 	    pm = 0.5 * Space.qnums[pind].m;
-	    for(int q1 = 0; q1 < -1*Space.qnums[Space.shellsm[q][0]].m + 1; ++q1){
+	    ptype = Space.qnums[pind].type;
+	    for(int q1 = 0; q1 < Space.shellsnum[q]; ++q1){
 	      qind = Space.shellsm[q][q1];
+	      qj = 0.5 * Space.shellsj[qind];
 	      qm = 0.5 * Space.qnums[qind].m;
+	      qtype = Space.qnums[qind].type;
 	      m1 = pm + qm;
 	      t1 = Space.qnums[pind].t + Space.qnums[qind].t;
 	      if(pind == qind){ continue; }
-	      for(int r1 = 0; r1 < -1*Space.qnums[Space.shellsm[r][0]].m + 1; ++r1){
+	      for(int r1 = 0; r1 < Space.shellsnum[r]; ++r1){
 		rind = Space.shellsm[r][r1];
+		rj = 0.5 * Space.shellsj[rind];
 		rm = 0.5 * Space.qnums[rind].m;
-		for(int s1 = 0; s1 < -1*Space.qnums[Space.shellsm[s][0]].m + 1; ++s1){
+		rtype = Space.qnums[rind].type;
+		for(int s1 = 0; s1 < Space.shellsnum[s]; ++s1){
 		  sind = Space.shellsm[s][s1];
+		  sj = 0.5 * Space.shellsj[sind];
 		  sm = 0.5 * Space.qnums[sind].m;
-		  qm = 0.5 * Space.qnums[qind].m;
+		  stype = Space.qnums[sind].type;
+
 		  m2 = rm + sm;
 		  t2 = Space.qnums[rind].t + Space.qnums[sind].t;
 		  if(rind == sind){ continue; }
@@ -3980,152 +3989,164 @@ void Get_Matrix_Elements_JM(Input_Parameters &Parameters, HF_Channels &HF_Chan, 
 		  CGC2 = CGC(rj, rm, sj, sm, J, M);
 		  TBME = TBME0 * CGC1 * CGC2;
 
-		  if(ptype == "particle" && qtype == "particle" && rtype == "particle" && stype == "particle"){
-		    key1 = Chan.pp_map[chan1][Space.hash2(pind, qind, Chan.qnums1[chan1].j)];
-		    key2 = Chan.pp_map[chan1][Space.hash2(rind, sind, Chan.qnums1[chan1].j)];
-		    chan_ind = Ints.Vpppp.V_1_index[chan1];
-		    ind = key1 * Chan.npp[chan1] + key2;
-		    Ints.Vpppp.V_1[chan_ind + ind] = TBME;
-
-		    chan = Space.ind_1b(Parameters.basis, Space.qnums[rind]);
-		    key1 = Chan.ppp_map[chan][Space.hash3(pind, qind, sind, Chan.qnums1[chan1].j)];
-		    key2 = Chan.p_map[chan][rind];
-		    chan_ind = Ints.Vpppp.V_3_3_index[chan];
-		    ind = key1 * Chan.np[chan] + key2;
-		    Ints.Vpppp.V_3_3[chan_ind + ind] = TBME;
-		  }
-		  else if(ptype == "hole" && qtype == "hole" && rtype == "hole" && stype == "hole"){
-		    key1 = Chan.hh_map[chan1][Space.hash2(pind, qind, Chan.qnums1[chan1].j)];
-		    key2 = Chan.hh_map[chan1][Space.hash2(rind, sind, Chan.qnums1[chan1].j)];
-		    chan_ind = Ints.Vhhhh.V_1_index[chan1];
-		    ind = key1 * Chan.nhh[chan1] + key2;
-		    Ints.Vhhhh.V_1[chan_ind + ind] = TBME;
-
-		    chan = Space.ind_1b(Parameters.basis, Space.qnums[qind]);
-		    key1 = Chan.h_map[chan][qind];
-		    key2 = Chan.hhh_map[chan][Space.hash3(rind, sind, pind, Chan.qnums1[chan1].j)];
-		    chan_ind = Ints.Vhhhh.V_3_2_index[chan];
-		    ind = key1 * Chan.nhhh[chan] + key2;
-		    Ints.Vhhhh.V_3_2[chan_ind + ind] = TBME;
-		  }
-		  else if(ptype == "hole" && qtype == "particle" && rtype == "hole" && stype == "particle"){
-		    minus(tb, Space.qnums[pind], Space.qnums[sind]);
-		    chan = Space.ind_2b_cross(Parameters.basis, tb);
-		    key1 = Chan.hp1_map[chan][Space.hash2(pind, sind, tb.j)];
-		    key2 = Chan.hp1_map[chan][Space.hash2(rind, qind, tb.j)];
-		    chan_ind = Ints.Vhphp.V_2_1_index[chan];
-		    ind = key1 * Chan.nhp1[chan] + key2;
-		    Ints.Vhphp.V_2_1[chan_ind + ind] = TBME;
-
-		    minus(tb, Space.qnums[qind], Space.qnums[rind]);
-		    chan = Space.ind_2b_cross(Parameters.basis, tb);
-		    key1 = Chan.ph1_map[chan][Space.hash2(qind, rind, tb.j)];
-		    key2 = Chan.ph1_map[chan][Space.hash2(sind, pind, tb.j)];
-		    chan_ind = Ints.Vhphp.V_2_2_index[chan];
-		    ind = key1 * Chan.nph1[chan] + key2;
-		    Ints.Vhphp.V_2_2[chan_ind + ind] = TBME;
-		  }
-		  else if(ptype == "hole" && qtype == "hole" && rtype == "particle" && stype == "particle"){
-		    key1 = Chan.hh_map[chan1][Space.hash2(pind, qind, Chan.qnums1[chan1].j)];
-		    key2 = Chan.pp_map[chan1][Space.hash2(rind, sind, Chan.qnums1[chan1].j)];
-		    chan_ind = Ints.Vhhpp.V_1_index[chan1];
-		    ind = key1 * Chan.npp[chan1] + key2;
-		    Ints.Vhhpp.V_1[chan_ind + ind] = TBME;
-		    chan_ind = Ints.Vpphh.V_1_index[chan1];
-		    ind = key2 * Chan.nhh[chan1] + key1;
-		    Ints.Vpphh.V_1[chan_ind + ind] = TBME;
-
-		    chan = Space.ind_1b(Parameters.basis, Space.qnums[pind]);
-		    key1 = Chan.h_map[chan][pind];
-		    key2 = Chan.pph_map[chan][Space.hash3(rind, sind, qind, Chan.qnums1[chan1].j)];
-		    chan_ind = Ints.Vhhpp.V_3_1_index[chan];
-		    ind = key1 * Chan.npph[chan] + key2;
-		    Ints.Vhhpp.V_3_1[chan_ind + ind] = TBME;
+		  if(rtype == "particle" && stype == "particle"){
+		    if(ptype == "particle" && qtype == "particle"){
+		      plus(tb, Space.qnums[pind], Space.qnums[qind]);
+		      chan = Space.ind_2b_dir(Parameters.basis, tb);
+		      key1 = Chan.pp_map[chan][Space.hash2(pind, qind, J0)];
+		      key2 = Chan.pp_map[chan][Space.hash2(rind, sind, J0)];
+		      chan_ind = Ints.Vpppp.V_1_index[chan];
+		      ind = key1 * Chan.npp[chan] + key2;
+		      Ints.Vpppp.V_1[chan_ind + ind] += TBME;
+		      
+		      chan = Space.ind_1b(Parameters.basis, Space.qnums[rind]);
+		      key1 = Chan.ppp_map[chan][Space.hash3(pind, qind, sind, J0)];
+		      key2 = Chan.p_map[chan][rind];
+		      chan_ind = Ints.Vpppp.V_3_3_index[chan];
+		      ind = key1 * Chan.np[chan] + key2;
+		      Ints.Vpppp.V_3_3[chan_ind + ind] += TBME;
+		    }
+		    else if(ptype == "hole" && qtype == "particle"){
+		      chan = Space.ind_1b(Parameters.basis, Space.qnums[qind]);
+		      key1 = Chan.p_map[chan][qind];
+		      key2 = Chan.pph_map[chan][Space.hash3(rind, sind, pind, J0)];
+		      chan_ind = Ints.Vhppp.V_3_2_index[chan];
+		      ind = key1 * Chan.npph[chan] + key2;
+		      Ints.Vhppp.V_3_2[chan_ind + ind] += TBME;
+		      
+		      minus(tb, Space.qnums[qind], Space.qnums[sind]);
+		      chan = Space.ind_2b_cross(Parameters.basis, tb);
+		      key1 = Chan.pp1_map[chan][Space.hash2(qind, sind, tb.j)];
+		      key2 = Chan.ph1_map[chan][Space.hash2(rind, pind, tb.j)];
+		      chan_ind = Ints.Vhppp.V_2_4_index[chan];
+		      ind = key1 * Chan.nph1[chan] + key2;
+		      Ints.Vhppp.V_2_4[chan_ind + ind] += TBME;
+		      
+		      // Vpphp -> rspq
+		      chan = Space.ind_1b(Parameters.basis, Space.qnums[pind]);
+		      key1 = Chan.ppp_map[chan][Space.hash3(rind, sind, qind, J0)];
+		      key2 = Chan.h_map[chan][pind];
+		      chan_ind = Ints.Vpphp.V_3_3_index[chan];
+		      ind = key1 * Chan.nh[chan] + key2;
+		      Ints.Vpphp.V_3_3[chan_ind + ind] += TBME;
+		    }
+		    else if(ptype == "hole" && qtype == "hole"){
+		      plus(tb, Space.qnums[pind], Space.qnums[qind]);
+		      chan = Space.ind_2b_dir(Parameters.basis, tb);
+		      key1 = Chan.hh_map[chan][Space.hash2(pind, qind, J0)];
+		      key2 = Chan.pp_map[chan][Space.hash2(rind, sind, J0)];
+		      chan_ind = Ints.Vhhpp.V_1_index[chan];
+		      ind = key1 * Chan.npp[chan] + key2;
+		      Ints.Vhhpp.V_1[chan_ind + ind] += TBME;
+		      chan_ind = Ints.Vpphh.V_1_index[chan];
+		      ind = key2 * Chan.nhh[chan] + key1;
+		      Ints.Vpphh.V_1[chan_ind + ind] += TBME;
+		      
+		      chan = Space.ind_1b(Parameters.basis, Space.qnums[pind]);
+		      key1 = Chan.h_map[chan][pind];
+		      key2 = Chan.pph_map[chan][Space.hash3(rind, sind, qind, J0)];
+		      chan_ind = Ints.Vhhpp.V_3_1_index[chan];
+		      ind = key1 * Chan.npph[chan] + key2;
+		      Ints.Vhhpp.V_3_1[chan_ind + ind] += TBME;
 	    
-		    chan = Space.ind_1b(Parameters.basis, Space.qnums[rind]);
-		    key1 = Chan.hhp_map[chan][Space.hash3(pind, qind, sind, Chan.qnums1[chan1].j)];
-		    key2 = Chan.p_map[chan][rind];
-		    chan_ind = Ints.Vhhpp.V_3_3_index[chan];
-		    ind = key1 * Chan.np[chan] + key2;
-		    Ints.Vhhpp.V_3_3[chan_ind + ind] = TBME;
-	    
-		    minus(tb, Space.qnums[pind], Space.qnums[sind]);
-		    chan = Space.ind_2b_cross(Parameters.basis, tb);
-		    key1 = Chan.hp1_map[chan][Space.hash2(pind, sind, tb.j)];
-		    key2 = Chan.ph1_map[chan][Space.hash2(rind, qind, tb.j)];
-		    chan_ind = Ints.Vhhpp.V_2_1_index[chan];
-		    ind = key1 * Chan.nph1[chan] + key2;
-		    Ints.Vhhpp.V_2_1[chan_ind + ind] = TBME;
-
-		    chan = Space.ind_1b(Parameters.basis, Space.qnums[qind]);
-		    key1 = Chan.h_map[chan][qind];
-		    key2 = Chan.pph_map[chan][Space.hash3(rind, sind, pind, Chan.qnums1[chan1].j)];
-		    chan_ind = Ints.Vhhpp.V_3_2_index[chan];
-		    ind = key1 * Chan.npph[chan] + key2;
-		    Ints.Vhhpp.V_3_2[chan_ind + ind] = TBME;
-		    
-		    minus(tb, Space.qnums[pind], Space.qnums[rind]);
-		    chan = Space.ind_2b_cross(Parameters.basis, tb);
-		    key1 = Chan.hp1_map[chan][Space.hash2(pind, rind, tb.j)];
-		    key2 = Chan.ph1_map[chan][Space.hash2(sind, qind, tb.j)];
-		    chan_ind = Ints.Vhhpp.V_2_3_index[chan];
-		    ind = key1 * Chan.nph1[chan] + key2;
-		    Ints.Vhhpp.V_2_3[chan_ind + ind] = TBME;
+		      chan = Space.ind_1b(Parameters.basis, Space.qnums[qind]);
+		      key1 = Chan.h_map[chan][qind];
+		      key2 = Chan.pph_map[chan][Space.hash3(rind, sind, pind, J0)];
+		      chan_ind = Ints.Vhhpp.V_3_2_index[chan];
+		      ind = key1 * Chan.npph[chan] + key2;
+		      Ints.Vhhpp.V_3_2[chan_ind + ind] += TBME;
+		      
+		      chan = Space.ind_1b(Parameters.basis, Space.qnums[rind]);
+		      key1 = Chan.hhp_map[chan][Space.hash3(pind, qind, sind, J0)];
+		      key2 = Chan.p_map[chan][rind];
+		      chan_ind = Ints.Vhhpp.V_3_3_index[chan];
+		      ind = key1 * Chan.np[chan] + key2;
+		      Ints.Vhhpp.V_3_3[chan_ind + ind] += TBME;
+		      
+		      minus(tb, Space.qnums[pind], Space.qnums[sind]);
+		      chan = Space.ind_2b_cross(Parameters.basis, tb);
+		      key1 = Chan.hp1_map[chan][Space.hash2(pind, sind, tb.j)];
+		      key2 = Chan.ph1_map[chan][Space.hash2(rind, qind, tb.j)];
+		      chan_ind = Ints.Vhhpp.V_2_1_index[chan];
+		      ind = key1 * Chan.nph1[chan] + key2;
+		      Ints.Vhhpp.V_2_1[chan_ind + ind] += TBME;
+		      
+		      minus(tb, Space.qnums[pind], Space.qnums[rind]);
+		      chan = Space.ind_2b_cross(Parameters.basis, tb);
+		      key1 = Chan.hp1_map[chan][Space.hash2(pind, rind, tb.j)];
+		      key2 = Chan.ph1_map[chan][Space.hash2(sind, qind, tb.j)];
+		      chan_ind = Ints.Vhhpp.V_2_3_index[chan];
+		      ind = key1 * Chan.nph1[chan] + key2;
+		      Ints.Vhhpp.V_2_3[chan_ind + ind] += TBME;
+		    } 
 		  }
-		  else if(ptype == "hole" && qtype == "particle" && rtype == "particle" && stype == "particle"){
-		    chan = Space.ind_1b(Parameters.basis, Space.qnums[qind]);
-		    key1 = Chan.p_map[chan][qind];
-		    key2 = Chan.pph_map[chan][Space.hash3(rind, sind, pind, Chan.qnums1[chan1].j)];
-		    chan_ind = Ints.Vhppp.V_3_2_index[chan];
-		    ind = key1 * Chan.npph[chan] + key2;
-		    Ints.Vhppp.V_3_2[chan_ind + ind] = TBME;
-		    
-		    minus(tb, Space.qnums[qind], Space.qnums[sind]);
-		    chan = Space.ind_2b_cross(Parameters.basis, tb);
-		    key1 = Chan.pp1_map[chan][Space.hash2(qind, sind, tb.j)];
-		    key2 = Chan.ph1_map[chan][Space.hash2(rind, pind, tb.j)];
-		    chan_ind = Ints.Vhppp.V_2_4_index[chan];
-		    ind = key1 * Chan.nph1[chan] + key2;
-		    Ints.Vhppp.V_2_4[chan_ind + ind] = TBME;
+		  else if(rtype == "hole" && stype == "particle"){
+		    if(ptype == "hole" && qtype == "particle"){
+		      minus(tb, Space.qnums[pind], Space.qnums[sind]);
+		      chan = Space.ind_2b_cross(Parameters.basis, tb);
+		      key1 = Chan.hp1_map[chan][Space.hash2(pind, sind, tb.j)];
+		      key2 = Chan.hp1_map[chan][Space.hash2(rind, qind, tb.j)];
+		      chan_ind = Ints.Vhphp.V_2_1_index[chan];
+		      ind = key1 * Chan.nhp1[chan] + key2;
+		      Ints.Vhphp.V_2_1[chan_ind + ind] += TBME;
+		      
+		      minus(tb, Space.qnums[qind], Space.qnums[rind]);
+		      chan = Space.ind_2b_cross(Parameters.basis, tb);
+		      key1 = Chan.ph1_map[chan][Space.hash2(qind, rind, tb.j)];
+		      key2 = Chan.ph1_map[chan][Space.hash2(sind, pind, tb.j)];
+		      chan_ind = Ints.Vhphp.V_2_2_index[chan];
+		      ind = key1 * Chan.nph1[chan] + key2;
+		      Ints.Vhphp.V_2_2[chan_ind + ind] += TBME;
+		    }
+		    else if(ptype == "hole" && qtype == "hole"){
+		      chan = Space.ind_1b(Parameters.basis, Space.qnums[qind]);
+		      key1 = Chan.h_map[chan][qind];
+		      key2 = Chan.hph_map[chan][Space.hash3(rind, sind, pind, J0)];
+		      chan_ind = Ints.Vhhhp.V_3_2_index[chan];
+		      ind = key1 * Chan.nhph[chan] + key2;
+		      Ints.Vhhhp.V_3_2[chan_ind + ind] += TBME;
 
-		    // Vpphp -> rspq
-		    chan = Space.ind_1b(Parameters.basis, Space.qnums[pind]);
-		    key1 = Chan.ppp_map[chan][Space.hash3(rind, sind, qind, Chan.qnums1[chan1].j)];
-		    key2 = Chan.h_map[chan][pind];
-		    chan_ind = Ints.Vpphp.V_3_3_index[chan];
-		    ind = key1 * Chan.nh[chan] + key2;
-		    Ints.Vpphp.V_3_3[chan_ind + ind] = TBME;
+		      chan = Space.ind_1b(Parameters.basis, Space.qnums[rind]);
+		      key1 = Chan.hhp_map[chan][Space.hash3(pind, qind, sind, J0)];
+		      key2 = Chan.h_map[chan][rind];
+		      chan_ind = Ints.Vhhhp.V_3_3_index[chan];
+		      ind = key1 * Chan.nh[chan] + key2;
+		      Ints.Vhhhp.V_3_3[chan_ind + ind] += TBME;
+		      
+		      minus(tb, Space.qnums[pind], Space.qnums[rind]);
+		      chan = Space.ind_2b_cross(Parameters.basis, tb);
+		      key1 = Chan.hh1_map[chan][Space.hash2(pind, rind, tb.j)];
+		      key2 = Chan.ph1_map[chan][Space.hash2(sind, qind, tb.j)];
+		      chan_ind = Ints.Vhhhp.V_2_3_index[chan];
+		      ind = key1 * Chan.nph1[chan] + key2;
+		      Ints.Vhhhp.V_2_3[chan_ind + ind] += TBME;
+
+		      // Vhphh -> rspq
+		      chan = Space.ind_1b(Parameters.basis, Space.qnums[sind]);
+		      key1 = Chan.p_map[chan][sind];
+		      key2 = Chan.hhh_map[chan][Space.hash3(pind, qind, rind, J0)];
+		      chan_ind = Ints.Vhphh.V_3_2_index[chan];
+		      ind = key1 * Chan.nhhh[chan] + key2;
+		      Ints.Vhphh.V_3_2[chan_ind + ind] += TBME;
+		    }
 		  }
-		  else if(ptype == "hole" && qtype == "hole" && rtype == "hole" && stype == "particle"){
-		    chan = Space.ind_1b(Parameters.basis, Space.qnums[rind]);
-		    key1 = Chan.hhp_map[chan][Space.hash3(pind, qind, sind, Chan.qnums1[chan1].j)];
-		    key2 = Chan.h_map[chan][rind];
-		    chan_ind = Ints.Vhhhp.V_3_3_index[chan];
-		    ind = key1 * Chan.nh[chan] + key2;
-		    Ints.Vhhhp.V_3_3[chan_ind + ind] = TBME;
-	      
-		    chan = Space.ind_1b(Parameters.basis, Space.qnums[qind]);
-		    key1 = Chan.h_map[chan][qind];
-		    key2 = Chan.hph_map[chan][Space.hash3(rind, sind, pind, Chan.qnums1[chan1].j)];
-		    chan_ind = Ints.Vhhhp.V_3_2_index[chan];
-		    ind = key1 * Chan.nhph[chan] + key2;
-		    Ints.Vhhhp.V_3_2[chan_ind + ind] = TBME;
-
-		    minus(tb, Space.qnums[pind], Space.qnums[rind]);
-		    chan = Space.ind_2b_cross(Parameters.basis, tb);
-		    key1 = Chan.hh1_map[chan][Space.hash2(pind, rind, tb.j)];
-		    key2 = Chan.ph1_map[chan][Space.hash2(sind, qind, tb.j)];
-		    chan_ind = Ints.Vhhhp.V_2_3_index[chan];
-		    ind = key1 * Chan.nph1[chan] + key2;
-		    Ints.Vhhhp.V_2_3[chan_ind + ind] = TBME;
-
-		    // Vhphh -> rspq
-		    chan = Space.ind_1b(Parameters.basis, Space.qnums[sind]);
-		    key1 = Chan.p_map[chan][sind];
-		    key2 = Chan.hhh_map[chan][Space.hash3(pind, qind, rind, Chan.qnums1[chan1].j)];
-		    chan_ind = Ints.Vhphh.V_3_2_index[chan];
-		    ind = key1 * Chan.nhhh[chan] + key2;
-		    Ints.Vhphh.V_3_2[chan_ind + ind] = TBME;
+		  else if(rtype == "hole" && stype == "hole"){
+		    if(ptype == "hole" && qtype == "hole"){
+		      plus(tb, Space.qnums[pind], Space.qnums[qind]);
+		      chan = Space.ind_2b_dir(Parameters.basis, tb);
+		      key1 = Chan.hh_map[chan][Space.hash2(pind, qind, J0)];
+		      key2 = Chan.hh_map[chan][Space.hash2(rind, sind, J0)];
+		      chan_ind = Ints.Vhhhh.V_1_index[chan];
+		      ind = key1 * Chan.nhh[chan] + key2;
+		      Ints.Vhhhh.V_1[chan_ind + ind] += TBME;
+		      
+		      chan = Space.ind_1b(Parameters.basis, Space.qnums[qind]);
+		      key1 = Chan.h_map[chan][qind];
+		      key2 = Chan.hhh_map[chan][Space.hash3(rind, sind, pind, J0)];
+		      chan_ind = Ints.Vhhhh.V_3_2_index[chan];
+		      ind = key1 * Chan.nhhh[chan] + key2;
+		      Ints.Vhhhh.V_3_2[chan_ind + ind] += TBME;
+		    }
 		  }
 		}
 	      }

@@ -61,7 +61,6 @@ HF_Channels::HF_Channels(Input_Parameters &Parameters, Model_Space &Space)
   for(chan3 = 0; chan3 < size3; ++chan3){ nob[chan3] = 0; }
   for(int p = 0; p < Space.num_states; ++p){
     chan3 = Space.ind_1b(Parameters.basis, Space.qnums[p]);
-    qnums3[chan3] = Space.qnums[p];
     ++nob[chan3];
     ++ob_total;
   }
@@ -75,7 +74,6 @@ HF_Channels::HF_Channels(Input_Parameters &Parameters, Model_Space &Space)
   for(int p = 0; p < Space.num_states; ++p){
     chan3 = Space.ind_1b(Parameters.basis, Space.qnums[p]);
     qnums3[chan3] = Space.qnums[p];
-    if(Parameters.basis != "finite_J" || Parameters.basis != "finite_JM"){ qnums3[chan3].j = 0; }
     nob0 = nob[chan3];
     ob.v1 = p;
     ob_vec[ob_index[chan3] + nob0] = ob;
@@ -83,6 +81,13 @@ HF_Channels::HF_Channels(Input_Parameters &Parameters, Model_Space &Space)
     ++nob[chan3];
   }
 
+  /*for(int i = 0; i < size3; ++i){
+    std::cout << "HF-Chan3: " << i << ", " << qnums3[i].par << " " << qnums3[i].j << " " << qnums3[i].t << std::endl;
+    std::cout << "nob = " << nob[i] << std::endl;
+    for(int j = 0; j < nob[i]; ++j){ std::cout << ob_vec[ob_index[i] + j].v1 << " "; }
+    std::cout << std::endl;
+    }*/
+  
   tb_total = 0;
   qnums1 = new State[size1];
   ntb = new int[size1];
@@ -93,13 +98,8 @@ HF_Channels::HF_Channels(Input_Parameters &Parameters, Model_Space &Space)
     for(int q = 0; q < Space.num_states; ++q){
       plus(state1, Space.qnums[p], Space.qnums[q]);
       jmin = abs(Space.qnums[p].j - Space.qnums[q].j);
-      if(Parameters.basis != "finite_J" || Parameters.basis != "finite_JM"){
-	state1.j = 0;
-	jmin = 0;
-      }
       while(state1.j >= jmin){
 	chan1 = Space.ind_2b_dir(Parameters.basis, state1);
-	qnums1[chan1] = state1;
 	++ntb[chan1];
 	++tb_total;
 	state1.j -= 2;
@@ -117,13 +117,10 @@ HF_Channels::HF_Channels(Input_Parameters &Parameters, Model_Space &Space)
     for(int q = 0; q < Space.num_states; ++q){
       plus(state1, Space.qnums[p], Space.qnums[q]);
       jmin = abs(Space.qnums[p].j - Space.qnums[q].j);
-      if(Parameters.basis != "finite_J" || Parameters.basis != "finite_JM"){
-	state1.j = 0;
-	jmin = 0;
-      }
       while(state1.j >= jmin){
 	key = Space.hash2(p, q, state1.j);
 	chan1 = Space.ind_2b_dir(Parameters.basis, state1);
+	qnums1[chan1] = state1;
 	ntb0 = ntb[chan1];
 	tb.v1 = p;
 	tb.v2 = q;
@@ -134,6 +131,15 @@ HF_Channels::HF_Channels(Input_Parameters &Parameters, Model_Space &Space)
       }
     }
   }
+
+  /*for(int i = 0; i < size1; ++i){
+    std::cout << "HF-Chan1: " << i << ", " << qnums1[i].par << " " << qnums1[i].j << " " << qnums1[i].t << std::endl;
+    std::cout << "ntb = " << ntb[i] << std::endl;
+    for(int j = 0; j < ntb[i]; ++j){
+      std::cout << tb_vec[tb_index[i] + j].v1 << "," << tb_vec[tb_index[i] + j].v2 << " ";
+    }
+    std::cout << std::endl;
+    }*/
 
   double memory = 0.0;
   int doubsize = sizeof(double);
@@ -219,11 +225,9 @@ void Single_Particle_States::delete_struct(HF_Channels &Chan)
 
 void Hartree_Fock_States(Input_Parameters &Parameters, Model_Space &Space, HF_Channels &Chan, Single_Particle_States &HF, HF_Matrix_Elements &ME)
 {
-  //double Bshift0 = 0.0; // level shift parameter = average energy
   double Bshift0;
   for(int i = 0; i < Space.num_states; ++i){ Bshift0 += Space.qnums[i].energy; }
   Bshift0 /= (Space.num_states);
-  //Bshift0 = 0.5 * Bshift * Space.num_hol;
 
   double width = 1.0;
   int DIIS_count = 0, Rand_count = 0;
@@ -252,9 +256,14 @@ void Hartree_Fock_States(Input_Parameters &Parameters, Model_Space &Space, HF_Ch
   HF0 = Single_Particle_States(Parameters, Space, Chan);
   HF2 = Single_Particle_States(Parameters, Space, Chan);
   tempn = new int[HF.energy_length];
+  for(int chan = 0; chan < Chan.size3; ++chan){
+    for(int i = 0; i < HF.vector_size[chan]; ++i){
+      tempn[HF.energy_index[chan] + i] = Space.qnums[Chan.ob_state(chan, i).v1].n;
+    }
+  }
+    
 
   while(error > 1e-12 && ind < 10000){
-    //if(error < DIISstart){ Bshift = Bshift0; }
     Hartree_Fock_Step(Parameters, Space, Chan, HF, HF2, ME, Bshift0, error);
     if( ind > 1000 && double(Rand_count)/double(ind) > 0.9 ){
       std::cerr << std::endl << ind << " : HF Solution Not Converged!!" << std::endl; exit(1);
@@ -306,8 +315,45 @@ void Hartree_Fock_States(Input_Parameters &Parameters, Model_Space &Space, HF_Ch
       else{ Space.qnums[ob_ind].type = "particle"; }
     }
   }
-
   delete[] tempn;
+
+  //order states by energy
+  /*double energy_p, energy_n;
+  int ind_p, ind_n;
+  State state_p, state_n;
+  for(int i = 0; i < Space.num_states; ++i){
+    if(Space.qnums[i].t == -1){
+      energy_p = Space.qnums[i].energy;
+      ind_p = i;
+      for(int j = i+1; j < Space.num_states; ++j){
+	if(Space.qnums[j].t == -1){
+	  if(Space.qnums[j].energy < energy_p){
+	    energy_p = Space.qnums[j].energy;
+	    ind_p = j;
+	  }
+	}
+      }
+      state_p = Space.qnums[ind_p];
+      Space.qnums[ind_p] = Space.qnums[i];
+      Space.qnums[i] = state_p;
+    }
+    else if(Space.qnums[i].t == 1){
+      energy_n = Space.qnums[i].energy;
+      ind_n = i;
+      for(int j = i+1; j < Space.num_states; ++j){
+	if(Space.qnums[j].t == 1){
+	  if(Space.qnums[j].energy < energy_n){
+	    energy_n = Space.qnums[j].energy;
+	    ind_n = j;
+	  }
+	}
+      }
+      state_n = Space.qnums[ind_n];
+      Space.qnums[ind_n] = Space.qnums[i];
+      Space.qnums[i] = state_n;
+    }
+    }*/
+
   HF0.delete_struct(Chan);
   HF2.delete_struct(Chan);
   Delete_DIIS_HF(Chan, p, delp, tempdelp, B, maxl);
@@ -315,6 +361,9 @@ void Hartree_Fock_States(Input_Parameters &Parameters, Model_Space &Space, HF_Ch
   /*for(int i = 0; i < Space.num_states; ++i){
     std::cout << Space.qnums[i].n << " " << Space.qnums[i].ml << " " << Space.qnums[i].m << " : " << Space.qnums[i].energy << " " << Space.qnums[i].type << std::endl;
     }*/
+  for(int i = 0; i < Space.num_states; ++i){
+    std::cout << Space.qnums[i].n << " " << Space.qnums[i].par << " " << Space.qnums[i].j << " " << Space.qnums[i].t << " : " << Space.qnums[i].energy << " " << Space.qnums[i].type << std::endl;
+  }
 }
 
 void Hartree_Fock_Step(Input_Parameters &Parameters, Model_Space &Space, HF_Channels &Chan, Single_Particle_States &HF, Single_Particle_States &HF2, HF_Matrix_Elements &ME, double &Bshift0, double &error)
@@ -387,12 +436,22 @@ void Hartree_Fock_Step(Input_Parameters &Parameters, Model_Space &Space, HF_Chan
 	  }
 	}
 	for(int beta = HF.hole_size[chan]; beta < HF.vector_size[chan]; ++beta){ // Sum over unoccupied levels
-	  //fock[size * m + l] += HF.vectors[vector_ind + (beta * size + m)] * HF.vectors[vector_ind + (beta * size + l)] * Bshift;
 	  fock[size * m + l] += HF.vectors[vector_ind + (beta * size + m)] * HF.vectors[vector_ind + (beta * size + l)] * Bshift[energy_ind + beta];
 	}
 	if(m != l){ fock[size * l + m] = fock[size * m + l]; }
       }
     }
+
+    /*if(chan == 6 || chan == 7){
+      std::cout << "HF(" << chan << ")" << std::endl;
+      for(int j = 0; j < size; ++j){
+	for(int k = 0; k < size; ++k){
+	  std::cout << fock[size * j + k] << " ";
+	}
+	std::cout << std::endl;
+      }
+      std::cout << std::endl;
+      }*/
 
     lda = size;
     lwork = (3+2)*size;
@@ -402,7 +461,6 @@ void Hartree_Fock_Step(Input_Parameters &Parameters, Model_Space &Space, HF_Chan
     for(int j = 0; j < (3+2)*size; ++j){ work[j] = 0.0; }
     if(size != 0){ dsyev_(&jobz, &uplo, &size, fock, &lda, w, work, &lwork, &info); }
 
-    //for(int j = HF.hole_size[chan]; j < HF.vector_size[chan]; ++j){ w[j] -= Bshift; } // Add back Level-shift parameter
     double deltaE;
     for(int j = HF.hole_size[chan]; j < HF.vector_size[chan]; ++j){ w[j] -= Bshift[energy_ind + j]; } // Add back Level-shift parameter
     for(int j = HF.hole_size[chan]; j < HF.vector_size[chan]; ++j){
@@ -413,6 +471,7 @@ void Hartree_Fock_Step(Input_Parameters &Parameters, Model_Space &Space, HF_Chan
 
     for(int j = 0; j < size; ++j){
       HF2.energies[energy_ind + j] = w[j];
+      maxind = -1;
       maxc = 0.0;
       for(int k = 0; k < size; ++k){
 	if( fabs(fock[size*j + k]) > maxc ){
@@ -547,7 +606,8 @@ void Perform_DIIS_HF(HF_Channels &Chan, Single_Particle_States &HF, Single_Parti
 	  maxind = k;
 	}
       }
-      if( HF0.vectors[HF.vector_index[chan] + (HF.vector_size[chan]*j + maxind)]/HF.vectors[HF.vector_index[chan] + (HF.vector_size[chan]*j + maxind)] < 0.0 ){
+      if( HF0.vectors[HF.vector_index[chan] + (HF.vector_size[chan]*j + maxind)]/HF.vectors[HF.vector_index[chan] + (HF.vector_size[chan]*j + maxind)]
+	  < 0.0 ){
 	for(int k = 0; k < HF.vector_size[chan]; ++k){ HF.vectors[HF.vector_index[chan] + (HF.vector_size[chan]*j + k)] *= -1.0; }
       }
     }
@@ -657,8 +717,8 @@ void Random_Step_HF(Input_Parameters &Parameters, Model_Space &Space, HF_Channel
 
 void Randomize_HF(HF_Channels &Chan, Single_Particle_States &HF0, Single_Particle_States &HF, double &width)
 {
-  int chan, ind;
-  double tempc;
+  int chan, ind, vector_ind, size, maxind;
+  double tempc, maxc;
   double rand;
   size_t key;
   std::unordered_map<size_t,double> c_map;
@@ -680,14 +740,22 @@ void Randomize_HF(HF_Channels &Chan, Single_Particle_States &HF0, Single_Particl
   }
 
   for(chan = 0; chan < Chan.size3; ++chan){
-    GramSchmidt(HF.vectors + HF.vector_index[chan], HF.vector_size[chan]);
-    /*for(ind = 0; ind < HF.vector_size[chan]; ++ind){
-      if( HF.vectors[HF.vector_index[chan] + (HF.vector_size[chan] * ind + ind)] < 0.0 ){
-	for(int k = 0; k < HF.vector_size[chan]; ++k){
-	  HF.vectors[HF.vector_index[chan] + (HF.vector_size[chan] * ind + k)] *= -1.0;
+    vector_ind = HF.vector_index[chan];
+    size = HF.vector_size[chan];
+    GramSchmidt(HF.vectors + vector_ind, size);
+    for(int j = 0; j < size; ++j){
+      maxind = -1;
+      maxc = 0.0;
+      for(int k = 0; k < size; ++k){
+	if( fabs(HF.vectors[vector_ind + (size*j + maxind)]) > maxc ){
+	  maxc = fabs(HF.vectors[vector_ind + (size*j + maxind)]);
+	  maxind = k;
 	}
       }
-      }*/
+      if( HF0.vectors[vector_ind + (size*j + maxind)]/HF.vectors[vector_ind + (size*j + maxind)] < 0.0 ){
+	for(int k = 0; k < size; ++k){ HF.vectors[vector_ind + (size*j + maxind)] *= -1.0; }
+      }
+    }
   }
 }
 
@@ -701,6 +769,7 @@ void Convert_To_HF_Matrix_Elements(Input_Parameters &Parameters, HF_Channels &Ch
 
   for(int chan = 0; chan < Chan.size1; ++chan){
     size = Chan.ntb[chan];
+    if(size == 0){ continue; }
     matlength = size * size;
     length1 = int(0.5 * size * (size + 1));
     M1 = new double[matlength];

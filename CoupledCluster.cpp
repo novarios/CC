@@ -37,32 +37,40 @@ int main(int argc, char * argv[])
 
     Get_Input_Parameters(inputfile, Parameters);
     if(Parameters.basis == "infinite"){ Parameters.approx == "doubles"; }
+    Parameters.HF = 1;
+    //Parameters.basis = "finite_JM";
+
     Build_Model_Space(Parameters, Space);
     Print_Parameters(Parameters, Space);
     HF_Chan = HF_Channels(Parameters, Space);
     States = Single_Particle_States(Parameters, Space, HF_Chan);
     if(Parameters.basis == "finite_J" || Parameters.basis == "finite_JM"){ Read_Matrix_Elements_J(Parameters, Space, HF_Chan, HF_ME); }
     else{ Read_Matrix_Elements_M(Parameters, Space, HF_Chan, HF_ME); }
-    Hartree_Fock_States(Parameters, Space, HF_Chan, States, HF_ME);
-    Convert_To_HF_Matrix_Elements(Parameters, HF_Chan, Space, States, HF_ME);
-    States.delete_struct(HF_Chan);
+
+    if(Parameters.HF == 1){
+      Hartree_Fock_States(Parameters, Space, HF_Chan, States, HF_ME);
+      Convert_To_HF_Matrix_Elements(Parameters, HF_Chan, Space, States, HF_ME);
+    }
     if(Parameters.basis == "finite_JM"){
-      Build_Model_Space_J2(Parameters, Space);
-      Parameters.basis = "finite_M";
       JM = 1;
+      Parameters.basis = "finite_M";
+      Build_Model_Space_J2(Parameters, Space);
+      Print_Parameters(Parameters, Space);
     }
     Chan = Channels(Parameters, Space);
+    std::cout << std::endl << " AmpsJ setup " << std::endl;
     Amps = Amplitudes(Parameters, Space, Chan);
+    std::cout << std::endl << std::endl;
     Ints = Interactions(Parameters, Chan);
+    
+    if(Parameters.HF == 0){ Get_Fock_Matrix(Parameters, HF_Chan, HF_ME, States, Space, Chan, Ints); }
     Eff_Ints = Eff_Interactions(Parameters, Space, Chan);
     if(Parameters.basis == "finite_J"){ Get_Matrix_Elements_J(Parameters, HF_Chan, HF_ME, Space, Chan, Ints); }
     else if(JM == 1){ Get_Matrix_Elements_JM(Parameters, HF_Chan, HF_ME, Space, Chan, Ints); }
     else{ Get_Matrix_Elements(Parameters, HF_Chan, HF_ME, Space, Chan, Ints); }
+    States.delete_struct(HF_Chan);
     HF_ME.delete_struct(HF_Chan);
     HF_Chan.delete_struct();
-    if(Parameters.basis == "finite_J" && test == 1){
-      //CC_compare_JM(Parameters, Space, Chan, Ints, Amps, inputfile);
-    }
   }
   else if(argc == 6 || argc == 7){
     Parameters.calc_case = argv[1];
@@ -127,7 +135,8 @@ int main(int argc, char * argv[])
   }
 
   if(Parameters.basis != "finite_J" || test != 1){
-    Perform_CC(Parameters, Space, Chan, Ints, Eff_Ints, Amps);
+    Perform_CC_Test(Parameters, Space, Chan, Ints, Eff_Ints, Amps);
+    //Perform_CC(Parameters, Space, Chan, Ints, Eff_Ints, Amps);
     Energy = E_Ref(Parameters, Space, Chan, Ints);
     Energy0 = Amps.get_energy(Parameters, Space, Chan, Ints);
     std::cout << std::setprecision(10);

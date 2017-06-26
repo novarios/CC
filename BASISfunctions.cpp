@@ -171,6 +171,8 @@ int Model_Space::ind_1b(std::string &basis, State &State)
       + int(0.5 * (State.m - qmins.m));
   }
   else if(basis == "finite_J" || basis == "finite_JM"){
+    //std::cout << "?? " << int(0.5 * (State.par - qmins.par)) << " " << int(0.5 * (State.j - qmins.j)) << " " << int(0.5 * (State.t - qmins.t)) << std::endl;
+    //std::cout << "?? . " << qsizes.j << " " << qsizes.t << std::endl;
     return int(0.5 * (State.par - qmins.par)) * qsizes.j * qsizes.t
       + int(0.5 * (State.j - qmins.j)) * qsizes.t
       + int(0.5 * (State.t - qmins.t));
@@ -234,8 +236,10 @@ void Model_Space::delete_struct(Input_Parameters &Parameters)
 {
   delete[] qnums;
   if(num_jstates != 0){
+    delete[] shellsnum;
     for(int i = 0; i < num_jstates; ++i){ delete[] shellsm[i]; }
     delete[] shellsm;
+    delete[] shellsj;
   }
 }
 
@@ -274,9 +278,6 @@ void Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space)
     getline(splevels, phline);
     if(Parameters.basis == "infinite"){ // ind, nx, ny, nz, sz, tz
       std::stringstream(phline) >> ind >> Space.qnums[i].nx >> Space.qnums[i].ny >> Space.qnums[i].nz >> Space.qnums[i].m >> Space.qnums[i].t >> energy;
-      Space.qnums[i].ml = 0;
-      Space.qnums[i].par = 1;
-      Space.qnums[i].j = 0;
       if(Space.qnums[i].nx < Space.qmins.nx){ Space.qmins.nx = Space.qnums[i].nx; }
       if(Space.qnums[i].nx > Space.qmaxs.nx){ Space.qmaxs.nx = Space.qnums[i].nx; }
       if(Space.qnums[i].ny < Space.qmins.ny){ Space.qmins.ny = Space.qnums[i].ny; }
@@ -290,12 +291,7 @@ void Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space)
     }
     else if(Parameters.basis == "finite_M"){ // ind, n, l, j, jz, tz
       std::stringstream(phline) >> ind >> Space.qnums[i].n >> l >> Space.qnums[i].j >> Space.qnums[i].m >> Space.qnums[i].t >> energy;
-      //std::cout << "! " << ind << " " << Space.qnums[i].n << " " << Space.qnums[i].j << " " << Space.qnums[i].m << "  " << energy << std::endl;
       Space.qnums[i].par = -2*(l%2) + 1;
-      Space.qnums[i].ml = 0;
-      Space.qnums[i].nx = 0;
-      Space.qnums[i].ny = 0;
-      Space.qnums[i].nz = 0;
       if(Space.qnums[i].par < Space.qmins.par){ Space.qmins.par = Space.qnums[i].par; }
       if(Space.qnums[i].par > Space.qmaxs.par){ Space.qmaxs.par = Space.qnums[i].par; }
       if(Space.qnums[i].m < Space.qmins.m){ Space.qmins.m = Space.qnums[i].m; }
@@ -305,13 +301,6 @@ void Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space)
     }
     else if(Parameters.basis == "finite_HO"){ // ind, n, l, lz, sz, tz
       std::stringstream(phline) >> ind >> Space.qnums[i].n >> Space.qnums[i].ml >> Space.qnums[i].m >> energy;
-      //std::cout << "! " << ind << " " << Space.qnums[i].n << " " << Space.qnums[i].ml << " " << Space.qnums[i].m << "  " << energy << std::endl;
-      Space.qnums[i].par = 1;
-      Space.qnums[i].t = -1;
-      Space.qnums[i].j = 0;
-      Space.qnums[i].nx = 0;
-      Space.qnums[i].ny = 0;
-      Space.qnums[i].nz = 0;
       if(Space.qnums[i].ml < Space.qmins.ml){ Space.qmins.ml = Space.qnums[i].ml; }
       if(Space.qnums[i].ml > Space.qmaxs.ml){ Space.qmaxs.ml = Space.qnums[i].ml; }
       if(Space.qnums[i].m < Space.qmins.m){ Space.qmins.m = Space.qnums[i].m; }
@@ -322,11 +311,7 @@ void Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space)
     else if(Parameters.basis == "finite_J" || Parameters.basis == "finite_JM"){ // ind, n, l, j, tz, l2n
       std::stringstream(phline) >> ind >> Space.qnums[i].n >> l >> Space.qnums[i].j >> Space.qnums[i].t >> ind >> energy;
       Space.qnums[i].par = -2*(l%2) + 1;
-      Space.qnums[i].m = 0;
-      Space.qnums[i].ml = 0;
-      Space.qnums[i].nx = 0;
-      Space.qnums[i].ny = 0;
-      Space.qnums[i].nz = 0;
+      if(Space.qnums[i].n < Space.qmins.n){ Space.qmins.n = Space.qnums[i].n; }
       if(Space.qnums[i].par < Space.qmins.par){ Space.qmins.par = Space.qnums[i].par; }
       if(Space.qnums[i].par > Space.qmaxs.par){ Space.qmaxs.par = Space.qnums[i].par; }
       if(Space.qnums[i].j < Space.qmins.j){ Space.qmins.j = Space.qnums[i].j; }
@@ -335,8 +320,6 @@ void Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space)
       if(Space.qnums[i].t > Space.qmaxs.t){ Space.qmaxs.t = Space.qnums[i].t; }
     }
     Space.qnums[i].energy = energy * Parameters.obstrength;
-    key = Space.ind_state(Parameters.basis, Space.qnums[i]);
-    Space.map_state[key] = i;
   }
   splevels.close();
 
@@ -348,17 +331,50 @@ void Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space)
   plus(Space.qmaxs1, Space.qmaxs, Space.qmaxs);
   minus(Space.qmins2, Space.qmins, Space.qmaxs);
   minus(Space.qmaxs2, Space.qmaxs, Space.qmins);
+  if(Space.qmins.par == -1 && Space.qmaxs.par == 1){
+    Space.qmins1.par = -1;
+    Space.qmins2.par = -1;
+    Space.qmaxs1.par = 1;
+    Space.qmaxs2.par = 1;
+  }
+  else if(Space.qmins.par == -1 && Space.qmaxs.par == -1){
+    Space.qmins1.par = -1;
+    Space.qmins2.par = -1;
+    Space.qmaxs1.par = -1;
+    Space.qmaxs2.par = -1;
+  }
+  else if(Space.qmins.par == 1 && Space.qmaxs.par == 1){
+    Space.qmins1.par = 1;
+    Space.qmins2.par = 1;
+    Space.qmaxs1.par = 1;
+    Space.qmaxs2.par = 1;
+  }
+  Space.qmins1.j = 0;
+  Space.qmins2.j = 0;
+  Space.qmaxs2.j = Space.qmaxs1.j;
 
   minus(Space.qsizes, Space.qmaxs, Space.qmins);
-  Space.qsizes.divide_spins();
-  Space.qsizes.add_one();
-
   minus(Space.qsizes1, Space.qmaxs1, Space.qmins1);
-  Space.qsizes1.divide_spins();
-  Space.qsizes1.add_one();
-
   minus(Space.qsizes2, Space.qmaxs2, Space.qmins2);
+  if(Space.qmins.par == -1 && Space.qmaxs.par == 1){
+    Space.qsizes.par = 2;
+    Space.qsizes1.par = 2;
+    Space.qsizes2.par = 2;
+  }
+  else{
+    Space.qsizes.par = 1;
+    Space.qsizes1.par = 1;
+    Space.qsizes2.par = 1;
+  }
+  Space.qsizes.j = Space.qmaxs.j - Space.qmins.j;
+  Space.qsizes1.j = Space.qmaxs1.j - Space.qmins1.j;
+  Space.qsizes2.j = Space.qmaxs2.j - Space.qmins2.j;
+
+  Space.qsizes.divide_spins();
+  Space.qsizes1.divide_spins();
   Space.qsizes2.divide_spins();
+  Space.qsizes.add_one();
+  Space.qsizes1.add_one();
   Space.qsizes2.add_one();
 
   // Find chan3, chan1, and chan2 sizes
@@ -384,7 +400,15 @@ void Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space)
   }
 
   for(int i = 0; i < Space.num_states; ++i){
+    key = Space.ind_state(Parameters.basis, Space.qnums[i]);
+    Space.map_state[key] = i;
+  }
+
+  /*for(int i = 0; i < Space.num_states; ++i){
     std::cout << "###   " << i << ", " << Space.qnums[i].n << " " << Space.qnums[i].ml << " " << Space.qnums[i].m << " " << Space.qnums[i].t << ", " << Space.qnums[i].energy << std::endl;
+    }*/
+  for(int i = 0; i < Space.num_states; ++i){
+    std::cout << "###   " << i << ", " << Space.qnums[i].n << " " << Space.qnums[i].j << " " << Space.qnums[i].par << " " << Space.qnums[i].t << ", " << Space.qnums[i].energy << std::endl;
   }
 }
 
@@ -399,14 +423,17 @@ void Build_Model_Space_J2(Input_Parameters &Parameters, Model_Space &Space)
   int indtotj = Space.num_states;
   Space.num_jstates = indtotj;
   Space.shellsm = new int*[Space.num_states];
+  Space.shellsnum = new int[Space.num_states];
   // reset Space.indtot with degeneracies 2j + 1
   Space.num_states = 0;
   for(int i = 0; i < indtotj; ++i){
     Space.num_states += Space.qnums[i].j + 1;
+    Space.shellsnum[i] = Space.qnums[i].j + 1;
     states[i] = Space.qnums[i];
   }
   delete[] Space.qnums;
   Space.qnums = new State[Space.num_states];
+  Space.shellsj = new int[Space.num_states];
 
   // initialize mins and maxs for each quantum number
   Space.qmins.maximize();
@@ -422,13 +449,14 @@ void Build_Model_Space_J2(Input_Parameters &Parameters, Model_Space &Space)
     Space.shellsm[i] = new int[shelllength];
     for(int j = 0; j < shelllength; ++j){
       m = -states[i].j + 2*j;
+      Space.qnums[ind].n = states[i].n;
       Space.qnums[ind].par = states[i].par;
-      Space.qnums[ind].j = states[i].j;
       Space.qnums[ind].m = m;
       Space.qnums[ind].t = states[i].t;
       Space.qnums[ind].energy = states[i].energy;
       Space.qnums[ind].type = states[i].type;
       Space.shellsm[i][j] = ind;
+      Space.shellsj[ind] = states[i].j;
       if(Space.qnums[ind].par < Space.qmins.par){ Space.qmins.par = Space.qnums[ind].par; }
       if(Space.qnums[ind].par > Space.qmaxs.par){ Space.qmaxs.par = Space.qnums[ind].par; }
       if(Space.qnums[ind].m < Space.qmins.m){ Space.qmins.m = Space.qnums[ind].m; }
@@ -440,11 +468,6 @@ void Build_Model_Space_J2(Input_Parameters &Parameters, Model_Space &Space)
   }
   delete[] states;
 
-  for(int i = 0; i < Space.num_states; ++i){
-    key = Space.ind_state(Parameters.basis, Space.qnums[i]);
-    Space.map_state[key] = i;
-  }
-
   // Deterime Shell Structure
   Space.Determine_Shells(Parameters);
 
@@ -453,23 +476,65 @@ void Build_Model_Space_J2(Input_Parameters &Parameters, Model_Space &Space)
   plus(Space.qmaxs1, Space.qmaxs, Space.qmaxs);
   minus(Space.qmins2, Space.qmins, Space.qmaxs);
   minus(Space.qmaxs2, Space.qmaxs, Space.qmins);
+  if(Space.qmins.par == -1 && Space.qmaxs.par == 1){
+    Space.qmins1.par = -1;
+    Space.qmins2.par = -1;
+    Space.qmaxs1.par = 1;
+    Space.qmaxs2.par = 1;
+  }
+  else if(Space.qmins.par == -1 && Space.qmaxs.par == -1){
+    Space.qmins1.par = -1;
+    Space.qmins2.par = -1;
+    Space.qmaxs1.par = -1;
+    Space.qmaxs2.par = -1;
+  }
+  else if(Space.qmins.par == 1 && Space.qmaxs.par == 1){
+    Space.qmins1.par = 1;
+    Space.qmins2.par = 1;
+    Space.qmaxs1.par = 1;
+    Space.qmaxs2.par = 1;
+  }
+  Space.qmins1.j = 0;
+  Space.qmins2.j = 0;
+  Space.qmaxs2.j = Space.qmaxs1.j;
 
   minus(Space.qsizes, Space.qmaxs, Space.qmins);
-  Space.qsizes.divide_spins();
-  Space.qsizes.add_one();
-
   minus(Space.qsizes1, Space.qmaxs1, Space.qmins1);
-  Space.qsizes1.divide_spins();
-  Space.qsizes1.add_one();
-
   minus(Space.qsizes2, Space.qmaxs2, Space.qmins2);
+  if(Space.qmins.par == -1 && Space.qmaxs.par == 1){
+    Space.qsizes.par = 2;
+    Space.qsizes1.par = 2;
+    Space.qsizes2.par = 2;
+  }
+  else{
+    Space.qsizes.par = 1;
+    Space.qsizes1.par = 1;
+    Space.qsizes2.par = 1;
+  }
+  Space.qsizes.j = Space.qmaxs.j - Space.qmins.j;
+  Space.qsizes1.j = Space.qmaxs1.j - Space.qmins1.j;
+  Space.qsizes2.j = Space.qmaxs2.j - Space.qmins2.j;
+
+  Space.qsizes.divide_spins();
+  Space.qsizes1.divide_spins();
   Space.qsizes2.divide_spins();
+  Space.qsizes.add_one();
+  Space.qsizes1.add_one();
   Space.qsizes2.add_one();
 
   // Find chan3, chan1, and chan2 sizes
   Space.size_1b = Space.qsizes.par * Space.qsizes.m * Space.qsizes.t;
   Space.size_2b_dir = Space.qsizes1.par * Space.qsizes1.m * Space.qsizes1.t;
   Space.size_2b_cross = Space.qsizes2.par * Space.qsizes2.m * Space.qsizes2.t;
+
+  for(int i = 0; i < Space.num_states; ++i){
+    key = Space.ind_state(Parameters.basis, Space.qnums[i]);
+    Space.map_state[key] = i;
+  }
+
+  for(int i = 0; i < Space.num_states; ++i){
+    std::cout << "###   " << i << ", " << Space.qnums[i].n << " " << Space.qnums[i].j << " " << Space.qnums[i].m << " " << Space.qnums[i].par << " " << Space.qnums[i].t << ", " << Space.qnums[i].energy << " : " << Space.qnums[i].type << std::endl;
+  }
 }
 
 void CART_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space)
@@ -556,9 +621,6 @@ void CART_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space)
 	      Space.qnums[count].nz = nz;
 	      Space.qnums[count].m = sz;
 	      Space.qnums[count].t = tz;
-	      Space.qnums[count].ml = 0;
-	      Space.qnums[count].par = 1;
-	      Space.qnums[count].j = 0;
 	      count++;
 	    }
 	  }   
@@ -574,11 +636,6 @@ void CART_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space)
   Space.qmaxs.nz = Space.nmax;
   Space.qmins.m = -1;
   Space.qmaxs.m = 1;
-
-  for(int i = 0; i < Space.num_states; ++i){
-    key = Space.ind_state(Parameters.basis, Space.qnums[i]);
-    Space.map_state[key] = i;
-  }
   
   // Find range of 2body quantum numbers from mins and maxs
   plus(Space.qmins1, Space.qmins, Space.qmins);
@@ -601,6 +658,11 @@ void CART_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space)
   Space.size_1b = Space.qsizes.nx * Space.qsizes.ny * Space.qsizes.nz * Space.qsizes.m * Space.qsizes.t;
   Space.size_2b_dir = Space.qsizes1.nx * Space.qsizes1.ny * Space.qsizes1.nz * Space.qsizes1.m * Space.qsizes1.t;
   Space.size_2b_cross = Space.qsizes2.nx * Space.qsizes2.ny * Space.qsizes2.nz * Space.qsizes2.m * Space.qsizes2.t;
+
+  for(int i = 0; i < Space.num_states; ++i){
+    key = Space.ind_state(Parameters.basis, Space.qnums[i]);
+    Space.map_state[key] = i;
+  }
 
   // Calculate energies
   double L = pow(Space.num_hol/Parameters.density, 1.0/3.0);
@@ -684,11 +746,6 @@ void QD_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space)
 	  Space.qnums[count].par = -2*(abs(ml)%2) + 1;
 	  Space.qnums[count].ml = ml;
 	  Space.qnums[count].m = sz;
-	  Space.qnums[count].t = -1;
-	  Space.qnums[count].nx = 0;
-	  Space.qnums[count].ny = 0;
-	  Space.qnums[count].nz = 0;
-	  Space.qnums[count].j = 0;
 	  if(shell < Parameters.Pshells){ Space.qnums[count].type = "hole"; ++Space.num_hol; ++Parameters.P; }
 	  else{ Space.qnums[count].type = "particle"; ++Space.num_par; }
 	  ++Space.num_p;
@@ -764,7 +821,6 @@ Channels::Channels(Input_Parameters &Parameters, Model_Space &Space)
   }
   for(int p = 0; p < Space.num_states; ++p){
     chan3 = Space.ind_1b(Parameters.basis, Space.qnums[p]);
-    qnums3[chan3] = Space.qnums[p];
     if(Space.qnums[p].type == "hole"){
       ++nh[chan3];
       ++h_total;
@@ -774,7 +830,6 @@ Channels::Channels(Input_Parameters &Parameters, Model_Space &Space)
       ++p_total;
     }
   }
-
   h_vec = new one_body[h_total];
   p_vec = new one_body[p_total];
   h_total = 0;
@@ -806,19 +861,19 @@ Channels::Channels(Input_Parameters &Parameters, Model_Space &Space)
   }
 
   /*for(int i = 0; i < size3; ++i){
-    std::cout << "Chan3: " << i << ", " << qnums3[i].par << " " << qnums3[i].ml << " " << qnums3[i].m << std::endl;
+    std::cout << "Chan3: " << i << ", " << qnums3[i].par << " " << qnums3[i].m << " " << qnums3[i].t << std::endl;
     std::cout << "nh = " << nh[i] << ", np = " << np[i] << std::endl;
-    for(int j = 0; j < nh[i]; ++j){ std::cout << h_vec[i][j] << " "; }
+    for(int j = 0; j < nh[i]; ++j){ std::cout << h_vec[h_index[i] + j].v1 << " "; }
     std::cout << std::endl;
-    for(int j = 0; j < np[i]; ++j){ std::cout << p_vec[i][j] << " "; }
+    for(int j = 0; j < np[i]; ++j){ std::cout << p_vec[p_index[i] + j].v1 << " "; }
     std::cout << std::endl;
     }*/
-
+    
   size1 = Space.size_2b_dir;
   size2 = Space.size_2b_cross;
+  //std::cout << " Size1 = " << size1 << ", Size2 = " << size2 << ", Size3 = " << size3 << std::endl;
   qnums1 = new State[size1];
   qnums2 = new State[size2];
-  //std::cout << " Size1 = " << size1 << ", Size2 = " << size2 << ", Size3 = " << size3 << std::endl;
 
   // For CCD
   hh_total = 0;
@@ -853,9 +908,7 @@ Channels::Channels(Input_Parameters &Parameters, Model_Space &Space)
       jmin = abs(Space.qnums[p].j - Space.qnums[q].j);
       while(state1.j >= jmin){
 	chan1 = Space.ind_2b_dir(Parameters.basis, state1);
-	qnums1[chan1] = state1;
 	chan2 = Space.ind_2b_cross(Parameters.basis, state2);
-	qnums2[chan2] = state2;
 	if(p >= Space.num_hol && q >= Space.num_hol){ // pp
 	  ++npp[chan1];
 	  ++pp_total;
@@ -877,7 +930,6 @@ Channels::Channels(Input_Parameters &Parameters, Model_Space &Space)
       }
     }
   }
-
   hh_vec = new two_body[hh_total];
   hh_total = 0;
   pp_vec = new two_body[pp_total];
@@ -902,7 +954,6 @@ Channels::Channels(Input_Parameters &Parameters, Model_Space &Space)
     ph1_total += nph1[chan2];
     nph1[chan2] = 0;
   }
-
   for(int p = 0; p < Space.num_states; ++p){
     for(int q = 0; q < Space.num_states; ++q){
       plus(state1, Space.qnums[p], Space.qnums[q]);
@@ -914,6 +965,8 @@ Channels::Channels(Input_Parameters &Parameters, Model_Space &Space)
 	key = Space.hash2(p, q, state1.j);
 	chan1 = Space.ind_2b_dir(Parameters.basis, state1);
 	chan2 = Space.ind_2b_cross(Parameters.basis, state2);
+	qnums1[chan1] = state1;
+	qnums2[chan2] = state2;
 	if(p >= Space.num_hol && q >= Space.num_hol){ // pp
 	  npp0 = npp[chan1];
 	  pp_vec[pp_index[chan1] + npp0] = tb;
@@ -945,27 +998,26 @@ Channels::Channels(Input_Parameters &Parameters, Model_Space &Space)
   }
 
   /*for(int i = 0; i < size1; ++i){
-    std::cout << "Chan1:  " << i << " " << qnums1[i].ml << " " << qnums1[i].m << std::endl;
+    std::cout << "Chan1:  " << i << " " << qnums1[i].par << " " << qnums1[i].m << " " << qnums1[i].t << std::endl;
     std::cout << "nhh = " << nhh[i] << ", npp = " << npp[i] << std::endl;
     for(int j = 0; j < nhh[i]; ++j){
-      std::cout << hh_vec[i][2*j] << "," << hh_vec[i][2*j + 1] << " ";
+      std::cout << hh_vec[hh_index[i] + j].v1 << "," << hh_vec[hh_index[i] + j].v2 << " ";
     }
     std::cout << std::endl;
     for(int j = 0; j < npp[i]; ++j){
-      std::cout << pp_vec[i][2*j] << "," << pp_vec[i][2*j + 1] << " ";
+      std::cout << pp_vec[pp_index[i] + j].v1 << "," << pp_vec[pp_index[i] + j].v2 << " ";
     }
     std::cout << std::endl;
-  }
-
-  for(int i = 0; i < size2; ++i){
+    }*/
+  /*for(int i = 0; i < size2; ++i){
     std::cout << "Chan2:  " << i << " " << qnums2[i].ml << " " << qnums2[i].m << std::endl;
     std::cout << "nhp1 = " << nhp1[i] << ", nph1 = " << nph1[i] << std::endl;
     for(int j = 0; j < nhp1[i]; ++j){
-      std::cout << hp1_vec[i][2*j] << "," << hp1_vec[i][2*j + 1] << " ";
+      std::cout << hp1_vec[hp1_index[i] + j].v1 << "," << hp1_vec[hp1_index[i] + j].v2 << " ";
     }
     std::cout << std::endl;
     for(int j = 0; j < nph1[i]; ++j){
-      std::cout << ph1_vec[i][2*j] << "," << ph1_vec[i][2*j + 1] << " ";
+      std::cout << ph1_vec[ph1_index[i] + j].v1 << "," << ph1_vec[ph1_index[i] + j].v2 << " ";
     }
     std::cout << std::endl;
     }*/
@@ -998,7 +1050,6 @@ Channels::Channels(Input_Parameters &Parameters, Model_Space &Space)
       }
     }
   }
-
   hhp_vec = new three_body[hhp_total];
   hhp_total = 0;
   pph_vec = new three_body[pph_total];
@@ -1077,7 +1128,6 @@ Channels::Channels(Input_Parameters &Parameters, Model_Space &Space)
       nhh1[chan2] = 0;
       npp1[chan2] = 0;
     }
-
     for(int p = 0; p < Space.num_states; ++p){
       for(int q = 0; q < Space.num_states; ++q){
 	plus(state1, Space.qnums[p], Space.qnums[q]);
@@ -1085,9 +1135,7 @@ Channels::Channels(Input_Parameters &Parameters, Model_Space &Space)
 	jmin = abs(Space.qnums[p].j - Space.qnums[q].j);
 	while(state1.j >= jmin){
 	  chan1 = Space.ind_2b_dir(Parameters.basis, state1);
-	  qnums1[chan1] = state1;
 	  chan2 = Space.ind_2b_cross(Parameters.basis, state2);
-	  qnums2[chan2] = state2;
 	  if(p >= Space.num_hol && q >= Space.num_hol){ // pp1
 	    ++npp1[chan2];
 	    ++pp1_total;
@@ -1105,7 +1153,6 @@ Channels::Channels(Input_Parameters &Parameters, Model_Space &Space)
 	}
       }
     }
-
     hp_vec = new two_body[hp_total];
     hp_total = 0;
     hh1_vec = new two_body[hh1_total];
@@ -1125,7 +1172,6 @@ Channels::Channels(Input_Parameters &Parameters, Model_Space &Space)
       pp1_total += npp1[chan2];
       npp1[chan2] = 0;
     }
-
     for(int p = 0; p < Space.num_states; ++p){
       for(int q = 0; q < Space.num_states; ++q){
 	plus(state1, Space.qnums[p], Space.qnums[q]);
@@ -1137,6 +1183,8 @@ Channels::Channels(Input_Parameters &Parameters, Model_Space &Space)
 	  key = Space.hash2(p, q, state1.j);
 	  chan1 = Space.ind_2b_dir(Parameters.basis, state1);
 	  chan2 = Space.ind_2b_cross(Parameters.basis, state2);
+	  qnums1[chan1] = state1;
+	  qnums2[chan2] = state2;
 	  if(p >= Space.num_hol && q >= Space.num_hol){ // pp1
 	    npp10 = npp1[chan2];
 	    pp1_vec[pp1_index[chan2] + npp10] = tb;
@@ -1544,11 +1592,11 @@ void Model_Space::Determine_Shells(Input_Parameters &Parameters)
   double p_en = -1000.0;
   double n_en = -1000.0;
   for(int i = 0; i < num_states; ++i){
-    if(qnums[i].energy > p_en && qnums[i].t == -1){
+    if(qnums[i].energy != p_en && qnums[i].t == -1){
       p_en = qnums[i].energy;
       ++pshell_num;
     }
-    else if(qnums[i].energy > n_en && qnums[i].t == 1){
+    if(qnums[i].energy != n_en && qnums[i].t == 1){
       n_en = qnums[i].energy;
       ++nshell_num;
     }
@@ -1560,12 +1608,12 @@ void Model_Space::Determine_Shells(Input_Parameters &Parameters)
   p_en = -1000.0;
   n_en = -1000.0;
   for(int i = 0; i < num_states; ++i){
-    if(qnums[i].energy > p_en && qnums[i].t == -1){
+    if(qnums[i].energy != p_en && qnums[i].t == -1){
       pshell[pshell_num] = i;
       p_en = qnums[i].energy;
       ++pshell_num;
     }
-    else if(qnums[i].energy > n_en && qnums[i].t == 1){
+    if(qnums[i].energy != n_en && qnums[i].t == 1){
       nshell[nshell_num] = i;
       n_en = qnums[i].energy;
       ++nshell_num;
