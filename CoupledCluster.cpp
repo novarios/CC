@@ -25,9 +25,8 @@ int main(int argc, char * argv[])
   Single_Particle_States States;
   double Energy, Energy0;
   int JM = 0;
-  int test = 0;
-  //omp_set_num_threads(4);
-  
+  //omp_set_num_threads(10);
+
   Parameters.extra = 100;
   clock_gettime(CLOCK_MONOTONIC, &time1);
   if(argc == 1 || argc == 2){
@@ -58,9 +57,7 @@ int main(int argc, char * argv[])
       Print_Parameters(Parameters, Space);
     }
     Chan = Channels(Parameters, Space);
-    std::cout << std::endl << " AmpsJ setup " << std::endl;
     Amps = Amplitudes(Parameters, Space, Chan);
-    std::cout << std::endl << std::endl;
     Ints = Interactions(Parameters, Chan);
     
     if(Parameters.HF == 0){ Get_Fock_Matrix(Parameters, HF_Chan, HF_ME, States, Space, Chan, Ints); }
@@ -134,45 +131,25 @@ int main(int argc, char * argv[])
     }
   }
 
-  if(Parameters.basis != "finite_J" || test != 1){
-    Perform_CC_Test(Parameters, Space, Chan, Ints, Eff_Ints, Amps);
-    //Perform_CC(Parameters, Space, Chan, Ints, Eff_Ints, Amps);
-    Energy = E_Ref(Parameters, Space, Chan, Ints);
-    Energy0 = Amps.get_energy(Parameters, Space, Chan, Ints);
-    std::cout << std::setprecision(10);
-    if(Parameters.approx == "singles"){
-      std::cout << "Eref = " << Energy << ", dCCSD = " << Energy0 << std::endl;
-      std::cout << "Eref/A = " << Energy/(Parameters.P + Parameters.N) << ", dCCSD/A = " << Energy0/(Parameters.P + Parameters.N) << std::endl;
-    }
-    else{
-      std::cout << "Eref = " << Energy << ", dCCD = " << Energy0 << std::endl;
-      std::cout << "Eref/A = " << Energy/(Parameters.P + Parameters.N) << ", dCCD/A = " << Energy0/(Parameters.P + Parameters.N) << std::endl;
-    }      
-    Energy += Energy0;
-    std::cout << "E = " << Energy << ", E/A = " << Energy/(Parameters.P + Parameters.N) << std::endl << std::endl;
+  Perform_CC_Test(Parameters, Space, Chan, Ints, Eff_Ints, Amps);
+  //Perform_CC(Parameters, Space, Chan, Ints, Eff_Ints, Amps);
+  Energy = E_Ref(Parameters, Space, Chan, Ints);
+  Energy0 = Amps.get_energy(Parameters, Space, Chan, Ints);
+  std::cout << std::setprecision(10);
+  if(Parameters.approx == "singles"){
+    std::cout << "Eref = " << Energy << ", dCCSD = " << Energy0 << std::endl;
+    std::cout << "Eref/A = " << Energy/(Parameters.P + Parameters.N) << ", dCCSD/A = " << Energy0/(Parameters.P + Parameters.N) << std::endl;
   }
+  else{
+    std::cout << "Eref = " << Energy << ", dCCD = " << Energy0 << std::endl;
+    std::cout << "Eref/A = " << Energy/(Parameters.P + Parameters.N) << ", dCCD/A = " << Energy0/(Parameters.P + Parameters.N) << std::endl;
+  }      
+  Energy += Energy0;
+  std::cout << "E = " << Energy << ", E/A = " << Energy/(Parameters.P + Parameters.N) << std::endl << std::endl;
 
-  if(argc == 7){
-    State *states = new State[3];
-    double *nums = new double[6];
-    for(int i = 0; i < 6; ++i){ nums[i] = 0.0; }
-    //Print_Amps(Parameters, Chan, Amps);
+  if(Parameters.extra == 1){
     Update_Heff_3(Parameters, Space, Chan, Ints, Eff_Ints, Amps);
-
-    if(Parameters.extra == 1){
-      PA_EOM(Parameters, Space, Chan, Eff_Ints, states, nums);
-      std::cout << std::fixed;
-      for(int i = 0; i < 3; ++i){
-	std::cout << std::setw(5) << Parameters.Shells << std::setw(5) << Parameters.Pshells << std::setw(5) << states[i].ml << std::setw(5) << states[i].m << std::setprecision(2) << std::setw(8) << Parameters.density << std::setprecision(9) << std::setw(17) << Energy << std::setw(17) << nums[2*i] << std::setw(17) << Energy + nums[2*i] << std::setw(17) << nums[2*i + 1] << std::endl;
-      }
-      for(int i = 0; i < 6; ++i){ nums[i] = 0.0; }
-      PR_EOM(Parameters, Space, Chan, Eff_Ints, states, nums);
-      for(int i = 0; i < 3; ++i){
-	std::cout << std::setw(5) << Parameters.Shells << std::setw(5) << Parameters.Pshells << std::setw(5) << states[i].ml << std::setw(5) << states[i].m << std::setprecision(2) << std::setw(8) << Parameters.density << std::setprecision(9) << std::setw(17) << Energy << std::setw(17) << nums[2*i] << std::setw(17) << Energy + nums[2*i] << std::setw(17) << nums[2*i + 1] << std::endl;
-      }
-    }
-    delete[] states;
-    delete[] nums;
+    EOM_1P(Parameters, Space, Chan, Eff_Ints, Energy);
   }
 
   Ints.delete_struct(Parameters, Chan);

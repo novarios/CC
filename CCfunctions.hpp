@@ -76,16 +76,12 @@ void Perform_DIIS(Input_Parameters &Parameters, Channels &Chan, Amplitudes &Amps
 void Update_B1(Input_Parameters &Parameters, Channels &Chan, Amplitudes &Amps, int &N, double *&p, double *&delp, double *&tempdelp, double *&B);
 void Update_B2(Input_Parameters &Parameters, Channels &Chan, Amplitudes &Amps, int &N, double *&p, double *&delp, double *&tempdelp, double *&B);
 
-void PA_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints, State *states, double *nums);
-void PR_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints, State *states, double *nums);
+void PA_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints, State *&states, double *&nums, int &state_num);
+void PR_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints, State *&states, double *&nums, int &state_num);
+void count_states(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, int type, int *&chan_vec, int &state_num);
 void CC_compare_JM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps, std::string &inputfile);
-
-
-void Map_4_count(Input_Parameters &Parameters, Model_Space &Space, int *map_index, int *map_num, int size, int type, int offset, int &length, int &count, int &p, int &q, int &r, int &s);
-void Map_4(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int *map_ind, double *map_fac1, double *map_fac2, int *map_index, int *map_num, int size, int type, int offset, int &count, std::unordered_map<int,int> *map1, std::unordered_map<int,int> *map2, int *num2, int &p, int &q, int &r, int &s, double &J);
-void Map_2(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int *map_ind, double *map_fac1, double *map_fac2, int &count, std::unordered_map<int,int> *map1, std::unordered_map<int,int> *map2, int *num2, int &p, int &q);
-void direct_state(Input_Parameters &Parameters, Model_Space &Space, int &p, int &q, int &r, int &s, int &jmin1, State &tb1);
-void cross_state(Input_Parameters &Parameters, Model_Space &Space, int &p, int &s, int &r, int &q, int &jmin2, State &tb2);
+void EOM_1P(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints, double Energy);
+void Print_EOM_1P(Input_Parameters &Parameters, State *states, double *nums, int &state_num, double Energy);
 
 //Structure for holding Input parameters
 struct Input_Parameters{
@@ -100,6 +96,8 @@ struct Input_Parameters{
   int N; //number of neutrons
   int P; //number of protons
   double density;
+  double ho_energy;
+  double ho_length;
   int Shells; //Nmax -> Shells
   std::string LevelScheme; //level scheme path
   std::string MatrixElements; //matrix elements path

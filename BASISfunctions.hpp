@@ -7,8 +7,10 @@ struct Model_Space;
 struct State;
 struct Channels;
 
+struct one_body;
 struct two_body;
 struct three_body;
+struct four_body;
 
 void plus(State &S, State &S1, State &S2);
 void minus(State &S, State &S1, State &S2);
@@ -24,6 +26,28 @@ void Build_Model_Space_J2(Input_Parameters &Parameters, Model_Space &Space);
 void CART_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space);
 void QD_Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space);
 
+void p_chan_setup(Input_Parameters &Parameters, Model_Space &Space, int &p_total, int *&np, int *&p_index, std::unordered_map<int,int> *&p_map, one_body *&p_vec, int &chan3size, State *qnums3, int type);
+void pq_chan_setup(Input_Parameters &Parameters, Model_Space &Space, int &pq_total, int *&npq, int *&pq_index, std::unordered_map<int,int> *&pq_map, two_body *&pq_vec, int &chansize, State *qnums, int &chan3size, State *qnums3, int *np, one_body *p_vec, int *p_index, int *nq, int *q_index, one_body *q_vec);
+void pq1_chan_setup(Input_Parameters &Parameters, Model_Space &Space, int &pq_total, int *&npq, int *&pq_index, std::unordered_map<int,int> *&pq_map, two_body *&pq_vec, int &chan2size, State *qnums2, int &chan3size, State *qnums3, int *np, one_body *p_vec, int *p_index, int *nq, int *q_index, one_body *q_vec);
+void pqr_chan_setup(Input_Parameters &Parameters, Model_Space &Space, int &pqr_total, int *&npqr, int *&pqr_index, std::unordered_map<int,int> *&pqr_map, three_body *&pqr_vec, State *&pqr_j, int &chan3size, State *qnums3, int *npq, two_body *pq_vec, int *pq_index, int *nr, int *r_index, one_body *r_vec);
+
+void Map_4_count_1(Input_Parameters &Parameters, Model_Space &Space, int *map_index, int *map_num, int size, int offset, int &length, int &count, four_body &fb);
+void Map_4_count_2(Input_Parameters &Parameters, Model_Space &Space, int *map_index, int *map_num, int size, int offset, int &length, int &count, four_body &fb);
+void Map_4_count_3(Input_Parameters &Parameters, Model_Space &Space, int *map_index, int *map_num, int size, int offset, int &length, int &count, four_body &fb);
+void Map_4_count_4(Input_Parameters &Parameters, Model_Space &Space, int *map_index, int *map_num, int size, int offset, int &length, int &count, four_body &fb);
+void Map_4_count_5678(Input_Parameters &Parameters, Model_Space &Space, int *map_index, int *map_num, int size, int offset, int &length, int &count);
+void Map_4_1(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int *map_ind, double *map_fac1, double *map_fac2, int *map_index, int *map_num, int size, int offset, int &count, std::unordered_map<int,int> *map1, std::unordered_map<int,int> *map2, int *num2, four_body *fb, four_body *fb_j, int *J);
+void Map_4_2(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int *map_ind, double *map_fac1, double *map_fac2, int *map_index, int *map_num, int size, int offset, int &count, std::unordered_map<int,int> *map1, std::unordered_map<int,int> *map2, int *num2, four_body *fb, four_body *fb_j, int *J);
+void Map_4_3(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int *map_ind, double *map_fac1, double *map_fac2, int *map_index, int *map_num, int size, int offset, int &count, std::unordered_map<int,int> *map1, std::unordered_map<int,int> *map2, int *num2, four_body *fb, four_body *fb_j, int *J);
+void Map_4_4(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int *map_ind, double *map_fac1, double *map_fac2, int *map_index, int *map_num, int size, int offset, int &count, std::unordered_map<int,int> *map1, std::unordered_map<int,int> *map2, int *num2, four_body *fb, four_body *fb_j, int *J);
+void Map_4_5(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int *map_ind, double *map_fac1, double *map_fac2, int *map_index, int *map_num, int size, int offset, int &count, std::unordered_map<int,int> *map1, std::unordered_map<int,int> *map2, int *num2, four_body *fb, four_body *fb_j, int *J);
+void Map_4_6(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int *map_ind, double *map_fac1, double *map_fac2, int *map_index, int *map_num, int size, int offset, int &count, std::unordered_map<int,int> *map1, std::unordered_map<int,int> *map2, int *num2, four_body *fb, four_body *fb_j, int *J);
+void Map_4_7(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int *map_ind, double *map_fac1, double *map_fac2, int *map_index, int *map_num, int size, int offset, int &count, std::unordered_map<int,int> *map1, std::unordered_map<int,int> *map2, int *num2, four_body *fb, four_body *fb_j, int *J);
+void Map_4_8(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int *map_ind, double *map_fac1, double *map_fac2, int *map_index, int *map_num, int size, int offset, int &count, std::unordered_map<int,int> *map1, std::unordered_map<int,int> *map2, int *num2, four_body *fb, four_body *fb_j, int *J);
+void Map_2(Input_Parameters &Parameters, Model_Space &Space, int *map_chan, int *map_ind, double *map_fac1, double *map_fac2, int &count, std::unordered_map<int,int> *map1, std::unordered_map<int,int> *map2, int *num2, two_body &tb, int &J);
+void direct_state(Input_Parameters &Parameters, Model_Space &Space, int &p, int &q, int &r, int &s, int &jmin1, State &tb1);
+void cross_state(Input_Parameters &Parameters, Model_Space &Space, int &p, int &s, int &r, int &q, int &jmin2, State &tb2);
+
 struct State{
   int t; // x2
   int m; // x2
@@ -33,9 +57,10 @@ struct State{
   int ml;
   int n;
   int j; // x2
+  int l;
   int par; // -1,+1
   double energy;
-  std::string type;
+  int type;
  
   State(){
     t = -1;
@@ -46,9 +71,10 @@ struct State{
     ml = 0;
     n = 0;
     j = 0;
+    l = 0;
     par = 1;
     energy = -1000.0;
-    type = "none";
+    type = 100;
   };
 
   void minimize(){
@@ -60,6 +86,7 @@ struct State{
     ml = -1000;
     n = -1000;
     j = -1000;
+    l = -1000;
     par = -1000;
   };
 
@@ -72,6 +99,7 @@ struct State{
     ml = 1000;
     n = 1000;
     j = 1000;
+    l = 1000;
     par = 1000;
   };
 
@@ -90,6 +118,7 @@ struct State{
     ++ml;
     ++n;
     ++j;
+    ++l;
   };
 };
 
@@ -106,6 +135,13 @@ struct three_body{
   int v1;
   int v2;
   int v3;
+};
+
+struct four_body{
+  int v1;
+  int v2;
+  int v3;
+  int v4;
 };
 
 //Structure for holding all model space info
@@ -148,8 +184,8 @@ struct Model_Space{
   void Determine_Shells(Input_Parameters &Parameters);
   void Setup_Maps(Input_Parameters &Parameters);
   void delete_struct(Input_Parameters &Parameters);
-  int hash2(int &p, int &q, int &j);
-  int hash3(int &p, int &q, int &r, int &j);
+  int hash2(int &p, int &q, int j);
+  int hash3(int &p, int &q, int &r, int j);
   int ind_state(std::string &basis, State &State);
   int ind_1b(std::string &basis, State &State);
   int ind_2b_dir(std::string &basis, State &State);
@@ -195,10 +231,12 @@ struct Channels{
   int *nhhp;
   three_body *hhp_vec;
   int *hhp_index;
+  State *hhp_j;
   std::unordered_map<int,int> *hhp_map;
   int *npph;
   three_body *pph_vec;
   int *pph_index;
+  State *pph_j;
   std::unordered_map<int,int> *pph_map;
 
   // For CCSD
@@ -217,18 +255,22 @@ struct Channels{
   int *nhph;
   three_body *hph_vec;
   int *hph_index;
+  State *hph_j;
   std::unordered_map<int,int> *hph_map;
   int *nhpp;
   three_body *hpp_vec;
   int *hpp_index;
+  State *hpp_j;
   std::unordered_map<int,int> *hpp_map;
   int *nhhh;
   three_body *hhh_vec;
   int *hhh_index;
+  State *hhh_j;
   std::unordered_map<int,int> *hhh_map;
   int *nppp;
   three_body *ppp_vec;
   int *ppp_index;
+  State *ppp_j;
   std::unordered_map<int,int> *ppp_map;
   int ind0; // index of i-i cross channel for singles
   //////////////////////////

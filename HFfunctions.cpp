@@ -39,107 +39,16 @@ two_body HF_Channels::tb_state(int &chan1, int &ind1)
 
 HF_Channels::HF_Channels(Input_Parameters &Parameters, Model_Space &Space)
 {
-  State state1, state3;
-  int key;
-  int jmin;
   int chan1, chan3;
-  int nob0, ntb0;
-  int ob_total;
-  int tb_total;
-  one_body ob;
-  two_body tb;
-
+  int ob_total, tb_total;
   size1 = Space.size_2b_dir;
   size3 = Space.size_1b;
-
-  // allocate memory for Hvec and Pvec, reset hnum and pnum
-  ob_total = 0;
-  qnums3 = new State[size3];
-  nob = new int[size3];
-  ob_index = new int[size3];
-  ob_map = new std::unordered_map<int, int>[size3];
-  for(chan3 = 0; chan3 < size3; ++chan3){ nob[chan3] = 0; }
-  for(int p = 0; p < Space.num_states; ++p){
-    chan3 = Space.ind_1b(Parameters.basis, Space.qnums[p]);
-    ++nob[chan3];
-    ++ob_total;
-  }
-  ob_vec = new one_body[ob_total];
-  ob_total = 0;
-  for(chan3 = 0; chan3 < size3; ++chan3){
-    ob_index[chan3] = ob_total;
-    ob_total += nob[chan3];
-    nob[chan3] = 0;
-  }
-  for(int p = 0; p < Space.num_states; ++p){
-    chan3 = Space.ind_1b(Parameters.basis, Space.qnums[p]);
-    qnums3[chan3] = Space.qnums[p];
-    nob0 = nob[chan3];
-    ob.v1 = p;
-    ob_vec[ob_index[chan3] + nob0] = ob;
-    ob_map[chan3][p] = nob0;
-    ++nob[chan3];
-  }
-
-  /*for(int i = 0; i < size3; ++i){
-    std::cout << "HF-Chan3: " << i << ", " << qnums3[i].par << " " << qnums3[i].j << " " << qnums3[i].t << std::endl;
-    std::cout << "nob = " << nob[i] << std::endl;
-    for(int j = 0; j < nob[i]; ++j){ std::cout << ob_vec[ob_index[i] + j].v1 << " "; }
-    std::cout << std::endl;
-    }*/
   
-  tb_total = 0;
   qnums1 = new State[size1];
-  ntb = new int[size1];
-  tb_index = new int[size1];
-  tb_map = new std::unordered_map<int, int>[size1];
-  for(chan1 = 0; chan1 < size1; ++chan1){ ntb[chan1] = 0; }
-  for(int p = 0; p < Space.num_states; ++p){
-    for(int q = 0; q < Space.num_states; ++q){
-      plus(state1, Space.qnums[p], Space.qnums[q]);
-      jmin = abs(Space.qnums[p].j - Space.qnums[q].j);
-      while(state1.j >= jmin){
-	chan1 = Space.ind_2b_dir(Parameters.basis, state1);
-	++ntb[chan1];
-	++tb_total;
-	state1.j -= 2;
-      }
-    }
-  }
-  tb_vec = new two_body[tb_total];
-  tb_total = 0;
-  for(chan1 = 0; chan1 < size1; ++chan1){
-    tb_index[chan1] = tb_total;
-    tb_total += ntb[chan1];
-    ntb[chan1] = 0;
-  }
-  for(int p = 0; p < Space.num_states; ++p){
-    for(int q = 0; q < Space.num_states; ++q){
-      plus(state1, Space.qnums[p], Space.qnums[q]);
-      jmin = abs(Space.qnums[p].j - Space.qnums[q].j);
-      while(state1.j >= jmin){
-	key = Space.hash2(p, q, state1.j);
-	chan1 = Space.ind_2b_dir(Parameters.basis, state1);
-	qnums1[chan1] = state1;
-	ntb0 = ntb[chan1];
-	tb.v1 = p;
-	tb.v2 = q;
-	tb_vec[tb_index[chan1] + ntb0] = tb;
-	tb_map[chan1][key] = ntb0;
-	++ntb[chan1];
-	state1.j -= 2;
-      }
-    }
-  }
+  qnums3 = new State[size3];
 
-  /*for(int i = 0; i < size1; ++i){
-    std::cout << "HF-Chan1: " << i << ", " << qnums1[i].par << " " << qnums1[i].j << " " << qnums1[i].t << std::endl;
-    std::cout << "ntb = " << ntb[i] << std::endl;
-    for(int j = 0; j < ntb[i]; ++j){
-      std::cout << tb_vec[tb_index[i] + j].v1 << "," << tb_vec[tb_index[i] + j].v2 << " ";
-    }
-    std::cout << std::endl;
-    }*/
+  p_chan_setup(Parameters,Space, ob_total,nob,ob_index,ob_map,ob_vec, size3,qnums3, -1);  // ob
+  pq_chan_setup(Parameters,Space, tb_total,ntb,tb_index,tb_map,tb_vec, size1,qnums1, size3,qnums3, nob,ob_vec,ob_index,nob,ob_index,ob_vec);  // tb
 
   double memory = 0.0;
   int doubsize = sizeof(double);
@@ -186,7 +95,7 @@ Single_Particle_States::Single_Particle_States(Input_Parameters &Parameters, Mod
     nob = Chan.nob[chan];
     for(ind = 0; ind < nob; ++ind){
       ob_ind = Chan.ob_state(chan, ind).v1;
-      if( Space.qnums[ob_ind].type == "hole" ){ ++nh; }
+      if( Space.qnums[ob_ind].type == 0 ){ ++nh; }
     }
     hole_size[chan] = nh;
     vector_size[chan] = nob;
@@ -225,7 +134,7 @@ void Single_Particle_States::delete_struct(HF_Channels &Chan)
 
 void Hartree_Fock_States(Input_Parameters &Parameters, Model_Space &Space, HF_Channels &Chan, Single_Particle_States &HF, HF_Matrix_Elements &ME)
 {
-  double Bshift0;
+  double Bshift0 = 0.0;
   for(int i = 0; i < Space.num_states; ++i){ Bshift0 += Space.qnums[i].energy; }
   Bshift0 /= (Space.num_states);
 
@@ -252,6 +161,17 @@ void Hartree_Fock_States(Input_Parameters &Parameters, Model_Space &Space, HF_Ch
   Initialize_DIIS_HF(Chan, HF, p, delp, tempdelp, B, maxl);
   ///////////////////////
 
+  //   Initialize Mesh for KE   //
+  if(Parameters.basis == "finite_J" || Parameters.basis == "finite_JM"){
+    setup_ho_cutoff(Parameters, Space, ME);
+    ME.ra = new double[ME.n_rel];
+    ME.wra = new double[ME.n_rel];
+    gauss_legendre(0.0, ME.cutoff, ME.ra, ME.wra, ME.n_rel);
+    ME.hol = new double[ME.n_rel * (Space.qmaxs.n+1) * (Space.qmaxs.l+1)];
+    ho_wfunction(Parameters, Space, ME);
+  }
+  ///////////////////////////////
+
   //   Initialize HF0, HF2, and tempn   //
   HF0 = Single_Particle_States(Parameters, Space, Chan);
   HF2 = Single_Particle_States(Parameters, Space, Chan);
@@ -261,7 +181,6 @@ void Hartree_Fock_States(Input_Parameters &Parameters, Model_Space &Space, HF_Ch
       tempn[HF.energy_index[chan] + i] = Space.qnums[Chan.ob_state(chan, i).v1].n;
     }
   }
-    
 
   while(error > 1e-12 && ind < 10000){
     Hartree_Fock_Step(Parameters, Space, Chan, HF, HF2, ME, Bshift0, error);
@@ -311,59 +230,39 @@ void Hartree_Fock_States(Input_Parameters &Parameters, Model_Space &Space, HF_Ch
       Space.qnums[ob_ind] = Chan.qnums3[chan];
       Space.qnums[ob_ind].n = tempn[energy_ind + ind];
       Space.qnums[ob_ind].energy = HF.energies[energy_ind + ind];
-      if( ind < HF.hole_size[chan] ){ Space.qnums[ob_ind].type = "hole"; }
-      else{ Space.qnums[ob_ind].type = "particle"; }
+      if( ind < HF.hole_size[chan] ){ Space.qnums[ob_ind].type = 0; }
+      else{ Space.qnums[ob_ind].type = 1; }
     }
   }
   delete[] tempn;
-
-  //order states by energy
-  /*double energy_p, energy_n;
-  int ind_p, ind_n;
-  State state_p, state_n;
-  for(int i = 0; i < Space.num_states; ++i){
-    if(Space.qnums[i].t == -1){
-      energy_p = Space.qnums[i].energy;
-      ind_p = i;
-      for(int j = i+1; j < Space.num_states; ++j){
-	if(Space.qnums[j].t == -1){
-	  if(Space.qnums[j].energy < energy_p){
-	    energy_p = Space.qnums[j].energy;
-	    ind_p = j;
-	  }
-	}
-      }
-      state_p = Space.qnums[ind_p];
-      Space.qnums[ind_p] = Space.qnums[i];
-      Space.qnums[i] = state_p;
-    }
-    else if(Space.qnums[i].t == 1){
-      energy_n = Space.qnums[i].energy;
-      ind_n = i;
-      for(int j = i+1; j < Space.num_states; ++j){
-	if(Space.qnums[j].t == 1){
-	  if(Space.qnums[j].energy < energy_n){
-	    energy_n = Space.qnums[j].energy;
-	    ind_n = j;
-	  }
-	}
-      }
-      state_n = Space.qnums[ind_n];
-      Space.qnums[ind_n] = Space.qnums[i];
-      Space.qnums[i] = state_n;
-    }
-    }*/
 
   HF0.delete_struct(Chan);
   HF2.delete_struct(Chan);
   Delete_DIIS_HF(Chan, p, delp, tempdelp, B, maxl);
 
-  /*for(int i = 0; i < Space.num_states; ++i){
-    std::cout << Space.qnums[i].n << " " << Space.qnums[i].ml << " " << Space.qnums[i].m << " : " << Space.qnums[i].energy << " " << Space.qnums[i].type << std::endl;
-    }*/
-  for(int i = 0; i < Space.num_states; ++i){
-    std::cout << Space.qnums[i].n << " " << Space.qnums[i].par << " " << Space.qnums[i].j << " " << Space.qnums[i].t << " : " << Space.qnums[i].energy << " " << Space.qnums[i].type << std::endl;
+  if(Parameters.basis == "finite_HO"){
+    for(int i = 0; i < Space.num_states; ++i){
+      std::cout << Space.qnums[i].n << " " << Space.qnums[i].ml << " " << Space.qnums[i].m << " : " << Space.qnums[i].energy << " " << Space.qnums[i].type << std::endl;
+    }
   }
+  else if(Parameters.basis == "finite_J"){
+    for(int i = 0; i < Space.num_states; ++i){
+      std::cout << Space.qnums[i].n << " " << Space.qnums[i].par << " " << Space.qnums[i].j << " " << Space.qnums[i].t << " : " << Space.qnums[i].energy << " " << Space.qnums[i].type << std::endl;
+    }
+  }
+  else if(Parameters.basis == "finite_M"){
+    for(int i = 0; i < Space.num_states; ++i){
+      std::cout << Space.qnums[i].n << " " << Space.qnums[i].par << " " << Space.qnums[i].m << " " << Space.qnums[i].t << " : " << Space.qnums[i].energy << " " << Space.qnums[i].type << std::endl;
+    }
+  }
+
+  //   Delete Mesh for KE   //
+  if(Parameters.basis == "finite_J" || Parameters.basis == "finite_JM"){
+    delete[] ME.ra;
+    delete[] ME.wra;
+    delete[] ME.hol;
+  }
+  ///////////////////////////
 }
 
 void Hartree_Fock_Step(Input_Parameters &Parameters, Model_Space &Space, HF_Channels &Chan, Single_Particle_States &HF, Single_Particle_States &HF2, HF_Matrix_Elements &ME, double &Bshift0, double &error)
@@ -398,7 +297,7 @@ void Hartree_Fock_Step(Input_Parameters &Parameters, Model_Space &Space, HF_Chan
       int m, l, mind, nind, lind, kind;
       int key1, key2, chan1, ind2, vector_ind2;
       int size2, length2, minj;
-      double term;
+      double term, KE, HF_0;
       State tb;
       #pragma omp for schedule(static)
       for(int ml = 0; ml < length1; ++ml){
@@ -407,9 +306,15 @@ void Hartree_Fock_Step(Input_Parameters &Parameters, Model_Space &Space, HF_Chan
 	length2 = int(0.5 * m * (2*size - m + 1));
 	l = int(m + ml - length2);
 	lind = Chan.ob_state(chan, l).v1;
-	
-	if(m == l){ fock[size * m + l] = Space.qnums[mind].energy; } // Add diagonal elements to fock matrices
-	else{ fock[size * m + l] = 0.0; }
+
+	HF_0 = 0.0;
+	if(m == l){
+	  //if(Parameters.basis == "finite_J" || Parameters.basis == "finite_JM"){ KE = kinetic_energy(Parameters, Space, ME, mind, lind); }
+	  //else{ KE = Space.qnums[mind].energy; } // Add diagonal elements to fock matrices
+	  KE = Space.qnums[mind].energy;
+	}
+	else{ KE = 0.0; }
+	fock[size * m + l] = KE;
 	
 	for(int chan2 = 0; chan2 < Chan.size3; ++chan2){
 	  vector_ind2 = HF.vector_index[chan2];
@@ -422,12 +327,15 @@ void Hartree_Fock_Step(Input_Parameters &Parameters, Model_Space &Space, HF_Chan
 		plus(tb, Space.qnums[mind], Space.qnums[nind]);
 		minj = abs(Chan.qnums3[chan].j - Chan.qnums3[chan2].j);
 		while(tb.j >= minj){
+		  if( (mind == nind || lind == kind) && tb.j%4 != 0 ){ tb.j -= 2; continue; }
 		  chan1 = Space.ind_2b_dir(Parameters.basis, tb);
 		  key1 = Chan.tb_map[chan1][Space.hash2(mind, nind, tb.j)];
 		  key2 = Chan.tb_map[chan1][Space.hash2(lind, kind, tb.j)];
 		  ind2 =  ME.Index[chan1] + (key1 * Chan.ntb[chan1] + key2);
 		  term = HF.vectors[vector_ind2 + (beta * size2 + n)] * HF.vectors[vector_ind2 + (beta * size2 + k)] * ME.V[ind2];
 		  term *= (tb.j + 1.0)/(Chan.qnums3[chan].j + 1.0);
+		  //std::cout << "< " << mind << ", " << nind << " || " << lind << ", " << kind << " >^ " << std::setprecision(14) << tb.j << " : " << (tb.j + 1.0)/(Chan.qnums3[chan].j + 1.0) << ", " << HF.vectors[vector_ind2 + (beta * size2 + n)] << ", " << HF.vectors[vector_ind2 + (beta * size2 + k)] << " : " << ME.V[ind2] << std::endl;
+		  HF_0 += term;
 		  fock[size * m + l] += term;
 		  tb.j -= 2;
 		}
@@ -435,6 +343,7 @@ void Hartree_Fock_Step(Input_Parameters &Parameters, Model_Space &Space, HF_Chan
 	    }
 	  }
 	}
+	//std::cout << "a = " << mind+1 << ", c = " << lind+1 << std::setprecision(14) << " : e_kin = " << KE << ", hf = " << HF_0 << std::endl;
 	for(int beta = HF.hole_size[chan]; beta < HF.vector_size[chan]; ++beta){ // Sum over unoccupied levels
 	  fock[size * m + l] += HF.vectors[vector_ind + (beta * size + m)] * HF.vectors[vector_ind + (beta * size + l)] * Bshift[energy_ind + beta];
 	}
@@ -442,30 +351,19 @@ void Hartree_Fock_Step(Input_Parameters &Parameters, Model_Space &Space, HF_Chan
       }
     }
 
-    /*if(chan == 6 || chan == 7){
-      std::cout << "HF(" << chan << ")" << std::endl;
-      for(int j = 0; j < size; ++j){
-	for(int k = 0; k < size; ++k){
-	  std::cout << fock[size * j + k] << " ";
-	}
-	std::cout << std::endl;
-      }
-      std::cout << std::endl;
-      }*/
-
     lda = size;
     lwork = (3+2)*size;
     w = new double[lda];
     work = new double[lwork];
-    for(int j = 0; j < size; ++j){ w[j] = 0.0; }
-    for(int j = 0; j < (3+2)*size; ++j){ work[j] = 0.0; }
+    for(int j = 0; j < lda; ++j){ w[j] = 0.0; }
+    for(int j = 0; j < lwork; ++j){ work[j] = 0.0; }
     if(size != 0){ dsyev_(&jobz, &uplo, &size, fock, &lda, w, work, &lwork, &info); }
 
     double deltaE;
     for(int j = HF.hole_size[chan]; j < HF.vector_size[chan]; ++j){ w[j] -= Bshift[energy_ind + j]; } // Add back Level-shift parameter
     for(int j = HF.hole_size[chan]; j < HF.vector_size[chan]; ++j){
       deltaE = fabs(w[j] - HF.energies[energy_ind + j]);
-      if( deltaE > Bshift0 ){ Bshift[energy_ind + j] = Bshift0 + deltaE; }
+      if( deltaE > Bshift0 || HF.hole_size[chan] == 0 || HF.vector_size[chan] == HF.hole_size[chan]){ Bshift[energy_ind + j] = Bshift0 + deltaE; }
       else{ Bshift[energy_ind + j] = Bshift0 + w[HF.hole_size[chan]] - w[HF.hole_size[chan] - 1]; }
     }
 
@@ -788,9 +686,6 @@ void Convert_To_HF_Matrix_Elements(Input_Parameters &Parameters, HF_Channels &Ch
       int p_ind, q_ind, r_ind, s_ind;
       int vec_ind_r, vec_ind_s, p_size, q_size;
       #pragma omp for schedule(static)
-      /*for(int pqrs = 0; pqrs < matlength; ++pqrs){
-	rs = pqrs%size;
-	pq = (pqrs - rs)/size;*/
       for(int pqrs = 0; pqrs < length1; ++pqrs){
 	pq = std::floor((2*size - 1 - std::sqrt(1 + 4*size + 4*matlength - 8*pqrs))/2) + 1;
 	length2 = int(0.5 * pq * (2*size - pq + 1));
@@ -819,27 +714,76 @@ void Convert_To_HF_Matrix_Elements(Input_Parameters &Parameters, HF_Channels &Ch
       }
     }
 
-    /*std::cout << "tb_vec[" << chan << "]" << std::endl;
-    for(int tb1 = 0; tb1 < length; ++tb1){ std::cout << Chan.tb_vec[chan][2*tb1] << "," << Chan.tb_vec[chan][2*tb1 + 1] << "  "; }
-    std::cout << std::endl << std::endl;
-    std::cout << std::setprecision(8);
-    std::cout << "ME.V[" << chan << "]" << std::endl;
-    for(int tb1 = 0; tb1 < length; ++tb1){
-      for(int tb2 = 0; tb2 < length; ++tb2){
-	std::cout << ME.V[chan][tb1*length + tb2] << " ";
+    /*#pragma omp parallel
+    {
+      int pq, rs, length2;
+      two_body pq_tb, rs_tb;
+      int p, q, r, s;
+      int p_chan, q_chan, r_chan, s_chan;
+      int p_ind, q_ind, r_ind, s_ind;
+      int vec_ind_r, vec_ind_s, p_size, q_size;
+      double dir, exch, term, norm;
+      #pragma omp for schedule(static)
+      for(int pqrs = 0; pqrs < matlength; ++pqrs){
+	rs = pqrs%size;
+	pq = int((pqrs - rs)/size);
+	pq_tb = Chan.tb_state(chan, pq);
+	rs_tb = Chan.tb_state(chan, rs);
+	p = pq_tb.v1;
+	q = pq_tb.v2;
+	r = rs_tb.v1;
+	s = rs_tb.v2;
+	norm = 1.0;
+	if(p == q){ norm /= std::sqrt(2.0); }
+	if(r == s){ norm /= std::sqrt(2.0); }
+	ME.V[ME.Index[chan] + pq*size + rs] *= norm; // renormalize ME
+	p_chan = Space.ind_1b(Parameters.basis, Space.qnums[p]);
+	q_chan = Space.ind_1b(Parameters.basis, Space.qnums[q]);
+	r_chan = Space.ind_1b(Parameters.basis, Space.qnums[r]);
+	s_chan = Space.ind_1b(Parameters.basis, Space.qnums[s]);
+	p_ind = Chan.ob_map[p_chan][p];
+	q_ind = Chan.ob_map[q_chan][q];
+	r_ind = Chan.ob_map[r_chan][r];
+	s_ind = Chan.ob_map[s_chan][s];
+	vec_ind_r = States.vector_index[r_chan];
+	vec_ind_s = States.vector_index[s_chan];
+	p_size = States.vector_size[p_chan];
+	q_size = States.vector_size[q_chan];
+	dir = 0.0;
+	exch = 0.0;
+	if(p_chan == r_chan && q_chan == s_chan){
+	  dir = States.vectors[vec_ind_r + (r_ind * p_size + p_ind)] * States.vectors[vec_ind_s + (s_ind * q_size + q_ind)];
+	}
+	if(p_chan == s_chan && q_chan == r_chan && Chan.qnums1[chan].t != 0){
+	  exch = States.vectors[vec_ind_r + (r_ind * q_size + q_ind)] * States.vectors[vec_ind_s + (s_ind * p_size + p_ind)];
+	}
+	M1[size * pq + rs] = (dir - exch * std::pow(-1.0, int(0.5*(Chan.qnums3[p_chan].j + Chan.qnums3[q_chan].j - Chan.qnums1[chan].j)))) * norm;
       }
-      std::cout << std::endl;
-    }
-    std::cout << std::endl;
+      }*/
 
-    std::cout << "M1[" << chan << "]" << std::endl;
-    for(int tb1 = 0; tb1 < length; ++tb1){
-      for(int tb2 = 0; tb2 < length; ++tb2){
-	std::cout << M1[tb1*length + tb2] << " ";
+    /*if(chan == 20){
+      std::cout << "tb_vec[" << chan << "]" << std::endl;
+      for(int tb1 = 0; tb1 < size; ++tb1){ std::cout << Chan.tb_vec[Chan.tb_index[chan] + tb1].v1 << "," << Chan.tb_vec[Chan.tb_index[chan] + tb1].v2 << "  "; }
+      std::cout << std::endl << std::endl;
+      std::cout << std::setprecision(8);
+      std::cout << "ME.V[" << chan << "]" << std::endl;
+      for(int tb1 = 0; tb1 < size; ++tb1){
+	for(int tb2 = 0; tb2 < size; ++tb2){
+	  std::cout << ME.V[ME.Index[chan] + tb1*size + tb2] << " ";
+	}
+	std::cout << std::endl;
       }
       std::cout << std::endl;
-    }
-    std::cout << std::endl;*/
+      
+      std::cout << "M1[" << chan << "]" << std::endl;
+      for(int tb1 = 0; tb1 < size; ++tb1){
+	for(int tb2 = 0; tb2 < size; ++tb2){
+	  std::cout << M1[tb1*size + tb2] << " ";
+	}
+	std::cout << std::endl;
+      }
+      std::cout << std::endl;
+      }*/
 
     transa = 'N';
     transb = 'T';
@@ -848,14 +792,16 @@ void Convert_To_HF_Matrix_Elements(Input_Parameters &Parameters, HF_Channels &Ch
     dgemm_NN(ME.V + ME.Index[chan], M1, C, &size, &size, &size, &alpha1, &beta1, &transa, &transa);
     dgemm_TN(M1, C, ME.V + ME.Index[chan], &size, &size, &size, &alpha1, &beta1, &transb, &transa);
 
-    /*std::cout << "HF.ME.V[" << chan << "]" << std::endl;
-    for(int tb1 = 0; tb1 < length; ++tb1){
-      for(int tb2 = 0; tb2 < length; ++tb2){
-	std::cout << ME.V[chan][tb1*length + tb2] << " ";
+    /*if(chan == 20){
+      std::cout << "HF.ME.V[" << chan << "]" << std::endl;
+      for(int tb1 = 0; tb1 < size; ++tb1){
+	for(int tb2 = 0; tb2 < size; ++tb2){
+	  std::cout << ME.V[ME.Index[chan] + tb1*size + tb2] << " ";
+	}
+	std::cout << std::endl;
       }
       std::cout << std::endl;
-    }
-    std::cout << std::endl;*/
+      }*/
 
     delete[] M1;
     delete[] C;

@@ -85,6 +85,13 @@ struct HF_Channels{
 struct HF_Matrix_Elements{
   double *V;
   int *Index;
+
+  int n_rel;
+  double cutoff;
+  double *ra;
+  double *wra;
+  double *hol;
+
   HF_Matrix_Elements(HF_Channels &Chan);
   HF_Matrix_Elements(){};
   void delete_struct(HF_Channels &Chan);

@@ -50,17 +50,25 @@ double Diagram_D_9(Input_Parameters &Parameters, Model_Space &Space, Channels &C
 double Diagram_X_2b(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps, int &a, int &b, int &i, int &j, int &print, int permute);
 double Diagram_X_4a(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps, int &a, int &b, int &i, int &j, int &print, int permute);
 
-void CC_Test_Full_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps);
-void CC_Test_T1_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps);
-void CC_Test_T2_1_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps);
-void CC_Test_T2_2_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps);
-void CC_Test_T2_3_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps);
-void CC_Test_T2_4_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps);
-void CC_Test_T3_1_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps);
-void CC_Test_T3_2_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps);
-void CC_Test_T3_3_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps);
-void CC_Test_T3_4_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps);
-void CC_Test_t2_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps);
-void CC_Test_t3_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Interactions &IntsJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps);
+void CC_Test_Full_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Amplitudes &Amps);
+void CC_Test_T1_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Amplitudes &Amps);
+void CC_Test_T2_1_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Amplitudes &Amps);
+void CC_Test_T2_2_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Amplitudes &Amps);
+void CC_Test_T2_3_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Amplitudes &Amps);
+void CC_Test_T2_4_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Amplitudes &Amps);
+void CC_Test_T3_1_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Amplitudes &Amps);
+void CC_Test_T3_2_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Amplitudes &Amps);
+void CC_Test_T3_3_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Amplitudes &Amps);
+void CC_Test_T3_4_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Amplitudes &Amps);
+void CC_Test_t2_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Amplitudes &Amps);
+void CC_Test_t3_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Amplitudes &AmpsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Amplitudes &Amps);
+
+void CC_Test_Xpp2_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Eff_Interactions &Eff_IntsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints);
+void CC_Test_Xhp2_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Eff_Interactions &Eff_IntsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints);
+void CC_Test_Xhh2_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Eff_Interactions &Eff_IntsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints);
+void CC_Test_Xpphp3_4_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Eff_Interactions &Eff_IntsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints);
+void CC_Test_Xhppp3_2_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Eff_Interactions &Eff_IntsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints);
+void CC_Test_Xhphp2_1_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Eff_Interactions &Eff_IntsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints);
+void CC_Test_Xpppp1_J(Input_Parameters &ParametersJ, Model_Space &SpaceJ, Channels &ChanJ, Eff_Interactions &Eff_IntsJ, Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints);
 
 #endif
