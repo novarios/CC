@@ -413,9 +413,9 @@ void Build_Model_Space(Input_Parameters &Parameters, Model_Space &Space)
   /*for(int i = 0; i < Space.num_states; ++i){
     std::cout << "###   " << i << ", " << Space.qnums[i].n << " " << Space.qnums[i].ml << " " << Space.qnums[i].m << " " << Space.qnums[i].t << ", " << Space.qnums[i].energy << std::endl;
     }*/
-  /*for(int i = 0; i < Space.num_states; ++i){
-    std::cout << "###   " << i << ", " << Space.qnums[i].n << " " << Space.qnums[i].j << " " << Space.qnums[i].par << " " << Space.qnums[i].t << ", " << Space.qnums[i].energy << std::endl;
-    }*/
+  for(int i = 0; i < Space.num_states; ++i){
+    std::cout << "###   " << i << ", " << Space.qnums[i].n << " " << Space.qnums[i].l << " " << Space.qnums[i].j << " " << Space.qnums[i].t << ", " << Space.qnums[i].energy << std::endl;
+  }
 }
 
 void Build_Model_Space_J2(Input_Parameters &Parameters, Model_Space &Space)
@@ -467,6 +467,7 @@ void Build_Model_Space_J2(Input_Parameters &Parameters, Model_Space &Space)
       Space.qnums[ind].energy = states[i].energy;
       Space.qnums[ind].type = states[i].type;
       Space.shellsm[i][j] = ind;
+      //Space.qnums[ind].j = states[i].j; // TEST!!
       Space.shellsj[ind] = states[i].j;
       if(Space.qnums[ind].par < Space.qmins.par){ Space.qmins.par = Space.qnums[ind].par; }
       if(Space.qnums[ind].par > Space.qmaxs.par){ Space.qmaxs.par = Space.qnums[ind].par; }
@@ -825,7 +826,7 @@ Channels::Channels(Input_Parameters &Parameters, Model_Space &Space)
   pq1_chan_setup(Parameters,Space, hp1_total,nhp1,hp1_index,hp1_map,hp1_vec, size2,qnums2, size3,qnums3, nh,h_vec,h_index,np,p_index,p_vec); // hp1
   pq1_chan_setup(Parameters,Space, ph1_total,nph1,ph1_index,ph1_map,ph1_vec, size2,qnums2, size3,qnums3, np,p_vec,p_index,nh,h_index,h_vec); // ph1
 
-  for(int chan = 0; chan < size1; ++chan){
+  /*for(int chan = 0; chan < size1; ++chan){
     std::cout << "chan = " << chan << ", j = " << qnums1[chan].j << ", npp = " << npp[chan] << ", nhh = " << nhh[chan] << std::endl;
     for(int pp = 0; pp < npp[chan]; ++pp){
       std::cout << pp_vec[pp_index[chan] + pp].v1 << "," << pp_vec[pp_index[chan] + pp].v2 << "  ";
@@ -835,7 +836,7 @@ Channels::Channels(Input_Parameters &Parameters, Model_Space &Space)
       std::cout << hh_vec[hh_index[chan] + hh].v1 << "," << hh_vec[hh_index[chan] + hh].v2 << "  ";
     }
     std::cout << std::endl;
-  }
+    }*/
 
   pqr_chan_setup(Parameters,Space, hhp_total,nhhp,hhp_index,hhp_map,hhp_vec,hhp_j, size3,qnums3, nhh,hh_vec,hh_index, np,p_index,p_vec); // hhp
   pqr_chan_setup(Parameters,Space, pph_total,npph,pph_index,pph_map,pph_vec,pph_j, size3,qnums3, npp,pp_vec,pp_index, nh,h_index,h_vec); // pph

@@ -79,8 +79,11 @@ void projection(double *u, double *v, double *proj, int size);
 void GramSchmidt(double *Vectors, int size);
 //void GramSchmidt(double **Vectors, int size);
 double rand_normal(double mean, double stddev);
-void Asym_Diagonalize1(double *Ham, int &N, double &eigenvalue, double &norm1p, int &np0);
-void Asym_Diagonalize2(double *Ham, int &N, double &eigenvalue, double &norm1p, int &np0);
+void Asym_Diagonalize1(double *Ham, int &N, double *eigenvalues, double *eigenvectors_L, double *eigenvectors_R, int num);
+//void Asym_Diagonalize2(double *Ham, int &N, double &eigenvalue, double &norm1p, int &np0);
+//void Asym_Diagonalize1(double *Ham, int &N, double *eigenvalues, double *eigenvectors_R, double *eigenvectors_L, int num);
+void Asym_Diagonalize2(double *Ham, int &N, double *eigenvalues, double *eigenvectors_L, double *eigenvectors_R, int num);
+void Asym_Diagonalize2_0(double *Ham, int &N, double *eigenvalues, double *eigenvectors, int num, char type);
 
 void gauss_legendre(double x1, double x2, double *x, double *w, int n);
 void laguerre_general(int n, double alpha, double x, double *cx);

@@ -673,11 +673,9 @@ void Perform_CC(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan
   while(error > 1e-12 && ind < 2000){
     Update_CC(Parameters, Space, Chan, Ints, Eff_Ints, Amps, tempAmps);
 
-    //Print_Amps(Parameters, Chan, tempAmps);
     Amps2.copy_Amplitudes(Parameters, Chan, Amps);
     Amps2.zero(Parameters, Chan, true);
     Gather_Amps(Parameters, Space, Chan, Eff_Ints, Amps2, tempAmps, mix);
-    //Print_Amps(Parameters, Chan, Amps2);
     
     CC_Error(Parameters, Chan, Ints, Amps, Amps2, error);
     error /= mix;
@@ -790,10 +788,25 @@ void Perform_CC_Test(Input_Parameters &Parameters, Model_Space &Space, Channels 
   Update_Heff_3(Parameters, Space, Chan, Ints, Eff_Ints, Amps);       // J
   Update_Heff_3(ParametersM, SpaceM, ChanM, IntsM, Eff_IntsM, AmpsM); // M
 
-  EOM_1P(Parameters, Space, Chan, Eff_Ints, CCoutE);
+  /*EOM_1P(Parameters, Space, Chan, Eff_Ints, CCoutE);
   std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-  EOM_1P(ParametersM, SpaceM, ChanM, Eff_IntsM, CCoutEM);
+  EOM_1P(ParametersM, SpaceM, ChanM, Eff_IntsM, CCoutEM);*/
 
+  EOM EOM_J1, EOM_J2, EOM_M1, EOM_M2;
+  EOM_J1.PA1_EOM(Parameters, Space, Chan, Eff_Ints);
+  EOM_J1.Print_EOM_1P(Parameters, CCoutE);
+  EOM_J2.PR1_EOM(Parameters, Space, Chan, Eff_Ints);
+  EOM_J2.Print_EOM_1P(Parameters, CCoutE);
+  std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+  EOM_M1.PA1_EOM(ParametersM, SpaceM, ChanM, Eff_IntsM);
+  EOM_M1.Print_EOM_1P(ParametersM, CCoutEM);
+  EOM_M2.PR1_EOM(ParametersM, SpaceM, ChanM, Eff_IntsM);
+  EOM_M2.Print_EOM_1P(ParametersM, CCoutEM);
+
+  EOM_J1.delete_struct();
+  EOM_J2.delete_struct();
+  EOM_M1.delete_struct();
+  EOM_M2.delete_struct();
   Amps2.delete_struct(Parameters, Chan);      // J
   tempAmps.delete_struct(Parameters, Chan);
   StatesM.delete_struct(HF_ChanM);            // M
@@ -2082,13 +2095,12 @@ void Update_Heff_3(Input_Parameters &Parameters, Model_Space &Space, Channels &C
   Eff_Ints.Xhphh.X_gather(Parameters, Chan);
 }
 
-
-void PA_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints, State *&states, double *&nums, int &state_num)
+void EOM::PA1_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints)
 {
   double *Ham;
   State state;
   int length;
-  int np0, npph0, npph;
+  int np0, npph0, npph, np_tot, npph_tot;
   three_body *pph_vec;
   State *J_state;
   int *J_vec;
@@ -2098,51 +2110,84 @@ void PA_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Ef
   int chan_j;
   int chan, N;
   double norm1p;
-  double eigenvalue;
+  double *eigenvalues, *eigenvectors_L, *eigenvectors_R;
   int p1, p2, h1;
 
-  int *chan_vec;
-  count_states(Parameters, Space, Chan, 1, chan_vec, state_num);
-
-  states = new State[state_num];
-  nums = new double[2 * state_num];
-  for(int n = 0; n < state_num; ++n){
+  // Count N_states and setup EOM structures //
+  count_states(Parameters, Space, Chan, 1);
+  np_tot = 0;
+  npph_tot = 0;
+  for(int n = 0; n < N_states; ++n){
     chan = chan_vec[n];
     np0 = Chan.np[chan];
-    npph0 = Chan.npph[chan];
-    npph = 0;
-    chan_j = Chan.qnums3[chan].j;
-
-    for(int pph = 0; pph < npph0; ++pph){
+    npph0 = 0;
+    npph = Chan.npph[chan]; 
+    for(int pph = 0; pph < npph; ++pph){
       p1 = Chan.pph_state(chan, pph).v1;
       p2 = Chan.pph_state(chan, pph).v2;
-      if( (p1 < p2) || (Parameters.basis == "finite_J" && p1 == p2) ){ ++npph; }
+      if( (p1 < p2) || (Parameters.basis == "finite_J" && p1 == p2) ){ ++npph0; }
     }
-    pph_vec = new three_body[npph];
-    J_state = new State[npph];
-    J_vec = new int[npph];
-    a_vec = new int[npph];
-    b_vec = new int[npph];
-    i_vec = new int[npph];
-    
-    npph = 0;
-    for(int pph = 0; pph < npph0; ++pph){
+    nob[n] = np0;
+    nthb[n] = npph0;
+    nstate[n] = np0 + npph0;
+    ob_index[n] = np_tot;
+    thb_index[n] = npph_tot;
+    state_index[n] = np_tot + npph_tot;
+    np_tot += np0;
+    npph_tot += npph0;
+  }
+  ob_vec = new one_body[np_tot];
+  thb_vec = new three_body[npph_tot];
+  thb_qnums = new State[npph_tot];
+  state_vec_R = new double[np_tot + npph_tot];
+  state_vec_L = new double[np_tot + npph_tot];
+  /////////////////////////////////////////////
+
+  for(int n = 0; n < N_states; ++n){
+    chan = chan_vec[n];
+    np0 = Chan.np[chan];
+    npph0 = 0;
+    npph = Chan.npph[chan];
+    chan_j = Chan.qnums3[chan].j;
+
+    for(int pph = 0; pph < npph; ++pph){
+      p1 = Chan.pph_state(chan, pph).v1;
+      p2 = Chan.pph_state(chan, pph).v2;
+      if( (p1 < p2) || (Parameters.basis == "finite_J" && p1 == p2) ){ ++npph0; }
+    }
+    pph_vec = new three_body[npph0];
+    J_state = new State[npph0];
+    J_vec = new int[npph0];
+    a_vec = new int[npph0];
+    b_vec = new int[npph0];
+    i_vec = new int[npph0];
+
+    // set EOM array
+    npph0 = 0;
+    for(int p = 0; p < np0; ++p){ ob_vec[ob_index[n] + p] = Chan.p_state(chan, p); }
+    for(int pph = 0; pph < npph; ++pph){
       p1 = Chan.pph_state(chan, pph).v1;
       p2 = Chan.pph_state(chan, pph).v2;
       h1 = Chan.pph_state(chan, pph).v3;
       if( (p1 < p2) || (Parameters.basis == "finite_J" && p1 == p2) ){
-	pph_vec[npph] = Chan.pph_state(chan, pph);
-	J_state[npph] = Chan.pph_j[Chan.pph_index[chan] + pph];
-	J_vec[npph] = Chan.pph_j[Chan.pph_index[chan] + pph].j;
-	a_vec[npph] = Space.qnums[p1].j;
-	b_vec[npph] = Space.qnums[p2].j;
-	i_vec[npph] = Space.qnums[h1].j;
-	++npph;
+	pph_vec[npph0] = Chan.pph_state(chan, pph);
+	J_state[npph0] = Chan.pph_j[Chan.pph_index[chan] + pph];
+	J_vec[npph0] = Chan.pph_j[Chan.pph_index[chan] + pph].j;
+	a_vec[npph0] = Space.qnums[p1].j;
+	b_vec[npph0] = Space.qnums[p2].j;
+	i_vec[npph0] = Space.qnums[h1].j;
+	// set EOM arrays
+	thb_vec[thb_index[n] + npph0] = Chan.pph_state(chan, pph);
+	thb_qnums[thb_index[n] + npph0] = Chan.pph_j[Chan.pph_index[chan] + pph];
+	++npph0;
       }
     }
 
-    N = np0 + npph;
+    N = np0 + npph0;
     Ham = new double[N*N];
+    eigenvalues = new double[1];
+    eigenvectors_R = new double[N];
+    eigenvectors_L = new double[N];
     for(int ind = 0; ind < N*N; ++ind){ Ham[ind] = 0.0; }
 
     #pragma omp parallel
@@ -2342,7 +2387,7 @@ void PA_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Ef
 	  key1 = Chan.p_map[chan][b1];
 	  key2 = Chan.pph_map[chan][Space.hash3(k1, k2, k3, J_vec[ket])];
 	  chan_ind = Eff_Ints.Xhppp.X_3_2_index[chan];
-	  ind = key1 * npph0 + key2;
+	  ind = key1 * npph + key2;
 	  ME += fac1 * Eff_Ints.Xhppp.X_3_2[chan_ind + ind];
 	  ket += np0;
 	}
@@ -2358,23 +2403,23 @@ void PA_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Ef
       }
     }
 
-    /*std::cout << std::endl << "Hamiltonian" << std::endl;
-    std::cout << std::fixed;
-    std::cout << std::setprecision(5);
+    if(N <= 1000){ Asym_Diagonalize1(Ham, N, eigenvalues, eigenvectors_L, eigenvectors_R, 1); }
+    else{ Asym_Diagonalize2(Ham, N, eigenvalues, eigenvectors_L, eigenvectors_R, 1); }
+
+    norm1p = 0.0;
+    for(int i = 0; i < np0; ++i){ norm1p += eigenvectors_L[i] * eigenvectors_R[i]; }
+    norm1p = std::sqrt(norm1p);
+
+    del_E[n] = eigenvalues[0];
+    norm_1p[n] = norm1p;
     for(int i = 0; i < N; ++i){
-      for(int j = 0; j < N; ++j){
-	std::cout << std::setw(9) << Ham[N*i + j];
-      }
-      std::cout << std::endl;
+      state_vec_R[state_index[n] + i] = eigenvectors_R[i];
+      state_vec_L[state_index[n] + i] = eigenvectors_L[i];
     }
-    std::cout << std::endl;*/
 
-    if(N <= 500){ Asym_Diagonalize1(Ham, N, eigenvalue, norm1p, np0); }
-    else{ Asym_Diagonalize2(Ham, N, eigenvalue, norm1p, np0); }
-    states[n] = Chan.qnums3[chan];
-    nums[2*n] = eigenvalue;
-    nums[2*n + 1] = norm1p;
-
+    delete[] eigenvalues;
+    delete[] eigenvectors_L;
+    delete[] eigenvectors_R;
     delete[] pph_vec;
     delete[] J_state;
     delete[] J_vec;
@@ -2383,15 +2428,14 @@ void PA_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Ef
     delete[] i_vec;
     delete[] Ham;
   }
-  delete[] chan_vec;
 }
 
-void PR_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints, State *&states, double *&nums, int &state_num)
+void EOM::PR1_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints)
 {
   double *Ham;
   State state;
   int length;
-  int nh0, nhhp0, nhhp;
+  int nh0, nhhp0, nhhp, nh_tot, nhhp_tot;
   three_body *hhp_vec;
   State *J_state;
   int *J_vec;
@@ -2401,52 +2445,84 @@ void PR_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Ef
   int chan_j;
   int chan, N;
   double norm1p;
-  double eigenvalue;
+  double *eigenvalues, *eigenvectors_L, *eigenvectors_R;
   int h1, h2, p1;
 
-  int *chan_vec;
-  count_states(Parameters, Space, Chan, 0, chan_vec, state_num);
-
-  states = new State[state_num];
-  nums = new double[2 * state_num];
-  for(int n = 0; n < state_num; ++n){
+  // Count N_states and setup EOM structures //
+  count_states(Parameters, Space, Chan, 0);
+  nh_tot = 0;
+  nhhp_tot = 0;
+  for(int n = 0; n < N_states; ++n){
     chan = chan_vec[n];
     nh0 = Chan.nh[chan];
-    nhhp0 = Chan.nhhp[chan];
-    nhhp = 0;
-    chan_j = Chan.qnums3[chan].j;
-
-    for(int hhp = 0; hhp < nhhp0; ++hhp){
+    nhhp0 = 0;
+    nhhp = Chan.nhhp[chan]; 
+    for(int hhp = 0; hhp < nhhp; ++hhp){
       h1 = Chan.hhp_state(chan, hhp).v1;
       h2 = Chan.hhp_state(chan, hhp).v2;
-      if( (h1 < h2) || (Parameters.basis == "finite_J" && h1 == h2) ){ ++nhhp; }
+      if( (h1 < h2) || (Parameters.basis == "finite_J" && h1 == h2) ){ ++nhhp0; }
     }
-    hhp_vec = new three_body[nhhp];
-    J_state = new State[nhhp];
-    J_vec = new int[nhhp];
-    i_vec = new int[nhhp];
-    j_vec = new int[nhhp];
-    a_vec = new int[nhhp];
-    
-    nhhp = 0;
-    for(int hhp = 0; hhp < nhhp0; ++hhp){
+    nob[n] = nh0;
+    nthb[n] = nhhp0;
+    nstate[n] = nh0 + nhhp0;
+    ob_index[n] = nh_tot;
+    thb_index[n] = nhhp_tot;
+    state_index[n] = nh_tot + nhhp_tot;
+    nh_tot += nh0;
+    nhhp_tot += nhhp0;
+  }
+  ob_vec = new one_body[nh_tot];
+  thb_vec = new three_body[nhhp_tot];
+  thb_qnums = new State[nhhp_tot];
+  state_vec_R = new double[nh_tot + nhhp_tot];
+  state_vec_L = new double[nh_tot + nhhp_tot];
+  /////////////////////////////////////////////
+
+  for(int n = 0; n < N_states; ++n){
+    chan = chan_vec[n];
+    nh0 = Chan.nh[chan];
+    nhhp0 = 0;
+    nhhp = Chan.nhhp[chan];
+    chan_j = Chan.qnums3[chan].j;
+
+    for(int hhp = 0; hhp < nhhp; ++hhp){
+      h1 = Chan.hhp_state(chan, hhp).v1;
+      h2 = Chan.hhp_state(chan, hhp).v2;
+      if( (h1 < h2) || (Parameters.basis == "finite_J" && h1 == h2) ){ ++nhhp0; }
+    }
+    hhp_vec = new three_body[nhhp0];
+    J_state = new State[nhhp0];
+    J_vec = new int[nhhp0];
+    i_vec = new int[nhhp0];
+    j_vec = new int[nhhp0];
+    a_vec = new int[nhhp0];
+
+    // set EOM array    
+    nhhp0 = 0;
+    for(int h = 0; h < nh0; ++h){ ob_vec[ob_index[n] + h] = Chan.h_state(chan, h); }
+    for(int hhp = 0; hhp < nhhp; ++hhp){
       h1 = Chan.hhp_state(chan, hhp).v1;
       h2 = Chan.hhp_state(chan, hhp).v2;
       p1 = Chan.hhp_state(chan, hhp).v3;
       if( (h1 < h2) || (Parameters.basis == "finite_J" && h1 == h2) ){
-	hhp_vec[nhhp] = Chan.hhp_state(chan, hhp);
-	J_state[nhhp] = Chan.hhp_j[Chan.hhp_index[chan] + hhp];
-	J_vec[nhhp] = Chan.hhp_j[Chan.hhp_index[chan] + hhp].j;
-	i_vec[nhhp] = Space.qnums[h1].j;
-	j_vec[nhhp] = Space.qnums[h2].j;
-	a_vec[nhhp] = Space.qnums[p1].j;
-	++nhhp;
+	hhp_vec[nhhp0] = Chan.hhp_state(chan, hhp);
+	J_state[nhhp0] = Chan.hhp_j[Chan.hhp_index[chan] + hhp];
+	J_vec[nhhp0] = Chan.hhp_j[Chan.hhp_index[chan] + hhp].j;
+	i_vec[nhhp0] = Space.qnums[h1].j;
+	j_vec[nhhp0] = Space.qnums[h2].j;
+	a_vec[nhhp0] = Space.qnums[p1].j;
+	// set EOM arrays
+	thb_vec[thb_index[n] + nhhp0] = Chan.hhp_state(chan, hhp);
+	thb_qnums[thb_index[n] + nhhp0] = Chan.hhp_j[Chan.hhp_index[chan] + hhp];
+	++nhhp0;
       }
     }
 
-    N = nh0 + nhhp;
-    if(N == 0){ continue; }
+    N = nh0 + nhhp0;
     Ham = new double[N*N];
+    eigenvalues = new double[1];
+    eigenvectors_R = new double[N];
+    eigenvectors_L = new double[N];
     for(int ind = 0; ind < N*N; ++ind){ Ham[ind] = 0.0; }
     
     #pragma omp parallel
@@ -2615,7 +2691,7 @@ void PR_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Ef
 	    key1 = Chan.h_map[chan][k1];
 	    key2 = Chan.hhp_map[chan][Space.hash3(b1, b2, b3, J_vec[bra])];
 	    chan_ind = Eff_Ints.Xhphh.X_3_1_index[chan];
-	    ind = key1 * nhhp0 + key2;
+	    ind = key1 * nhhp + key2;
 	    ME += -1.0 * Eff_Ints.Xhphh.X_3_1[chan_ind + ind];
 	  }
 	  bra += nh0;
@@ -2660,23 +2736,23 @@ void PR_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Ef
       }
     }
     
-    /*std::cout << std::endl << "Hamiltonian" << std::endl;
-    std::cout << std::fixed;
-    std::cout << std::setprecision(5);
+    if(N <= 100){ Asym_Diagonalize1(Ham, N, eigenvalues, eigenvectors_L, eigenvectors_R, 1); }
+    else{ Asym_Diagonalize2(Ham, N, eigenvalues, eigenvectors_L, eigenvectors_R, 1); }
+
+    norm1p = 0.0;
+    for(int i = 0; i < nh0; ++i){ norm1p += eigenvectors_L[i] * eigenvectors_R[i]; }
+    norm1p = std::sqrt(norm1p);
+
+    del_E[n] = eigenvalues[0];
+    norm_1p[n] = norm1p;
     for(int i = 0; i < N; ++i){
-      for(int j = 0; j < N; ++j){
-	std::cout << std::setw(9) << Ham[N*i + j];
-      }
-      std::cout << std::endl;
+      state_vec_R[state_index[n] + i] = eigenvectors_R[i];
+      state_vec_L[state_index[n] + i] = eigenvectors_L[i];
     }
-    std::cout << std::endl;*/
 
-    if(N <= 500){ Asym_Diagonalize1(Ham, N, eigenvalue, norm1p, nh0); }
-    else{ Asym_Diagonalize2(Ham, N, eigenvalue, norm1p, nh0); }
-    states[n] = Chan.qnums3[chan];
-    nums[2*n] = eigenvalue;
-    nums[2*n + 1] = norm1p;
-
+    delete[] eigenvalues;
+    delete[] eigenvectors_L;
+    delete[] eigenvectors_R;
     delete[] hhp_vec;
     delete[] J_state;
     delete[] J_vec;
@@ -2685,10 +2761,9 @@ void PR_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Ef
     delete[] a_vec;
     delete[] Ham;
   }
-  delete[] chan_vec;
 }
 
-void count_states(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, int type, int *&chan_vec, int &state_num)
+void EOM::count_states(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, int type)
 {
   int count1 = 0, count2 = 0, count_limit1 = 0, count_limit2 = 0;
   int num, ind, index;
@@ -2704,7 +2779,6 @@ void count_states(Input_Parameters &Parameters, Model_Space &Space, Channels &Ch
       if( type == 1 ){ num = Chan.np[chan]; }
       else if( type == 0 ){ num = Chan.nh[chan]; }
       if( num == 0 || Chan.qnums3[chan].t == 1 ){ continue; } // skip if no particles/holes in this channel
-
       if(Parameters.basis == "finite_HO" && (Chan.qnums3[chan].m != 1 || Chan.qnums3[chan].ml < 0 || Chan.qnums3[chan].ml > 2)){ continue; }
       else if(Parameters.basis == "finite_M" && (Chan.qnums3[chan].m != 1)){ continue; }
       ++count_limit1;
@@ -2716,14 +2790,23 @@ void count_states(Input_Parameters &Parameters, Model_Space &Space, Channels &Ch
       if( type == 1 ){ num = Chan.np[chan]; }
       else if( type == 0 ){ num = Chan.nh[chan]; }
       if( num == 0 || Chan.qnums3[chan].t == -1 ){ continue; } // skip if no particles/holes in this channel
-
       if(Parameters.basis == "finite_HO" && (Chan.qnums3[chan].m != 1 || Chan.qnums3[chan].ml < 0 || Chan.qnums3[chan].ml > 2)){ continue; }
       else if(Parameters.basis == "finite_M" && (Chan.qnums3[chan].m != 1)){ continue; }
       ++count_limit2;
     }
     if( count_limit2 > n_limit ){ count_limit2 = n_limit; }
   }
-  chan_vec = new int[count_limit1 + count_limit2];
+  N_states = count_limit1 + count_limit2;   // EOM variable
+  chan_vec = new int[N_states];             // EOM variable
+  qnums = new State[N_states];              // EOM variable
+  del_E = new double[N_states];             // EOM variable
+  norm_1p = new double[N_states];           // EOM variable
+  nob = new int[N_states];                  // EOM variable
+  ob_index = new int[N_states];             // EOM variable
+  nthb = new int[N_states];                 // EOM variable
+  thb_index = new int[N_states];            // EOM variable
+  nstate = new int[N_states];               // EOM variable
+  state_index = new int[N_states];          // EOM variable
 
   if( Parameters.Pshells != 0 ){
     while( count1 < count_limit1 ){
@@ -2732,14 +2815,11 @@ void count_states(Input_Parameters &Parameters, Model_Space &Space, Channels &Ch
 	if( type == 1 ){ num = Chan.np[chan]; index = 0; }
 	else if( type == 0 ){ num = Chan.nh[chan]; index = num-1; }
 	if( num == 0 || Chan.qnums3[chan].t == 1 ){ continue; } // skip if no particles/holes in this channel
-
 	if(Parameters.basis == "finite_HO" && (Chan.qnums3[chan].m != 1 || Chan.qnums3[chan].ml < 0 || Chan.qnums3[chan].ml > 2)){ continue; }
         else if(Parameters.basis == "finite_M" && (Chan.qnums3[chan].m != 1)){ continue; }
 	for(int n = 0; n < count1; ++n){ if( chan_vec[n] == chan ){ goto stop1; } }
-
 	if( type == 1 ){ tempen = Space.qnums[Chan.p_state(chan, index).v1].energy; }
 	else if( type == 0 ){ tempen = Space.qnums[Chan.h_state(chan, index).v1].energy; }
-	
 	if( (type == 1 && tempen < en) || (type == 0 && tempen > en) ){
 	  en = tempen;
 	  ind = chan;
@@ -2747,6 +2827,7 @@ void count_states(Input_Parameters &Parameters, Model_Space &Space, Channels &Ch
       stop1:;
       }
       chan_vec[count1] = ind;
+      qnums[count1] = Chan.qnums3[ind];
       ++count1;
     }
   }
@@ -2757,14 +2838,11 @@ void count_states(Input_Parameters &Parameters, Model_Space &Space, Channels &Ch
 	if( type == 1 ){ num = Chan.np[chan]; index = 0; }
 	else if( type == 0 ){ num = Chan.nh[chan]; index = num-1; }
 	if( num == 0 || Chan.qnums3[chan].t == -1 ){ continue; } // skip if no particles/holes in this channel
-
 	if(Parameters.basis == "finite_HO" && (Chan.qnums3[chan].m != 1 || Chan.qnums3[chan].ml < 0 || Chan.qnums3[chan].ml > 2)){ continue; }
         else if(Parameters.basis == "finite_M" && (Chan.qnums3[chan].m != 1)){ continue; }
 	for(int n = count1; n < count1+count2; ++n){ if( chan_vec[n] == chan ){ goto stop2; } }
-
 	if( type == 1 ){ tempen = Space.qnums[Chan.p_state(chan, index).v1].energy; }
 	else if( type == 0 ){ tempen = Space.qnums[Chan.h_state(chan, index).v1].energy; }
-
 	if( (type == 1 && tempen < en) || (type == 0 && tempen > en) ){
 	  en = tempen;
 	  ind = chan;
@@ -2772,55 +2850,58 @@ void count_states(Input_Parameters &Parameters, Model_Space &Space, Channels &Ch
       stop2:;
       }
       chan_vec[count1 + count2] = ind;
+      qnums[count1 + count2] = Chan.qnums3[ind];
       ++count2;
     }
   }
-  state_num = count1 + count2;
 }
 
-
-void EOM_1P(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints, double Energy)
-{
-  State *states;
-  double *nums;
-  int state_num;    
-  std::cout << "1PA-EOM" << std::endl;
-  PA_EOM(Parameters, Space, Chan, Eff_Ints, states, nums, state_num);
-  Print_EOM_1P(Parameters, states, nums, state_num, Energy);
-  delete[] states;
-  delete[] nums;
-  std::cout << "1PR-EOM" << std::endl;
-  PR_EOM(Parameters, Space, Chan, Eff_Ints, states, nums, state_num);
-  Print_EOM_1P(Parameters, states, nums, state_num, Energy);
-  delete[] states;
-  delete[] nums;
-}
-
-void Print_EOM_1P(Input_Parameters &Parameters, State *states, double *nums, int &state_num, double Energy)
+void EOM::Print_EOM_1P(Input_Parameters &Parameters, double Energy)
 {
   std::cout << std::fixed;
   if(Parameters.basis == "finite_HO"){
-    for(int i = 0; i < state_num; ++i){
-      std::cout << std::setw(5) << Parameters.Shells << std::setw(5) << Parameters.Pshells << std::setw(5) << states[i].ml;
-      std::cout << std::setw(5) << states[i].m << std::setprecision(2) << std::setw(8) << Parameters.density;
-      std::cout << std::setprecision(9) << std::setw(17) << Energy << std::setw(17) << nums[2*i];
-      std::cout << std::setw(17) << Energy + nums[2*i] << std::setw(17) << nums[2*i + 1] << std::endl;
+    for(int i = 0; i < N_states; ++i){
+      std::cout << std::setw(5) << Parameters.Shells << std::setw(5) << Parameters.Pshells << std::setw(5) << qnums[i].ml;
+      std::cout << std::setw(5) << qnums[i].m << std::setprecision(2) << std::setw(8) << Parameters.density;
+      std::cout << std::setprecision(9) << std::setw(17) << Energy << std::setw(17) << del_E[i];
+      std::cout << std::setw(17) << Energy + del_E[i] << std::setw(17) << norm_1p[i] << std::endl;
     }
   }
   else if(Parameters.basis == "finite_J"){
-    for(int i = 0; i < state_num; ++i){
+    for(int i = 0; i < N_states; ++i){
       std::cout << std::setw(5) << Parameters.Shells << std::setw(5) << Parameters.Pshells << std::setw(5) << Parameters.Nshells;
-      std::cout << std::setw(5) << states[i].j << std::setw(5) << states[i].par << std::setw(5) << states[i].t;
-      std::cout << std::setprecision(9) << std::setw(17) << Energy << std::setw(17) << nums[2*i];
-      std::cout << std::setw(17) << Energy + nums[2*i] << std::setw(17) << nums[2*i + 1] << std::endl;
+      std::cout << std::setw(5) << qnums[i].j << std::setw(5) << qnums[i].par << std::setw(5) << qnums[i].t;
+      std::cout << std::setprecision(9) << std::setw(17) << Energy << std::setw(17) << del_E[i];
+      std::cout << std::setw(17) << Energy + del_E[i] << std::setw(17) << norm_1p[i] << std::endl;
     }
   }
   else if(Parameters.basis == "finite_M"){
-    for(int i = 0; i < state_num; ++i){
+    for(int i = 0; i < N_states; ++i){
       std::cout << std::setw(5) << Parameters.Shells << std::setw(5) << Parameters.Pshells << std::setw(5) << Parameters.Nshells;
-      std::cout << std::setw(5) << states[i].m << std::setw(5) << states[i].par << std::setw(5) << states[i].t;
-      std::cout << std::setprecision(9) << std::setw(17) << Energy << std::setw(17) << nums[2*i];
-      std::cout << std::setw(17) << Energy + nums[2*i] << std::setw(17) << nums[2*i + 1] << std::endl;
+      std::cout << std::setw(5) << qnums[i].m << std::setw(5) << qnums[i].par << std::setw(5) << qnums[i].t;
+      std::cout << std::setprecision(9) << std::setw(17) << Energy << std::setw(17) << del_E[i];
+      std::cout << std::setw(17) << Energy + del_E[i] << std::setw(17) << norm_1p[i] << std::endl;
     }
+  }
+}
+
+void EOM::delete_struct()
+{
+  if(N_states != 0){
+    delete[] qnums;
+    delete[] chan_vec;
+    delete[] del_E;
+    delete[] norm_1p;
+    delete[] nob;
+    delete[] ob_vec;
+    delete[] ob_index;
+    delete[] nthb;
+    delete[] thb_vec;
+    delete[] thb_index;
+    delete[] thb_qnums;
+    delete[] nstate;
+    delete[] state_vec_R;
+    delete[] state_vec_L;
+    delete[] state_index;
   }
 }

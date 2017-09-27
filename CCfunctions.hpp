@@ -37,6 +37,12 @@ struct HF_Matrix_Elements;
 struct Interactions;
 struct Eff_Interactions;
 
+struct one_body;
+struct two_body;
+struct three_body;
+
+struct EOM;
+
 int Hash2(int &p, int &q, int &size);
 int Hash3(int &p, int &q, int &r, int &size);
 
@@ -60,6 +66,7 @@ void Doubles_Step_2(Input_Parameters &Parameters, Model_Space &Space, Channels &
 
 void Perform_CC(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps);
 void Perform_CC_Test(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps);
+void CC_compare_JM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps, std::string &inputfile);
 
 void Random_Step(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Eff_Interactions &Eff_Ints, Amplitudes &Amps0, Amplitudes &Amps, Amplitudes &Amps2, Amplitudes &tempAmps, double &mix, double &width, double &error, double &error2);
 void Randomize_Amps(Input_Parameters &Parameters, Channels &Chan, Interactions &Ints, Amplitudes &Amps0, Amplitudes &Amps, double &width);
@@ -75,13 +82,6 @@ void Delete_DIIS(Input_Parameters &Parameters, Channels &Chan, double *&p, doubl
 void Perform_DIIS(Input_Parameters &Parameters, Channels &Chan, Amplitudes &Amps, Amplitudes &Amps0, double &mix, double *&p, double *&delp, double *&tempdelp, double *&B, int &N, int &maxl, int &DIIS_count);
 void Update_B1(Input_Parameters &Parameters, Channels &Chan, Amplitudes &Amps, int &N, double *&p, double *&delp, double *&tempdelp, double *&B);
 void Update_B2(Input_Parameters &Parameters, Channels &Chan, Amplitudes &Amps, int &N, double *&p, double *&delp, double *&tempdelp, double *&B);
-
-void PA_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints, State *&states, double *&nums, int &state_num);
-void PR_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints, State *&states, double *&nums, int &state_num);
-void count_states(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, int type, int *&chan_vec, int &state_num);
-void CC_compare_JM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints, Amplitudes &Amps, std::string &inputfile);
-void EOM_1P(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints, double Energy);
-void Print_EOM_1P(Input_Parameters &Parameters, State *states, double *nums, int &state_num, double Energy);
 
 //Structure for holding Input parameters
 struct Input_Parameters{
@@ -194,6 +194,35 @@ struct Amplitudes{
   void delete_struct(Input_Parameters &Parameters, Channels &Chan);
   void zero(Input_Parameters &Parameters, Channels &Chan, bool t1flag);
   double get_energy(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints);
+};
+
+struct EOM{
+  int N_states;         //  number of total EOM states
+  State *qnums;         //  quantum numbers for N states
+  int *chan_vec;        //  1b-channels corresponding to each state
+  double *del_E;        //  energy difference
+  double *norm_1p;      //  1-body character of state
+
+  int *nob;             //  number of one-body components in each of N states
+  one_body *ob_vec;     //  contains nob one-body indices for each of N states
+  int *ob_index;        //  index in ob_vec for start of each sub_vec
+
+  int *nthb;            //  number of three-body components in each of N states
+  three_body *thb_vec;  //  contains nthb three-body indices for each of N states
+  int *thb_index;       //  index in thb_vec for start of each sub_vec
+  State *thb_qnums;     //  quantum numbers for 2-body state in 3-body state
+
+  int *nstate;          //  number of components in each of N states (nob + nthb)
+  double *state_vec_R;  //  contains nstate R coefficients for each of N states
+  double *state_vec_L;  //  contains nstate L coefficients for each of N states
+  int *state_index;     //  index in state_vec for start of each sub_vec
+
+  EOM(){};
+  void count_states(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, int type);
+  void PA1_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints);
+  void PR1_EOM(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Eff_Interactions &Eff_Ints);
+  void Print_EOM_1P(Input_Parameters &Parameters, double Energy);
+  void delete_struct();
 };
 
 #endif

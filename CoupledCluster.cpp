@@ -4,6 +4,7 @@
 #include "INTfunctions.hpp"
 #include "TESTfunctions.hpp"
 #include "BASISfunctions.hpp"
+#include "OPfunctions.hpp"
 
 int main(int argc, char * argv[])
 {
@@ -25,8 +26,7 @@ int main(int argc, char * argv[])
   Single_Particle_States States;
   double Energy, Energy0;
   int JM = 0;
-  //omp_set_num_threads(10);
-
+  
   Parameters.extra = 100;
   clock_gettime(CLOCK_MONOTONIC, &time1);
   if(argc == 1 || argc == 2){
@@ -131,8 +131,8 @@ int main(int argc, char * argv[])
     }
   }
 
-  Perform_CC_Test(Parameters, Space, Chan, Ints, Eff_Ints, Amps);
-  //Perform_CC(Parameters, Space, Chan, Ints, Eff_Ints, Amps);
+  //Perform_CC_Test(Parameters, Space, Chan, Ints, Eff_Ints, Amps);
+  Perform_CC(Parameters, Space, Chan, Ints, Eff_Ints, Amps);
   Energy = E_Ref(Parameters, Space, Chan, Ints);
   Energy0 = Amps.get_energy(Parameters, Space, Chan, Ints);
   std::cout << std::setprecision(10);
@@ -148,8 +148,20 @@ int main(int argc, char * argv[])
   std::cout << "E = " << Energy << ", E/A = " << Energy/(Parameters.P + Parameters.N) << std::endl << std::endl;
 
   if(Parameters.extra == 1){
+    EOM EOM_1PA, EOM_1PR;
     Update_Heff_3(Parameters, Space, Chan, Ints, Eff_Ints, Amps);
-    EOM_1P(Parameters, Space, Chan, Eff_Ints, Energy);
+    std::cout << "1PA-EOM" << std::endl;
+    EOM_1PA.PA1_EOM(Parameters, Space, Chan, Eff_Ints);
+    EOM_1PA.Print_EOM_1P(Parameters, Energy);
+    std::cout << "1PR-EOM" << std::endl;
+    EOM_1PR.PR1_EOM(Parameters, Space, Chan, Eff_Ints);
+    EOM_1PR.Print_EOM_1P(Parameters, Energy);
+
+    GT GT1 = GT(Parameters, Space, Chan, Amps);
+
+    EOM_1PA.delete_struct();
+    EOM_1PR.delete_struct();
+    GT1.delete_struct();
   }
 
   Ints.delete_struct(Parameters, Chan);

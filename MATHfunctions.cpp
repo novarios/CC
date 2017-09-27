@@ -63,25 +63,6 @@ double logfac2(int n)
   return fac;
 }
 
-/*long long factorial(const double &n)
-{
-  if(n + 0.2 < 0){ std::cerr << n << " : Factorial intput should be >= 0" << std::endl; exit(1); }
-  else if(fabs(n) < 0.1){ return 1; }
-  long long intfactorial = 1;
-  for(int a = 2; a <= n + 0.1; a++){ intfactorial = intfactorial * a; }
-  return intfactorial;
-}*/
-
-/*long long factorial2(const double &n)
-{
-  if(n + 0.2 < 0){ std::cerr << n << " : Factorial2 intput should be >= 0" << std::endl; exit(1); }
-  else if(fabs(n) < 0.1){ return 1; }
-  long long intfactorial;
-  if(int(n + 0.1) % 2 == 0){ intfactorial = 2; for(int a = 4; a <= n + 0.1; a = a + 2){ intfactorial = intfactorial * a; } }
-  else{ intfactorial = 1; for(int a = 3; a <= n + 0.1; a = a + 2){ intfactorial = intfactorial * a; } }
-  return intfactorial;
-}*/
-
 int choose(int int1, int int2)
 {
   return fac(int1) / (fac(int2) * fac(int1 - int2));
@@ -154,46 +135,6 @@ double loggamma(double x){
   return gl;
 }
 
-/*double CGC(double j1, double m1, double j2, double m2, double jtot, double mtot)
-{
-  if(fabs(m1 + m2 - mtot) > 0.1){ std::cout << "CGC1" << std::endl; return 0.0; } //projections must add correctly
-  else if((jtot < fabs(j1 - j2)) || (jtot > j1 + j2)){
-    std::cout << "j1,j2,J = " << j1 << " " << j2 << " " << jtot << ", CGC2" << std::endl; return 0.0; } //triangle rule
-  else if((fabs(m1) > j1) || (fabs(m2) > j2) || (fabs(mtot) > jtot)){ std::cout << "CGC3" << std::endl; return 0.0; } //unphysical
-
-  double num1, den1, fac1, num2_1, num2_2, num2_3, fac2, den3_2, den3_1, den3_3, den3_4, den3_5, fac3; //numerators, denominators, and factors for CGC
-  int change1 = 0, change2 = 0; //flags to change from general formula
-  double maxk1, maxk2; //variables to find maximum sum
-  double CGC; //clebsch-gordon coefficient
-  if(j1 < j2){ std::swap(j1,j2); std::swap(m1,m2); change1 = 1; };  
-  if(mtot < 0){ m1 = -m1; m2 = -m2; change2 = 1; }
-  mtot = fabs(mtot);
-  num1 = (2 * jtot + 1) * factorial(jtot + j1 - j2) * factorial(jtot - j1 + j2) * factorial(j1 + j2 - jtot);
-  den1 = double(factorial(j1 + j2 + jtot + 1));
-  fac1 = std::sqrt(num1 / den1);
-  num2_1 = double(factorial(jtot + mtot) * factorial(jtot - mtot));
-  num2_2 = double(factorial(j1 - m1) * factorial(j1 + m1));
-  num2_3 = double(factorial(j2 - m2) * factorial(j2 + m2));
-  fac2 = std::sqrt(num2_1 * num2_2 * num2_3);
-  maxk1 = std::min(j1 + j2 - jtot, j1 - m1);
-  maxk2 = std::min(maxk1, j2 + m2);
-  fac3 = 0.0;
-  for(int k = 0; k <= maxk2+1; ++k){
-    den3_1 = j1 + j2 - jtot - k;
-    den3_2 = j1 - m1 - k;
-    den3_3 = j2 + m2 - k;
-    den3_4 = jtot - j2 + m1 + k;
-    den3_5 = jtot - j1 - m2 + k;
-    if (den3_1 > -0.1 && den3_2 > -0.1 && den3_3 > -0.1 && den3_4 > -0.1 && den3_5 > -0.1){
-      fac3 = fac3 + (pow(-1.0, k) / (factorial(k)*factorial(den3_1)*factorial(den3_2)*factorial(den3_3)*factorial(den3_4)*factorial(den3_5)));
-    }
-  }
-  CGC = fac1*fac2*fac3;
-  if (change1 == 1){ CGC = CGC*pow(-1.0, int(abs(jtot - j2 - j1) + 0.1)); };
-  if (change2 == 1){ CGC = CGC*pow(-1.0, int(abs(jtot - j1 - j2) + 0.1)); };
-  return CGC;
-  }*/
-
 double CGC(int j1, int m1, int j2, int m2, int jtot, int mtot) // for 2*j
 {
   if(m1 + m2 - mtot != 0 || std::abs(m1) > j1 || std::abs(m2) > j2 || std::abs(mtot) > jtot || std::abs(j1 - j2) > jtot || j1 + j2 < jtot){ return 0.0; }
@@ -213,7 +154,6 @@ double CGC(int j1, int m1, int j2, int m2, int jtot, int mtot) // for 2*j
   fac2 = std::sqrt(n2_1 * n2_2 * n2_3);
   maxk = std::min(j1 + j2 - jtot, j1 - m1);
   maxk = std::min(maxk, j2 + m2);
-  //std::cout << "num1 = " << num1 << ", den1 = " << den1 << ", fac1 = " << fac1 << ", n2_1 = " << n2_1 << ", n2_2 = " << n2_2 << ", n2_3 = " << n2_3 << ", fac2 = " << fac2 << ", maxk = " << maxk << std::endl;
 
   fac3 = 0.0;
   for(int k = 0; k <= maxk; k += 2){
@@ -222,7 +162,6 @@ double CGC(int j1, int m1, int j2, int m2, int jtot, int mtot) // for 2*j
     d3_3 = j2 + m2 - k;
     d3_4 = jtot - j2 + m1 + k;
     d3_5 = jtot - j1 - m2 + k;
-    //std::cout << "k = " << k << ", d3_1 = " << d3_1 << ", d3_2 = " << d3_2 << ", d3_3 = " << d3_3 << ", d3_4 = " << d3_4 << ", d3_5 = " << d3_5 << std::endl;
     if (d3_1 >= 0 && d3_2 >= 0 && d3_3 >= 0 && d3_4 >= 0 && d3_5 >= 0){
       fac3 += phase2(k) / (fac(k/2) * fac(d3_1/2) * fac(d3_2/2) * fac(d3_3/2) * fac(d3_4/2) * fac(d3_5/2));
     }
@@ -233,40 +172,11 @@ double CGC(int j1, int m1, int j2, int m2, int jtot, int mtot) // for 2*j
   return CGC;
 }
 
-/*double CGC3(const double &j1, const double &m1, const double &j2, const double &m2, const double &jtot, const double &mtot)
-{
-  double threej;  
-  if(m1 + m2 + mtot != 0 || abs(m1) > j1 || abs(m2) > j2 || abs(mtot) > jtot || abs(j1 - j2) > jtot || j1 + j2 < jtot){ threej = 0.0; }
-  else{ threej = (pow(-1.0, int(abs(j1 - j2 - mtot) + 0.1)) / sqrt(2.0 * jtot + 1.0)) * CGC(j1,m1,j2,m2,jtot,-mtot); }
-  return threej;
-  }*/
-
 double CGC3(int j1, int m1, int j2, int m2, int jtot, int mtot) // for 2*j
 {
   if(m1 + m2 + mtot != 0 || abs(m1) > j1 || abs(m2) > j2 || abs(mtot) > jtot || abs(j1 - j2) > jtot || j1 + j2 < jtot){ return 0.0; }
   else{ return phase2(j1 - j2 - mtot) * CGC(j1,m1,j2,m2,jtot,-mtot) / std::sqrt(jtot + 1.0); }
 }
-
-/*double CGC6(const double &j1, const double &j2, const double &j3, const double &j4, const double &j5, const double &j6)
-{
-  double sixj = 0.0;
-  int S;  
-  for(double m1 = -j1; m1 <= j1; m1 = m1 + 1.0){
-    for(double m2 = -j2; m2 <= j2; m2 = m2 + 1.0){
-      for(double m4 = -j4; m4 <= j4; m4 = m4 + 1.0){
-	for(double m5 = -j5; m5 <= j5; m5 = m5 + 1.0){
-	  double m3 = m2 + m1, m6 = m1 - m5;
-	  if(m3 != m5 - m4 || m6 != -m2 - m4){ continue; }
-	  else{
-       	    S = int((j1 - m1) + (j2 - m2) + (j3 - m3) + (j4 - m4) + (j5 - m5) + (j6 - m6) + 0.01);
-	    sixj = sixj + pow(-1.0, S) * CGC3(j1,m1,j2,m2,j3,-m3) * CGC3(j1,-m1,j5,m5,j6,m6) * CGC3(j4,m4,j5,-m5,j3,m3) * CGC3(j4,-m4,j2,-m2,j6,-m6);
-	  }
-	}
-      }
-    }
-  }
-  return sixj;
-  }*/
 
 double CGC6(int j1, int j2, int j3, int j4, int j5, int j6) // for 2*j
 {
@@ -286,28 +196,13 @@ double CGC6(int j1, int j2, int j3, int j4, int j5, int j6) // for 2*j
       }
     }
   }
-  //std::cout << "6j( " << j1 << " " << j2 << " " << j3 << " " << j4 << " " << j5 << " " << j6 << " ) = " << sixj << std::endl;
   return sixj;
 }
-
-/*double CGC9_0(const double &j1, const double &j2, const double &j3, const double &j4, const double &j5, const double &j6)
-{
-  return pow(-1.0, int(j2 + j5 + j3 + j6)) * CGC6(j1, j2, j5, j4, j3, j6);
-  }*/
 
 double CGC9_0(int j1, int j2, int j3, int j4, int j5, int j6)
 {
   return phase2(j2 + j5 + j3 + j6) * CGC6(j1, j2, j5, j4, j3, j6);
 }
-
-/*double Pandya(const double &j1, const double &j2, const double &j3, const double &j4, const double &j13)
-{
-  double p = 0.0;
-  int j12min = int(abs(j1 - j2));
-  int j12max = j1 + j2;
-  for(int j = j12min; j < j12max; ++j){ p += pow(-1.0, int(j3 + j4 + j)) * (2 * j + 1) * CGC6(j1, j2, j, j4, j3, j13); }
-  return p;
-  }*/
 
 double Pandya(int j1, int j2, int j3, int j4, int j13)
 {
@@ -317,18 +212,6 @@ double Pandya(int j1, int j2, int j3, int j4, int j13)
   for(int j = j12min; j <= j12max; j += 2){ p += phase2(j3 + j4 + j) * (j + 1.0) * CGC6(j1, j2, j, j4, j3, j13); }
   return p;
 }
-
-/*double Chi_J(const int &a, const int &b, const int &c, const int &d, const int &J1, const int &J2)
-{
-  double a2 = 0.5*a;
-  double b2 = 0.5*b;
-  double c2 = 0.5*c;
-  double d2 = 0.5*d;
-  double J1_2 = 0.5*J1;
-  double J2_2 = 0.5*J2;
-  double fac1 = std::sqrt((2*J1_2 + 1) * (2*J2_2 + 1));
-  return fac1 * pow(-1.0, int(b2 + J1_2 + c2 + J2_2)) * CGC6(a2, b2, J1_2, d2, c2, J2_2);
-  }*/
 
 double Chi_J(int a, int b, int c, int d, int J1, int J2)
 {
@@ -391,34 +274,6 @@ double Erf(double z)
   else{ return tau - 1.0; }
 }
 
-/*double Laguerre(const int &k, const double &alpha, const double &x)
-{
-  if(k == 0){ return 1.0; }
-  else if(k == 1){ return 1.0 + alpha - x; }
-  else{
-    int k0 = 1;
-    double L0 = 1.0;
-    double L1 = 1.0 + alpha - x;
-    double L2 = ((2*k0 + 1.0 + alpha - x)*L1 - (k0 + alpha)*L0)/(k0 + 1);
-    L0 = L1;
-    L1 = L2;
-    ++k0;
-    while(k0 < k){
-      L2 = ((2*k0 + 1.0 + alpha - x)*L1 - (k0 + alpha)*L0)/(k0 + 1);
-      L0 = L1;
-      L1 = L2;
-      ++k0;
-    }
-    return L2;
-  }
-  }*/
-
-/*double HOfunction(const double &hw, const int &k, const int &l, const int &m, const double &r, const double &theta, const double &phi){
-  double nu = 1000000 * m_electronc2 * hw / (2 * hbarc_eVum * hbarc_eVum);
-  double N = std::sqrt(std::sqrt(2 * nu * nu * nu / PI) * (std::pow(2, k + 2*l + 3) * factorial(k) * std::pow(nu, l)) / factorial2(2*k + 2*l + 1));
-  return N * std::pow(r, l) * std::pow(e, -1.0 * nu * r * r) * Laguerre(k, l+0.5, 2 * nu * r * r) * SphericalY(theta, phi, l, m);
-  }*/
-
 void projection(double *u, double *v, double *proj, int size)
 {
   double innerprod = 0.0;
@@ -426,36 +281,6 @@ void projection(double *u, double *v, double *proj, int size)
   for(int i = 0; i < size; ++i){ innerprod += v[i]*u[i]; norm += u[i]*u[i]; }
   for(int i = 0; i < size; ++i){ proj[i] = -1.0 * (innerprod/norm)*u[i]; }
 }
-
-/*void GramSchmidt(double **Vectors, const int &size)
-{
-  double norm;
-  double innerprod;
-  double **V = new double*[size];
-  for(int i = 0; i < size; ++i){
-    V[i] = new double[size];
-    for(int j = 0; j < size; ++j){ V[i][j] = Vectors[i][j]; }
-  }
-
-  norm = 0.0;
-  for(int i = 0; i < size; ++i){ norm += V[0][i] * V[0][i]; }
-  for(int i = 0; i < size; ++i){ Vectors[0][i] = V[0][i]/std::sqrt(norm); }
-  for(int i = 1; i < size; ++i){
-    for(int j = 0; j < size; ++j){ Vectors[i][j] = V[i][j]; }
-    for(int j = 0; j < i; ++j){
-      innerprod = 0.0;
-      for(int k = 0; k < size; ++k){ innerprod += Vectors[i][k] * Vectors[j][k]; }
-      for(int k = 0; k < size; ++k){ Vectors[i][k] -= innerprod * Vectors[j][k]; }
-    }
-    norm = 0.0;
-    for(int j = 0; j < size; ++j){ norm += Vectors[i][j] * Vectors[i][j]; }
-    for(int j = 0; j < size; ++j){ Vectors[i][j] /= std::sqrt(norm); }
-  }
-  for(int i = 0; i < size; ++i){
-    delete[] V[i];
-  }
-  delete[] V;
-}*/
 
 void GramSchmidt(double *Vectors, int size)
 {
@@ -509,11 +334,12 @@ double rand_normal(double mean, double stddev)
   }
 }
 
-void Asym_Diagonalize1(double *Ham, int &N, double &eigenvalue, double &norm1p, int &np0)
+void Asym_Diagonalize1(double *Ham, int &N, double *eigenvalues, double *eigenvectors_L, double *eigenvectors_R, int num)
 {
+  if(num > N){ std::cerr << "Asym_Diagonalize1: number of vectors > size" << std::endl; exit(1); }
   int info = 0;
-  int ind;
-  char job1 = 'N';
+  int ind, ind0;
+  char job1 = 'V';
   char job2 = 'V';
   int lwork = 10*N;
   double *Vl = new double[N * N];
@@ -521,25 +347,50 @@ void Asym_Diagonalize1(double *Ham, int &N, double &eigenvalue, double &norm1p, 
   double *wr = new double[N];
   double *wi = new double[N];
   double *work = new double[lwork];
-  double tempen;
-  info = 0;
+  double tempen, templ, tempr;
   dgeev_(&job1, &job2, &N, Ham, &N, wr, wi, Vl, &N, Vr, &N, work, &lwork, &info);
   
-  ind = -1;
-  tempen = 1000;
-  for(int i = 0; i < N; ++i){
-    //std::cout << "! " << std::setprecision(12) << wr[i] << std::endl;
-    if(wr[i] < tempen){
-      tempen = wr[i];
-      ind = i;
+  ind0 = 0;
+  while(ind0 < num){
+    tempen = 1.0e10;
+    for(int i = ind0; i < N; ++i){
+      if(wr[i] < tempen){
+	tempen = wr[i];
+	ind = i;
+      }
+    }
+    wr[ind] = wr[ind0];
+    wr[ind0] = tempen;
+    eigenvalues[ind0] = tempen;
+    for(int i = 0; i < N; ++i){
+      tempr = Vr[N*ind + i];
+      Vr[N*ind + i] = Vr[N*ind0 + i];
+      Vr[N*ind0 + i] = tempr;
+      eigenvectors_R[N*ind0 + i] = tempr;
+      templ = Vl[N*ind + i];
+      Vl[N*ind + i] = Vl[N*ind0 + i];
+      Vl[N*ind0 + i] = templ;
+      eigenvectors_L[N*ind0 + i] = templ;
+    }
+    ++ind0;
+  }
+
+  // Biorthogonalize
+  double norm;
+  for(int i = 0; i < num; ++i){
+    norm = 0.0;
+    for(int j = 0; j < N; ++j){ norm += eigenvectors_L[N*i + j] * eigenvectors_R[N*i + j]; }
+    if( norm < 0.0 ){
+      norm *= -1.0;
+      for(int j = 0; j < N; ++j){ eigenvectors_R[N*i + j] *= -1.0; }
+    }
+    norm = std::sqrt(norm);
+    for(int j = 0; j < N; ++j){
+      eigenvectors_L[N*i + j] /= norm;
+      eigenvectors_R[N*i + j] /= norm;
     }
   }
-  
-  norm1p = 0.0;
-  for(int i = 0; i < np0; ++i){ norm1p += Vr[N*ind + i] * Vr[N*ind + i]; }
-  norm1p = std::sqrt(norm1p);
-  eigenvalue = wr[ind];
-  
+
   delete[] Vl;
   delete[] Vr;
   delete[] wr;
@@ -547,81 +398,95 @@ void Asym_Diagonalize1(double *Ham, int &N, double &eigenvalue, double &norm1p, 
   delete[] work;
 }
 
-void Asym_Diagonalize2(double *Ham, int &N, double &eigenvalue, double &norm1p, int &np0)
+void Asym_Diagonalize2_0(double *Ham, int &N, double *eigenvalues, double *eigenvectors, int num, char type)
 {
-  int info = 0;
-  int ido = 0; // status integer is zero at start
-  char bmat[] = "I"; // standard eigenvalue problem
-  char which[] = "SR"; // smallest magnitude eigenvalues
-  int nev = 1; // number of eigenvalues to calculate
-  double tol = 1.0e-10; // error tolerance
-  double *resid = new double[N];
-  int ncv = 3*nev + 2; // number of lanczos vectors
-  if(ncv > N){ ncv = N; }
-  double *v = new double[N*ncv];
-  for(int i = 0; i < N*ncv; ++i){ v[i] = 0.0; }
-  int ldv = N;
-  double *workd = new double[3*N];
-  int lworkl = 4*ncv*(ncv + 2);
-  double *workl = new double[lworkl];
-  info = 0;
-  int iparam[11];
-  int ipntr[14];
-  int ishift = 1;
+  bool rvec = true;
+  char howmny = 'A';
+  char which[] = "SR", bmat[] = "I"; // standard eigenvalue problem
   int mxiter = 5000;
-  int mode = 1;
+  int nev = num, ncv = 3*nev + 2; // number of eigenvalues, lanczos vectors to calculate
+  if(ncv > N){ ncv = N; }
+  int ldv = N, ldz = N, lworkl = 4*ncv*(ncv + 2);
+  int mode = 1, ishift = 1, info = 0, ido = 0; // status integer is zero at start
+  double sigmar, sigmai, tol = 1.0e-10; // error tolerance
+  int *select = new int[ncv];
+  double *resid = new double[N];
+  double *workev = new double[3 * ncv];
+  double *workd = new double[3*N];
+  double *workl = new double[lworkl];
+  double *v = new double[N*ncv];
+  double *dr = new double[nev + 1];
+  double *di = new double[nev + 1];
+  double *z = new double[N * (nev + 1)];
+  int iparam[11], ipntr[14];
   iparam[0] = ishift;
   iparam[2] = mxiter;
   iparam[6] = mode;
+  for(int i = 0; i < N*ncv; ++i){ v[i] = 0.0; }
+  for(int i = 0; i < nev + 1; ++i){
+    dr[i] = 0.0;
+    di[i] = 0.0;
+    for(int j = 0; j < N; ++j){ z[N*i + j] = 0.0; }
+  }
 
   do{
     dnaupd_(&ido, bmat, &N, which, &nev, &tol, resid, &ncv, v, &ldv, iparam, ipntr, workd, workl, &lworkl, &info);	
     if(ido != -1 && ido != 1){ break; }
-    
-    #pragma omp parallel for
-    for(int j = 0; j < N; ++j){
-      workd[ipntr[1]-1 + j] = 0.0;
-      for(int k = 0; k < N; ++k){
-	workd[ipntr[1]-1 + j] += Ham[N*k + j] * workd[ipntr[0]-1 + k];
+    if(type == 'R'){
+      #pragma omp parallel for
+      for(int j = 0; j < N; ++j){
+	workd[ipntr[1]-1 + j] = 0.0;
+	for(int k = 0; k < N; ++k){ workd[ipntr[1]-1 + j] += Ham[N*k + j] * workd[ipntr[0]-1 + k]; }
+      }
+    }
+    else if(type == 'L'){
+      #pragma omp parallel for
+      for(int j = 0; j < N; ++j){
+	workd[ipntr[1]-1 + j] = 0.0;
+	for(int k = 0; k < N; ++k){ workd[ipntr[1]-1 + j] += Ham[N*j + k] * workd[ipntr[0]-1 + k]; }
       }
     }
   } while(true);
-  
-  bool rvec = true;
-  char howmny = 'A';
-  int *select = new int[ncv];
-  double *dr = new double[nev + 1];
-  double *di = new double[nev + 1];
-  double *z = new double[N * (nev + 1)];
-  for(int i = 0; i < nev + 1; ++i){
-    dr[i] = 0.0;
-    di[i] = 0.0;
-    for(int j = 0; j < N; ++j){
-      z[N*i + j] = 0.0;
-    }
-  }
-  int ldz = N;
-  double sigmar;
-  double sigmai;
-  double *workev = new double[3 * ncv];
-  
   dneupd_(&rvec, &howmny, select, dr, di, z, &ldz, &sigmar, &sigmai, workev, bmat, &N, which, &nev, &tol, resid, &ncv, v, &ldv, iparam, ipntr, workd, workl, &lworkl, &info);
   
-  norm1p = 0.0;
-  for(int i = 0; i < np0; ++i){ norm1p += z[i] * z[i]; }
-  norm1p = std::sqrt(norm1p);
-  eigenvalue = dr[0];
-  
+  for(int i = 0; i < num; ++i){
+    if(type == 'R'){ eigenvalues[i] = dr[i]; }
+    for(int j = 0; j < N; ++j){ eigenvectors[N*i + j] = z[N*i + j]; }
+  }
+  delete[] select;
   delete[] resid;
-  delete[] v;
+  delete[] workev;
   delete[] workd;
   delete[] workl;
-  delete[] select;
+  delete[] v;
   delete[] dr;
   delete[] di;
   delete[] z;
-  delete[] workev;
 }
+
+void Asym_Diagonalize2(double *Ham, int &N, double *eigenvalues, double *eigenvectors_L, double *eigenvectors_R, int num)
+{
+  if(num > N){ std::cerr << "Asym_Diagonalize1: number of vectors > size" << std::endl; exit(1); }
+  Asym_Diagonalize2_0(Ham, N, eigenvalues, eigenvectors_L, num, 'L');
+  Asym_Diagonalize2_0(Ham, N, eigenvalues, eigenvectors_R, num, 'R');
+ 
+  // Biorthogonalize
+  double norm;
+  for(int i = 0; i < num; ++i){
+    norm = 0.0;
+    for(int j = 0; j < N; ++j){ norm += eigenvectors_L[N*i + j] * eigenvectors_R[N*i + j]; }
+    if( norm < 0.0 ){
+      norm *= -1.0;
+      for(int j = 0; j < N; ++j){ eigenvectors_R[N*i + j] *= -1.0; }
+    }
+    norm = std::sqrt(norm);
+    for(int j = 0; j < N; ++j){
+      eigenvectors_L[N*i + j] /= norm;
+      eigenvectors_R[N*i + j] /= norm;
+    }
+  }
+}
+
 
 //  input: x1   : lower limit of the integration interval                      
 //         x2   : upper limit ---------- "" -------------                      
