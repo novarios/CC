@@ -1,9 +1,5 @@
-#include "CCfunctions.hpp"
-#include "HFfunctions.hpp"
 #include "MATHfunctions.hpp"
-#include "INTfunctions.hpp"
-#include "TESTfunctions.hpp"
-#include "BASISfunctions.hpp"
+#include "CoupledCluster.hpp"
 
 double phase(int arg)
 {
@@ -106,7 +102,7 @@ double loggamma(double x){
   if(x <= 0.0){ std::cerr << x << " : LogGamma intput should be > 0" << std::endl; exit(1); }  
   else if(x == 1.0 || x == 2.0){ return 0.0; }
   double x0, x2, xp, gl0, gl;
-  int n;
+  int n = 0;
   if(x <= 7.0){
     n = int(7 - x);
     x0 = x + n;
@@ -181,6 +177,80 @@ double CGC3(int j1, int m1, int j2, int m2, int jtot, int mtot) // for 2*j
 double CGC6(int j1, int j2, int j3, int j4, int j5, int j6) // for 2*j
 {
   double sixj = 0.0;
+  double phase0 = phase2(j1 + j2 + j3 + j4 + j5 + j6);
+  int m1, m2, m3, m4, m5, m6;
+  int min, max;
+  double CGC1;
+  for(m1 = -j1; m1 <= j1; m1 += 2){
+    for(m2 = -j2; m2 <= j2; m2 += 2){
+      m3 = m1 + m2;
+      CGC1 = CGC3(j1,m1,j2,m2,j3,-m3);
+      min = std::max(-j4,-j5-m3);
+      max = std::min(j4,j5-m3);
+      for(m4 = min; m4 <= max; m4 += 2){
+	m5 = m3 + m4;
+	m6 = m1 - m5;
+	sixj += phase2(2*m1 + m2 + m5) * CGC1 * CGC3(j1,-m1,j5,m5,j6,m6) * CGC3(j4,m4,j5,-m5,j3,m3) * CGC3(j4,-m4,j2,-m2,j6,-m6);
+	if( j1 == 3 && j2 == 2 && j3 == 1 && j4 == 0 && j5 == 1 && j6 == 2){
+	  std::cout << "threej1(" << j1 << "," << m1 << "," << j2 << "," << m2 << "," << j3 << "," << -m3 << ") = " << CGC3(j1,m1,j2,m2,j3,-m3) << std::endl;
+	  std::cout << "threej2(" << j1 << "," << -m1 << "," << j5 << "," << m5 << "," << j6 << "," << m6 << ") = " << CGC3(j1,-m1,j5,m5,j6,m6) << std::endl;
+	  std::cout << "threej3(" << j4 << "," << m4 << "," << j5 << "," << -m5 << "," << j3 << "," << m3 << ") = " << CGC3(j4,m4,j5,-m5,j3,m3) << std::endl;
+	  std::cout << "threej4(" << j4 << "," << -m4 << "," << j2 << "," << -m2 << "," << j6 << "," << -m6 << ") = " << CGC3(j4,-m4,j2,-m2,j6,-m6) << std::endl;
+	  std::cout << "SixJ = " << sixj << ", phase = " << phase0 * phase2(2*m1 + m2 + m5) << std::endl;
+	}
+      }
+    }
+  }
+  return phase0 * sixj;
+}
+
+/*double CGC(int j1, int m1, int j2, int m2, int jtot, int mtot) // for 2*j
+{
+  if(m1 + m2 - mtot != 0 || std::abs(m1) > j1 || std::abs(m2) > j2 || std::abs(mtot) > jtot || std::abs(j1 - j2) > jtot || j1 + j2 < jtot){ return 0.0; }
+  double fac1, fac2, fac3, fac30, num1, den1, n2_1, n2_2, n2_3, CGC;
+  int maxk, d3_1, d3_2, d3_3, d3_4, d3_5;
+  int change1 = 0, change2 = 0; // flags to change from general formula
+
+  if(j1 < j2){ std::swap(j1,j2); std::swap(m1,m2); change1 = 1; };  
+  if(mtot < 0){ m1 = -m1; m2 = -m2; mtot = std::abs(mtot); change2 = 1; }
+
+  num1 = std::log(jtot + 1.0) + logfac((jtot + j1 - j2)/2) + logfac((jtot - j1 + j2)/2) + logfac((j1 + j2 - jtot)/2);
+  den1 = logfac((j1 + j2 + jtot + 2)/2);
+  fac1 = 0.5 * (num1 - den1);
+  n2_1 = logfac((jtot + mtot)/2) + logfac((jtot - mtot)/2);
+  n2_2 = logfac((j1 - m1)/2) + logfac((j1 + m1)/2);
+  n2_3 = logfac((j2 - m2)/2) + logfac((j2 + m2)/2);
+  fac2 = 0.5 * (n2_1 + n2_2 + n2_3);
+  maxk = std::min(j1 + j2 - jtot, j1 - m1);
+  maxk = std::min(maxk, j2 + m2);
+
+  fac3 = 0.0;
+  for(int k = 0; k <= maxk; k += 2){
+    d3_1 = j1 + j2 - jtot - k;
+    d3_2 = j1 - m1 - k;
+    d3_3 = j2 + m2 - k;
+    d3_4 = jtot - j2 + m1 + k;
+    d3_5 = jtot - j1 - m2 + k;
+    if( d3_1 >= 0 && d3_2 >= 0 && d3_3 >= 0 && d3_4 >= 0 && d3_5 >= 0 ){
+      fac30 = -logfac(k/2) - logfac(d3_1/2) - logfac(d3_2/2) - logfac(d3_3/2) - logfac(d3_4/2) -logfac(d3_5/2);
+      fac3 += phase2(k) * std::pow(e, fac30);
+    }
+  }
+  CGC = std::pow(e, fac1 + fac2) * fac3;
+  if( change1 == 1 ){ CGC *= phase2(jtot - j2 - j1); };
+  if( change2 == 1 ){ CGC *= phase2(jtot - j1 - j2); };
+  return CGC;
+}
+
+double CGC3(int j1, int m1, int j2, int m2, int jtot, int mtot) // for 2*j
+{
+  if(m1 + m2 + mtot != 0 || abs(m1) > j1 || abs(m2) > j2 || abs(mtot) > jtot || abs(j1 - j2) > jtot || j1 + j2 < jtot){ return 0.0; }
+  else{ return phase2(j1 - j2 - mtot) * CGC(j1,m1,j2,m2,jtot,-mtot) / std::sqrt(jtot + 1.0); }
+}
+
+double CGC6(int j1, int j2, int j3, int j4, int j5, int j6) // for 2*j
+{
+  double sixj = 0.0;
   int S, m1, m2, m3, m4, m5, m6;
   for(m1 = -j1; m1 <= j1; m1 += 2){
     for(m2 = -j2; m2 <= j2; m2 += 2){
@@ -197,7 +267,7 @@ double CGC6(int j1, int j2, int j3, int j4, int j5, int j6) // for 2*j
     }
   }
   return sixj;
-}
+  }*/
 
 double CGC9_0(int j1, int j2, int j3, int j4, int j5, int j6)
 {
@@ -227,7 +297,8 @@ double Legendre(double x, int l, int m) // l, m x2
   double P;
   if(M == 0){ P = 1.0; }
   else{ P = std::pow(-1.0, M/2) * fac2(M - 1) * std::pow(1.0 - x*x, 0.25*M); } // P_M^M
-  double P1, tempP; //P_L-1^M, reset P1
+  double P1 = 0.0;
+  double tempP; //P_L-1^M, reset P1
   while(L != l){
     tempP = P;
     if(L == M){ P = x * (L + 1) * P; }
@@ -338,7 +409,7 @@ void Asym_Diagonalize1(double *Ham, int &N, double *eigenvalues, double *eigenve
 {
   if(num > N){ std::cerr << "Asym_Diagonalize1: number of vectors > size" << std::endl; exit(1); }
   int info = 0;
-  int ind, ind0;
+  int ind = -1, ind0 = -1;
   char job1 = 'V';
   char job2 = 'V';
   int lwork = 10*N;
@@ -408,7 +479,7 @@ void Asym_Diagonalize2_0(double *Ham, int &N, double *eigenvalues, double *eigen
   if(ncv > N){ ncv = N; }
   int ldv = N, ldz = N, lworkl = 4*ncv*(ncv + 2);
   int mode = 1, ishift = 1, info = 0, ido = 0; // status integer is zero at start
-  double sigmar, sigmai, tol = 1.0e-10; // error tolerance
+  double sigmar, sigmai, tol = 1.0e-12; // error tolerance
   int *select = new int[ncv];
   double *resid = new double[N];
   double *workev = new double[3 * ncv];
@@ -450,7 +521,17 @@ void Asym_Diagonalize2_0(double *Ham, int &N, double *eigenvalues, double *eigen
   dneupd_(&rvec, &howmny, select, dr, di, z, &ldz, &sigmar, &sigmai, workev, bmat, &N, which, &nev, &tol, resid, &ncv, v, &ldv, iparam, ipntr, workd, workl, &lworkl, &info);
   
   for(int i = 0; i < num; ++i){
-    if(type == 'R'){ eigenvalues[i] = dr[i]; }
+    if(type == 'R'){
+      std::cout << "%%R  " << dr[i] << std::endl;
+      //for(int j = 0; j < N; ++j){ std::cout << std::setprecision(5) << z[N*i + j] << " "; }
+      //std::cout << std::endl;
+      eigenvalues[i] = dr[i];
+    }
+    else{
+      std::cout << "%%L  " << dr[i] << std::endl;
+      //for(int j = 0; j < N; ++j){ std::cout << std::setprecision(5) << z[N*i + j] << " "; }
+      //std::cout << std::endl;
+    }
     for(int j = 0; j < N; ++j){ eigenvectors[N*i + j] = z[N*i + j]; }
   }
   delete[] select;
@@ -483,10 +564,63 @@ void Asym_Diagonalize2(double *Ham, int &N, double *eigenvalues, double *eigenve
     for(int j = 0; j < N; ++j){
       eigenvectors_L[N*i + j] /= norm;
       eigenvectors_R[N*i + j] /= norm;
+      if( std::fabs(eigenvectors_L[N*i + j]) < 1.0e-10 ){ eigenvectors_L[N*i + j] = 0.0; }
+      if( std::fabs(eigenvectors_R[N*i + j]) < 1.0e-10 ){ eigenvectors_R[N*i + j] = 0.0; }
     }
   }
 }
 
+void Asym_Diagonalize2_2(double *Ham, int &N, double *eigenvalues, double *eigenvectors_L, double *eigenvectors_R, int num)
+{
+  if(num > N){ std::cerr << "Asym_Diagonalize1: number of vectors > size" << std::endl; exit(1); }
+  Asym_Diagonalize2_0(Ham, N, eigenvalues, eigenvectors_L, num, 'L');
+  Asym_Diagonalize2_0(Ham, N, eigenvalues, eigenvectors_R, num, 'R');
+ 
+  // Biorthogonalize
+  double norm;
+  for(int i = 0; i < num; ++i){
+    norm = 0.0;
+    for(int j = 0; j < N; ++j){ norm += eigenvectors_L[N*i + j] * eigenvectors_R[N*i + j]; }
+    if( norm < 0.0 ){
+      norm *= -1.0;
+      for(int j = 0; j < N; ++j){ eigenvectors_R[N*i + j] *= -1.0; }
+    }
+    norm = std::sqrt(norm);
+    for(int j = 0; j < N; ++j){
+      eigenvectors_L[N*i + j] /= norm;
+      eigenvectors_R[N*i + j] /= norm;
+      if( std::fabs(eigenvectors_L[N*i + j]) < 1.0e-10 ){ eigenvectors_L[N*i + j] = 0.0; }
+      if( std::fabs(eigenvectors_R[N*i + j]) < 1.0e-10 ){ eigenvectors_R[N*i + j] = 0.0; }
+    }
+  }
+}
+
+/*void Arnoldi_1(double *Ham, int &N, double *eigenvalues, double *eigenvectors, int num, char type)
+{
+  int ido = 0; // status flag
+  char which[] = "SR"; // target smallest real part
+  char bmat[] = "I"; // standard eigenvalue problem
+  int nev = 1; // calculate lowest eigenpair
+  double tol = 1.0e-10; // error tolerance
+  double *resid = new double[N];
+  int ncv = 3*nev + 2; // number of eigenvalues, lanczos vectors to calculate
+  double *v = new double[N*ncv];
+  int ldv = N;
+  int mode = 1; // standard eigen-problem A*x = lambda*x
+  int ishift = 1; // exact implicit shifts with respect to the current Hessenberg matrix
+  int info = 0; // status integer is zero at start
+  int iparam[11], ipntr[14];
+  iparam[0] = ishift;
+  iparam[2] = mxiter;
+  iparam[6] = mode;
+  int lworkl = 4*ncv*(ncv + 2);
+  double *workd = new double[3*N];
+  double *workl = new double[lworkl];
+
+  dnaupd_(&ido, bmat, &N, which, &nev, &tol, resid, &ncv, v, &ldv, iparam, ipntr, workd, workl, &lworkl, &info);	
+  if(ido != -1 && ido != 1){ break; }
+  for(int j = 0; j < N; ++j){ workd[ipntr[1]-1 + j] = vec[j]; }
+  }*/
 
 //  input: x1   : lower limit of the integration interval                      
 //         x2   : upper limit ---------- "" -------------                      
@@ -498,7 +632,8 @@ void gauss_legendre(double x1, double x2, double *x, double *w, int n)
 {
   int m;
   double eps = 3.0e-14;
-  double p1, p2, p3, pp, xl, xm, z, z1;
+  double pp = 0.0;
+  double p1, p2, p3, xl, xm, z, z1;
   m = (n+1)/ 2 ;
   xm = 0.5 * (x2+x1);
   xl = 0.5 * (x2-x1);
@@ -536,7 +671,7 @@ void laguerre_general(int n, double alpha, double x, double *cx)
   for(int i = 2; i <= n; ++i){ cx[i] = double( ( (2*i - 1 + alpha - x )*cx[i-1] + (1 - i - alpha)*cx[i-2] ) / i); }
 }
 
-void setup_ho_cutoff(Input_Parameters &Parameters, Model_Space &Space, HF_Matrix_Elements &ME)
+/*void setup_ho_cutoff(Input_Parameters &Parameters, Model_Space &Space, HF_Matrix_Elements &ME)
 {
   int number_of_iterations, int_points;
   double sigma, norm, oscl_r, sum_hf;
@@ -643,4 +778,4 @@ double kinetic_energy(Input_Parameters &Parameters, Model_Space &Space, HF_Matri
   delete[] kin_energy;
   
   return e_kin;
-}
+  }*/

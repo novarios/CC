@@ -1,2986 +1,450 @@
-#include "CCfunctions.hpp"
-#include "HFfunctions.hpp"
-#include "MATHfunctions.hpp"
 #include "INTfunctions.hpp"
-#include "TESTfunctions.hpp"
+#include "CoupledCluster.hpp"
+#include "HFfunctions.hpp"
 #include "BASISfunctions.hpp"
+#include "MATHfunctions.hpp"
+#include "AngMom.hpp"
 
-Interactions::Interactions(Input_Parameters &Parameters, Channels &Chan)
+void Interactions::Build(Channels &Chan)
 {
-  #pragma omp parallel sections
-  {
-  #pragma omp section
-    { Fmatrix = F_matrix(Parameters, Chan); }
-    #pragma omp section
-    { Vhhhh = V_hhhh(Parameters, Chan); }
-    #pragma omp section
-    { Vpppp = V_pppp(Parameters, Chan); }
-    #pragma omp section
-    { Vhhpp = V_hhpp(Parameters, Chan); }
-    #pragma omp section
-    { Vpphh = V_pphh(Parameters, Chan); }
-    #pragma omp section
-    { Vhphp = V_hphp(Parameters, Chan); }
-    #pragma omp section
-    { Vhhhp = V_hhhp(Parameters, Chan); }
-    #pragma omp section
-    { Vhppp = V_hppp(Parameters, Chan); }
-    #pragma omp section
-    { Vhphh = V_hphh(Parameters, Chan); }
-    #pragma omp section
-    { Vpphp = V_pphp(Parameters, Chan); }
-  }
+  this->Eref = 0.0;
+  this->Fmatrix.Build(Chan);
+  this->Vhhhh.Build(Chan);
+  this->Vpppp.Build(Chan);
+  this->Vhhpp.Build(Chan);
+  this->Vpphh.Build(Chan);
+  this->Vhphp.Build(Chan);
+  this->Vhhhp.Build(Chan);
+  this->Vhppp.Build(Chan);
+  this->Vhphh.Build(Chan);
+  this->Vpphp.Build(Chan);
 }
 
-void Interactions::delete_struct(Input_Parameters &Parameters, Channels &Chan)
+void Interactions::Delete()
 {
-  Fmatrix.delete_struct(Parameters, Chan);
-  Vhhhh.delete_struct(Parameters, Chan);
-  Vpppp.delete_struct(Parameters, Chan);
-  Vhhpp.delete_struct(Parameters, Chan);
-  Vpphh.delete_struct(Parameters, Chan);
-  Vhphp.delete_struct(Parameters, Chan);
-  Vhhhp.delete_struct(Parameters, Chan);
-  Vhppp.delete_struct(Parameters, Chan);
-  Vhphh.delete_struct(Parameters, Chan);
-  Vpphp.delete_struct(Parameters, Chan);
+  this->Fmatrix.Delete();
+  this->Vhhhh.Delete();
+  this->Vpppp.Delete();
+  this->Vhhpp.Delete();
+  this->Vpphh.Delete();
+  this->Vhphp.Delete();
+  this->Vhhhp.Delete();
+  this->Vhppp.Delete();
+  this->Vhphh.Delete();
+  this->Vpphp.Delete();
 }
 
-F_matrix::F_matrix(Input_Parameters &Parameters, Channels &Chan)
+void F_matrix::Build(Channels &Chan)
 {
   int length, ind, chan3;
-  hh_2_length = Chan.nhh1[Chan.ind0];
-  hp_2_length = Chan.nhp1[Chan.ind0];
-  ph_2_length = Chan.nph1[Chan.ind0];
-  pp_2_length = Chan.npp1[Chan.ind0];
-  hh_2 = new double[hh_2_length];
-  hp_2 = new double[hp_2_length];
-  ph_2 = new double[ph_2_length];
-  pp_2 = new double[pp_2_length];
-  for(ind = 0; ind < hh_2_length; ++ind){ hh_2[ind] = 0.0; }
-  for(ind = 0; ind < hp_2_length; ++ind){ hp_2[ind] = 0.0; }
-  for(ind = 0; ind < ph_2_length; ++ind){ ph_2[ind] = 0.0; }
-  for(ind = 0; ind < pp_2_length; ++ind){ pp_2[ind] = 0.0; }
+  this->hh_2_length = Chan.nhh1[Chan.ind0];
+  this->hp_2_length = Chan.nhp1[Chan.ind0];
+  this->ph_2_length = Chan.nph1[Chan.ind0];
+  this->pp_2_length = Chan.npp1[Chan.ind0];
+  this->hh_2 = new double[this->hh_2_length];
+  this->hp_2 = new double[this->hp_2_length];
+  this->ph_2 = new double[this->ph_2_length];
+  this->pp_2 = new double[this->pp_2_length];
+  for(ind = 0; ind < this->hh_2_length; ++ind){ this->hh_2[ind] = 0.0; }
+  for(ind = 0; ind < this->hp_2_length; ++ind){ this->hp_2[ind] = 0.0; }
+  for(ind = 0; ind < this->ph_2_length; ++ind){ this->ph_2[ind] = 0.0; }
+  for(ind = 0; ind < this->pp_2_length; ++ind){ this->pp_2[ind] = 0.0; }
 
   length = 0;
-  hh_3_index = new int[Chan.size3];
+  this->hh_3_index = new int[Chan.size3];
   for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    hh_3_index[chan3] = length;
+    this->hh_3_index[chan3] = length;
     length += Chan.nh[chan3] * Chan.nh[chan3];
   }
-  hh_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){ hh_3[ind] = 0.0; }
-  hh_3_length = length;
+  this->hh_3 = new double[length];
+  for(ind = 0; ind < length; ++ind){ this->hh_3[ind] = 0.0; }
+  this->hh_3_length = length;
 
   length = 0;
-  hp_3_index = new int[Chan.size3];
+  this->hp_3_index = new int[Chan.size3];
   for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    hp_3_index[chan3] = length;
+    this->hp_3_index[chan3] = length;
     length += Chan.nh[chan3] * Chan.np[chan3];
   }
-  hp_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){ hp_3[ind] = 0.0; }
-  hp_3_length = length;
+  this->hp_3 = new double[length];
+  for(ind = 0; ind < length; ++ind){ this->hp_3[ind] = 0.0; }
+  this->hp_3_length = length;
 
   length = 0;
-  ph_3_index = new int[Chan.size3];
+  this->ph_3_index = new int[Chan.size3];
   for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    ph_3_index[chan3] = length;
+    this->ph_3_index[chan3] = length;
     length += Chan.np[chan3] * Chan.nh[chan3];
   }
-  ph_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){ ph_3[ind] = 0.0; }
-  ph_3_length = length;
+  this->ph_3 = new double[length];
+  for(ind = 0; ind < length; ++ind){ this->ph_3[ind] = 0.0; }
+  this->ph_3_length = length;
 
   length = 0;
-  pp_3_index = new int[Chan.size3];
+  this->pp_3_index = new int[Chan.size3];
   for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    pp_3_index[chan3] = length;
+    this->pp_3_index[chan3] = length;
     length += Chan.np[chan3] * Chan.np[chan3];
   }
-  pp_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){ pp_3[ind] = 0.0; }
-  pp_3_length = length;
+  this->pp_3 = new double[length];
+  for(ind = 0; ind < length; ++ind){ this->pp_3[ind] = 0.0; }
+  this->pp_3_length = length;
 }
 
-void F_matrix::delete_struct(Input_Parameters &Parameters, Channels &Chan)
+void F_matrix::Delete()
 {
-  delete[] hh_2;
-  delete[] hp_2;
-  delete[] ph_2;
-  delete[] pp_2;
-  delete[] hh_3;
-  delete[] hp_3;
-  delete[] ph_3;
-  delete[] pp_3;
-  delete[] hh_3_index;
-  delete[] hp_3_index;
-  delete[] ph_3_index;
-  delete[] pp_3_index;
+  delete[] this->hh_2;
+  delete[] this->hp_2;
+  delete[] this->ph_2;
+  delete[] this->pp_2;
+  delete[] this->hh_3;
+  delete[] this->hp_3;
+  delete[] this->ph_3;
+  delete[] this->pp_3;
+  delete[] this->hh_3_index;
+  delete[] this->hp_3_index;
+  delete[] this->ph_3_index;
+  delete[] this->pp_3_index;
 }
 
-V_hhhh::V_hhhh(Input_Parameters &Parameters, Channels &Chan)
+void V_hhhh::Build(Channels &Chan)
 {
   int chan1, chan3, ind, length;
   length = 0;
-  V_1_index = new int[Chan.size1];
+  this->V_1_index = new int[Chan.size1];
   for(chan1 = 0; chan1 < Chan.size1; ++chan1){
-    V_1_index[chan1] = length;
+    this->V_1_index[chan1] = length;
     length += Chan.nhh[chan1] * Chan.nhh[chan1];
   }
-  V_1 = new double[length];
-  for(ind = 0; ind < length; ++ind){ V_1[ind] = 0.0; }
-  V_1_length = length;
+  this->V_1 = new double[length];
+  for(ind = 0; ind < length; ++ind){ this->V_1[ind] = 0.0; }
+  this->V_1_length = length;
 
   length = 0;
-  V_3_2_index = new int[Chan.size3];
+  this->V_3_2_index = new int[Chan.size3];
   for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    V_3_2_index[chan3] = length;
+    this->V_3_2_index[chan3] = length;
     length += Chan.nh[chan3] * Chan.nhhh[chan3];
   }
-  V_3_2 = new double[length];
-  for(ind = 0; ind < length; ++ind){ V_3_2[ind] = 0.0; }
-  V_3_2_length = length;
+  this->V_3_2 = new double[length];
+  for(ind = 0; ind < length; ++ind){ this->V_3_2[ind] = 0.0; }
+  this->V_3_2_length = length;
 }
 
-void V_hhhh::delete_struct(Input_Parameters &Parameters, Channels &Chan)
+void V_hhhh::Delete()
 {
-  delete[] V_1;
-  delete[] V_3_2;
-  delete[] V_1_index;
-  delete[] V_3_2_index;
+  delete[] this->V_1;
+  delete[] this->V_3_2;
+  delete[] this->V_1_index;
+  delete[] this->V_3_2_index;
 }
 
-V_pppp::V_pppp(Input_Parameters &Parameters, Channels &Chan)
-{
-  int chan1, chan3, ind, length;
-  length = 0;
-  V_1_index = new int[Chan.size1];
-  for(chan1 = 0; chan1 < Chan.size1; ++chan1){
-    V_1_index[chan1] = length;
-    length += Chan.npp[chan1] * Chan.npp[chan1];
-  }
-  V_1 = new double[length];
-  for(ind = 0; ind < length; ++ind){ V_1[ind] = 0.0; }
-  V_1_length = length;
-
-  length = 0;
-  V_3_3_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    V_3_3_index[chan3] = length;;
-    length += Chan.nppp[chan3] * Chan.np[chan3];
-  }
-  V_3_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){ V_3_3[ind] = 0.0; }
-  V_3_3_length = length;
-}
-
-void V_pppp::delete_struct(Input_Parameters &Parameters, Channels &Chan)
-{
-  delete[] V_1;
-  delete[] V_3_3;
-  delete[] V_1_index;
-  delete[] V_3_3_index;
-}
-
-V_hhpp::V_hhpp(Input_Parameters &Parameters, Channels &Chan)
-{
-  int chan1, chan2, chan3, ind, length;
-  length = 0;
-  V_1_index = new int[Chan.size1];
-  for(chan1 = 0; chan1 < Chan.size1; ++chan1){
-    V_1_index[chan1] = length;
-    length += Chan.nhh[chan1] * Chan.npp[chan1];
-  }
-  V_1 = new double[length];
-  for(ind = 0; ind < length; ++ind){ V_1[ind] = 0.0; }
-  V_1_length = length;
-
-  length = 0;
-  V_2_1_index = new int[Chan.size2];
-  V_2_3_index = new int[Chan.size2];
-  for(chan2 = 0; chan2 < Chan.size2; ++chan2){
-    V_2_1_index[chan2] = length;
-    V_2_3_index[chan2] = length;
-    length += Chan.nhp1[chan2] * Chan.nph1[chan2];
-  }
-  V_2_1 = new double[length];
-  V_2_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    V_2_1[ind] = 0.0;
-    V_2_3[ind] = 0.0;
-  }
-  V_2_1_length = length;
-  V_2_3_length = length;
-
-  length = 0;
-  V_3_1_index = new int[Chan.size3];
-  V_3_2_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    V_3_1_index[chan3] = length;
-    V_3_2_index[chan3] = length;
-    length += Chan.nh[chan3] * Chan.npph[chan3];
-  }
-  V_3_1 = new double[length];
-  V_3_2 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    V_3_1[ind] = 0.0;
-    V_3_2[ind] = 0.0;
-  }
-  V_3_1_length = length;
-  V_3_2_length = length;
-
-  length = 0;
-  V_3_3_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    V_3_3_index[chan3] = length;
-    length += Chan.nhhp[chan3] * Chan.np[chan3];
-  }
-  V_3_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){ V_3_3[ind] = 0.0; }
-  V_3_3_length = length;
-}
-
-void V_hhpp::delete_struct(Input_Parameters &Parameters, Channels &Chan)
-{
-  delete[] V_1;
-  delete[] V_2_1;
-  delete[] V_2_3;
-  delete[] V_3_1;
-  delete[] V_3_2;
-  delete[] V_3_3;
-  delete[] V_1_index;
-  delete[] V_2_1_index;
-  delete[] V_2_3_index;
-  delete[] V_3_1_index;
-  delete[] V_3_2_index;
-  delete[] V_3_3_index;
-}
-
-V_pphh::V_pphh(Input_Parameters &Parameters, Channels &Chan)
+void V_pppp::Build(Channels &Chan)
 {
   int chan1, ind, length;
   length = 0;
-  V_1_index = new int[Chan.size1];
+  this->V_1_index = new int[Chan.size1];
   for(chan1 = 0; chan1 < Chan.size1; ++chan1){
-    V_1_index[chan1] = length;
+    this->V_1_index[chan1] = length;
+    length += Chan.npp[chan1] * Chan.npp[chan1];
+  }
+  this->V_1 = new double[length];
+  for(ind = 0; ind < length; ++ind){ this->V_1[ind] = 0.0; }
+  this->V_1_length = length;
+}
+
+void V_pppp::Delete()
+{
+  delete[] this->V_1;
+  delete[] this->V_1_index;
+}
+
+void V_hhpp::Build(Channels &Chan)
+{
+  int chan1, chan2, chan3, ind, length;
+  length = 0;
+  this->V_1_index = new int[Chan.size1];
+  for(chan1 = 0; chan1 < Chan.size1; ++chan1){
+    this->V_1_index[chan1] = length;
+    length += Chan.nhh[chan1] * Chan.npp[chan1];
+  }
+  this->V_1 = new double[length];
+  for(ind = 0; ind < length; ++ind){ this->V_1[ind] = 0.0; }
+  this->V_1_length = length;
+
+  length = 0;
+  this->V_2_1_index = new int[Chan.size2];
+  this->V_2_3_index = new int[Chan.size2];
+  for(chan2 = 0; chan2 < Chan.size2; ++chan2){
+    this->V_2_1_index[chan2] = length;
+    this->V_2_3_index[chan2] = length;
+    length += Chan.nhp1[chan2] * Chan.nph1[chan2];
+  }
+  this->V_2_1 = new double[length];
+  this->V_2_3 = new double[length];
+  for(ind = 0; ind < length; ++ind){
+    this->V_2_1[ind] = 0.0;
+    this->V_2_3[ind] = 0.0;
+  }
+  this->V_2_1_length = length;
+  this->V_2_3_length = length;
+
+  length = 0;
+  this->V_3_1_index = new int[Chan.size3];
+  this->V_3_2_index = new int[Chan.size3];
+  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
+    this->V_3_1_index[chan3] = length;
+    this->V_3_2_index[chan3] = length;
+    length += Chan.nh[chan3] * Chan.npph[chan3];
+  }
+  this->V_3_1 = new double[length];
+  this->V_3_2 = new double[length];
+  for(ind = 0; ind < length; ++ind){
+    this->V_3_1[ind] = 0.0;
+    this->V_3_2[ind] = 0.0;
+  }
+  this->V_3_1_length = length;
+  this->V_3_2_length = length;
+
+  length = 0;
+  this->V_3_3_index = new int[Chan.size3];
+  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
+    this->V_3_3_index[chan3] = length;
+    length += Chan.nhhp[chan3] * Chan.np[chan3];
+  }
+  this->V_3_3 = new double[length];
+  for(ind = 0; ind < length; ++ind){ this->V_3_3[ind] = 0.0; }
+  this->V_3_3_length = length;
+}
+
+void V_hhpp::Delete()
+{
+  delete[] this->V_1;
+  delete[] this->V_2_1;
+  delete[] this->V_2_3;
+  delete[] this->V_3_1;
+  delete[] this->V_3_2;
+  delete[] this->V_3_3;
+  delete[] this->V_1_index;
+  delete[] this->V_2_1_index;
+  delete[] this->V_2_3_index;
+  delete[] this->V_3_1_index;
+  delete[] this->V_3_2_index;
+  delete[] this->V_3_3_index;
+}
+
+void V_pphh::Build(Channels &Chan)
+{
+  /*int chan1, ind, length;
+  length = 0;
+  this->V_1_index = new int[Chan.size1];
+  for(chan1 = 0; chan1 < Chan.size1; ++chan1){
+    this->V_1_index[chan1] = length;
     length += Chan.npp[chan1] * Chan.nhh[chan1];
   }
-  V_1 = new double[length];
-  for(ind = 0; ind < length; ++ind){ V_1[ind] = 0.0; }
-  V_1_length = length;
+  this->V_1 = new double[length];
+  for(ind = 0; ind < length; ++ind){ this->V_1[ind] = 0.0; }
+  this->V_1_length = length;*/
 }
 
-void V_pphh::delete_struct(Input_Parameters &Parameters, Channels &Chan)
+void V_pphh::Delete()
 {
-  delete[] V_1;
-  delete[] V_1_index;
+  //delete[] this->V_1;
+  //delete[] this->V_1_index;
 }
 
-V_hphp::V_hphp(Input_Parameters &Parameters, Channels &Chan)
+void V_hphp::Build(Channels &Chan)
 {
   int chan2, ind, length;
   length = 0;
-  V_2_1_index = new int[Chan.size2];
+  this->V_2_1_index = new int[Chan.size2];
   for(chan2 = 0; chan2 < Chan.size2; ++chan2){
-    V_2_1_index[chan2] = length;
+    this->V_2_1_index[chan2] = length;
     length += Chan.nhp1[chan2] * Chan.nhp1[chan2];
   }
-  V_2_1 = new double[length];
-  for(ind = 0; ind < length; ++ind){ V_2_1[ind] = 0.0; }
-  V_2_1_length = length;
+  this->V_2_1 = new double[length];
+  for(ind = 0; ind < length; ++ind){ this->V_2_1[ind] = 0.0; }
+  this->V_2_1_length = length;
 
   length = 0;
-  V_2_2_index = new int[Chan.size2];
+  this->V_2_2_index = new int[Chan.size2];
   for(chan2 = 0; chan2 < Chan.size2; ++chan2){
-    V_2_2_index[chan2] = length;
+    this->V_2_2_index[chan2] = length;
     length += Chan.nph1[chan2] * Chan.nph1[chan2];
   }
-  V_2_2 = new double[length];
-  for(ind = 0; ind < length; ++ind){ V_2_2[ind] = 0.0; }
-  V_2_2_length = length;
+  this->V_2_2 = new double[length];
+  for(ind = 0; ind < length; ++ind){ this->V_2_2[ind] = 0.0; }
+  this->V_2_2_length = length;
 }
 
-void V_hphp::delete_struct(Input_Parameters &Parameters, Channels &Chan)
+void V_hphp::Delete()
 {
-  delete[] V_2_1;
-  delete[] V_2_2;
-  delete[] V_2_1_index;
-  delete[] V_2_2_index;
+  delete[] this->V_2_1;
+  delete[] this->V_2_2;
+  delete[] this->V_2_1_index;
+  delete[] this->V_2_2_index;
 }
 
-V_hhhp::V_hhhp(Input_Parameters &Parameters, Channels &Chan)
+void V_hhhp::Build(Channels &Chan)
 {
   int chan2, chan3, ind, length;
   length = 0;
-  V_2_3_index = new int[Chan.size2];
+  this->V_2_3_index = new int[Chan.size2];
   for(chan2 = 0; chan2 < Chan.size2; ++chan2){
-    V_2_3_index[chan2] = length;
+    this->V_2_3_index[chan2] = length;
     length += Chan.nhh1[chan2] * Chan.nph1[chan2];
   }
-  V_2_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){ V_2_3[ind] = 0.0; }
-  V_2_3_length = length;
+  this->V_2_3 = new double[length];
+  for(ind = 0; ind < length; ++ind){ this->V_2_3[ind] = 0.0; }
+  this->V_2_3_length = length;
 
   length = 0;
-  V_3_2_index = new int[Chan.size3];
+  this->V_3_2_index = new int[Chan.size3];
   for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    V_3_2_index[chan3] = length;
+    this->V_3_2_index[chan3] = length;
     length += Chan.nh[chan3] * Chan.nhph[chan3];
   }
-  V_3_2 = new double[length];
-  for(ind = 0; ind < length; ++ind){ V_3_2[ind] = 0.0; }
-  V_3_2_length = length;
+  this->V_3_2 = new double[length];
+  for(ind = 0; ind < length; ++ind){ this->V_3_2[ind] = 0.0; }
+  this->V_3_2_length = length;
 
   length = 0;
-  V_3_3_index = new int[Chan.size3];
+  this->V_3_3_index = new int[Chan.size3];
   for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    V_3_3_index[chan3] = length;
+    this->V_3_3_index[chan3] = length;
     length += Chan.nhhp[chan3] * Chan.nh[chan3];
   }
-  V_3_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){ V_3_3[ind] = 0.0; }
-  V_3_3_length = length;
+  this->V_3_3 = new double[length];
+  for(ind = 0; ind < length; ++ind){ this->V_3_3[ind] = 0.0; }
+  this->V_3_3_length = length;
 }
 
-void V_hhhp::delete_struct(Input_Parameters &Parameters, Channels &Chan)
+void V_hhhp::Delete()
 {
-  delete[] V_2_3;
-  delete[] V_3_2;
-  delete[] V_3_3;
-  delete[] V_2_3_index;
-  delete[] V_3_2_index;
-  delete[] V_3_3_index;
+  delete[] this->V_2_3;
+  delete[] this->V_3_2;
+  delete[] this->V_3_3;
+  delete[] this->V_2_3_index;
+  delete[] this->V_3_2_index;
+  delete[] this->V_3_3_index;
 }
 
-V_hppp::V_hppp(Input_Parameters &Parameters, Channels &Chan)
+void V_hppp::Build(Channels &Chan)
 {
   int chan2, chan3, ind, length;
   length = 0;
-  V_2_4_index = new int[Chan.size2];
+  this->V_2_4_index = new int[Chan.size2];
   for(chan2 = 0; chan2 < Chan.size2; ++chan2){
-    V_2_4_index[chan2] = length;
+    this->V_2_4_index[chan2] = length;
     length += Chan.npp1[chan2] * Chan.nph1[chan2];
   }
-  V_2_4 = new double[length];
-  for(ind = 0; ind < length; ++ind){ V_2_4[ind] = 0.0; }
-  V_2_4_length = length;
+  this->V_2_4 = new double[length];
+  for(ind = 0; ind < length; ++ind){ this->V_2_4[ind] = 0.0; }
+  this->V_2_4_length = length;
 
   length = 0;
-  V_3_2_index = new int[Chan.size3];
+  this->V_3_2_index = new int[Chan.size3];
   for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    V_3_2_index[chan3] = length;
+    this->V_3_2_index[chan3] = length;
     length += Chan.np[chan3] * Chan.npph[chan3];
   }
-  V_3_2 = new double[length];
-  for(ind = 0; ind < length; ++ind){ V_3_2[ind] = 0.0; }
-  V_3_2_length = length;
+  this->V_3_2 = new double[length];
+  for(ind = 0; ind < length; ++ind){ this->V_3_2[ind] = 0.0; }
+  this->V_3_2_length = length;
 }
 
-void V_hppp::delete_struct(Input_Parameters &Parameters, Channels &Chan)
+void V_hppp::Delete()
 {
-  delete[] V_2_4;
-  delete[] V_3_2;
-  delete[] V_2_4_index;
-  delete[] V_3_2_index;
+  delete[] this->V_2_4;
+  delete[] this->V_3_2;
+  delete[] this->V_2_4_index;
+  delete[] this->V_3_2_index;
 }
 
-V_hphh::V_hphh(Input_Parameters &Parameters, Channels &Chan)
+void V_hphh::Build(Channels &Chan)
 {
   int chan3, ind, length;
   length = 0;
-  V_3_2_index = new int[Chan.size3];
+  this->V_3_2_index = new int[Chan.size3];
   for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    V_3_2_index[chan3] = length;
+    this->V_3_2_index[chan3] = length;
     length += Chan.np[chan3] * Chan.nhhh[chan3];
   }
-  V_3_2 = new double[length];
-  for(ind = 0; ind < length; ++ind){ V_3_2[ind] = 0.0; }
-  V_3_2_length = length;
+  this->V_3_2 = new double[length];
+  for(ind = 0; ind < length; ++ind){ this->V_3_2[ind] = 0.0; }
+  this->V_3_2_length = length;
 }
 
-void V_hphh::delete_struct(Input_Parameters &Parameters, Channels &Chan)
+void V_hphh::Delete()
 {
-  delete[] V_3_2;
-  delete[] V_3_2_index;
+  delete[] this->V_3_2;
+  delete[] this->V_3_2_index;
 }
 
-V_pphp::V_pphp(Input_Parameters &Parameters, Channels &Chan)
+void V_pphp::Build(Channels &Chan)
 {
   int chan3, ind, length;
   length = 0;
-  V_3_3_index = new int[Chan.size3];
+  this->V_3_3_index = new int[Chan.size3];
   for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    V_3_3_index[chan3] = length;
+    this->V_3_3_index[chan3] = length;
     length += Chan.nppp[chan3] * Chan.nh[chan3];
   }
-  V_3_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){ V_3_3[ind] = 0.0; }
-  V_3_3_length = length;
+  this->V_3_3 = new double[length];
+  for(ind = 0; ind < length; ++ind){ this->V_3_3[ind] = 0.0; }
+  this->V_3_3_length = length;
 }
 
-void V_pphp::delete_struct(Input_Parameters &Parameters, Channels &Chan)
+void V_pphp::Delete()
 {
-  delete[] V_3_3;
-  delete[] V_3_3_index;
+  delete[] this->V_3_3;
+  delete[] this->V_3_3_index;
 }
 
-Eff_Interactions::Eff_Interactions(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan)
-{
-  struct timespec time1, time2;
-  double elapsed0 = 0.0;
-  clock_gettime(CLOCK_MONOTONIC, &time1);
-
-  Xhh = X_hh(Parameters, Space, Chan);
-  Xpp = X_pp(Parameters, Space, Chan);
-  Xhp = X_hp(Parameters, Space, Chan);
-  Xhhhh = X_hhhh(Parameters, Space, Chan);
-  Xpppp = X_pppp(Parameters, Space, Chan);
-  Xhphp = X_hphp(Parameters, Space, Chan);
-  Xhhhp = X_hhhp(Parameters, Space, Chan);
-  Xhppp = X_hppp(Parameters, Space, Chan);
-  Xhphh = X_hphh(Parameters, Space, Chan);
-  Xpphp = X_pphp(Parameters, Space, Chan);
-
-  clock_gettime(CLOCK_MONOTONIC, &time2);
-  elapsed0 = (time2.tv_sec - time1.tv_sec);
-  elapsed0 += (time2.tv_nsec - time1.tv_nsec) / 1000000000.0;
-  std::cout << std::endl << "INT Runtime = " << elapsed0 << " sec. " << std::endl;
-}
-
-void Eff_Interactions::delete_struct(Input_Parameters &Parameters, Channels &Chan)
-{
-  Xhh.delete_struct(Parameters, Chan);
-  Xpp.delete_struct(Parameters, Chan);
-  Xhp.delete_struct(Parameters, Chan);
-  Xhhhh.delete_struct(Parameters, Chan);
-  Xpppp.delete_struct(Parameters, Chan);
-  Xhphp.delete_struct(Parameters, Chan);
-  Xhhhp.delete_struct(Parameters, Chan);
-  Xhppp.delete_struct(Parameters, Chan);
-  Xhphh.delete_struct(Parameters, Chan);
-  Xpphp.delete_struct(Parameters, Chan);
-}
-
-void Eff_Interactions::zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  Xhh.X1_zero(Parameters, Chan, flag);
-  Xhh.X_zero(Parameters, Chan, flag);
-  Xpp.X_zero(Parameters, Chan, flag);
-  Xhp.X_zero(Parameters, Chan, flag);
-  Xhhhh.X_zero(Parameters, Chan, flag);
-  Xpppp.X1_zero(Parameters, Chan, flag);
-  Xpppp.X_zero(Parameters, Chan, flag);
-  Xhphp.X_zero(Parameters, Chan, flag);
-  Xhphp.X1_zero(Parameters, Chan, flag);
-  Xhphp.X2_zero(Parameters, Chan, flag);
-  Xhphp.X3_zero(Parameters, Chan, flag);
-  Xhhhp.X1_zero(Parameters, Chan, flag);
-  Xhhhp.X_zero(Parameters, Chan, flag);
-  Xhppp.X1_zero(Parameters, Chan, flag);
-  Xhppp.X_zero(Parameters, Chan, flag);
-  Xhphh.X1_zero(Parameters, Chan, flag);
-  Xhphh.X_zero(Parameters, Chan, flag);
-  Xpphp.X1_zero(Parameters, Chan, flag);
-  Xpphp.X_zero(Parameters, Chan, flag);
-}
-
-void Eff_Interactions::diagonalize(Input_Parameters &Parameters, Channels &Chan)
-{
-  Xhh.diagonalize(Parameters, Chan);
-  Xpp.diagonalize(Parameters, Chan);
-}
-
-X_hh::X_hh(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan)
-{
-  int chan3, ind, length;
-  int i, j;
-  two_body hh1;
-
-  length = Chan.nhh1[Chan.ind0];
-  X1_2 = new double[length];
-  X_2 = new double[length];
-  map_chan = new int[length];
-  map_ind = new int[length];
-  map_fac1 = new double[length];
-  map_fac2 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X1_2[ind] = 0.0;
-    X_2[ind] = 0.0;
-  }
-  X_2_length = length;
-
-  length = 0;
-  X_3_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_index[chan3] = length;
-    length += Chan.nh[chan3] * Chan.nh[chan3];
-  }
-  X1_3 = new double[length];
-  X1_3od = new double[length];
-  X_3 = new double[length];
-  X_3od = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X1_3[ind] = 0.0;
-    X1_3od[ind] = 0.0;
-    X_3[ind] = 0.0;
-    X_3od[ind] = 0.0;
-  }
-  X_3_length = length;
-
-  length = 0;
-  X_3d_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3d_index[chan3] = length;
-    length += Chan.nh[chan3];
-  }
-  X1_3d = new double[length];
-  X_3d = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X1_3d[ind] = 0.0;
-    X_3d[ind] = 0.0;
-  }
-  X_3d_length = length;
-
-  for(ind = 0; ind < X_2_length; ++ind){
-    hh1 = Chan.hh1_state(Chan.ind0, ind);
-    i = hh1.v1;
-    j = hh1.v2;
-    Map_2(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, ind, Chan.h_map,Chan.h_map,Chan.nh, hh1,Space.qnums[i].j);
-  }
-}
-
-void X_hh::X1_zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  int ind;
-  if( !flag ){
-    for(ind = 0; ind < X_2_length; ++ind){
-      X1_2[ind] = 0.0;
-    }
-  }
-  for(ind = 0; ind < X_3_length; ++ind){
-    X1_3[ind] = 0.0;
-    X1_3od[ind] = 0.0;
-  }
-  for(ind = 0; ind < X_3d_length; ++ind){
-    X1_3d[ind] = 0.0;
-  }
-}
-
-void X_hh::X_zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  int ind;
-  if( !flag ){
-    for(ind = 0; ind < X_2_length; ++ind){
-      X_2[ind] = 0.0;
-    }
-  }
-  for(ind = 0; ind < X_3_length; ++ind){
-    X_3[ind] = 0.0;
-    X_3od[ind] = 0.0;
-  }
-  for(ind = 0; ind < X_3d_length; ++ind){
-    X_3d[ind] = 0.0;
-  }
-}
-
-void X_hh::diagonalize(Input_Parameters &Parameters, Channels &Chan)
-{
-  int nh, chan3, h, ind;
-  for(ind = 0; ind < X_3_length; ++ind){
-    X1_3od[ind] = X1_3[ind];
-    X_3od[ind] = X_3[ind];
-  }
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    nh = Chan.nh[chan3];
-    for(h = 0; h < nh; ++h){
-      ind = h * nh + h;
-      X1_3od[X_3_index[chan3] + ind] = 0.0;
-      X_3od[X_3_index[chan3] + ind] = 0.0;
-      X1_3d[X_3d_index[chan3] + h] = X1_3[X_3_index[chan3] + ind];
-      X_3d[X_3d_index[chan3] + h] = X_3[X_3_index[chan3] + ind];
-    }
-  }
-}
-
-void X_hh::X1_gather(Input_Parameters &Parameters, Channels &Chan)
-{
-  double x;
-  for(int ind = 0; ind < X_2_length; ++ind){
-    x = 0.0;
-    x += X1_2[ind];
-    x += map_fac2[ind] * X1_3[X_3_index[map_chan[ind]] + map_ind[ind]];
-    X1_2[ind] = x;
-  }
-  X1_zero(Parameters, Chan, true);
-
-  for(int ind = 0; ind < X_2_length; ++ind){
-    x = X1_2[ind];
-    X1_3[X_3_index[map_chan[ind]] + map_ind[ind]] += map_fac1[ind] * x;
-  }
-}
-
-void X_hh::X_gather(Input_Parameters &Parameters, Channels &Chan)
-{
-  double x;
-  for(int ind = 0; ind < X_2_length; ++ind){
-    x = 0.0;
-    x += X_2[ind];
-    x += map_fac2[ind] * X_3[X_3_index[map_chan[ind]] + map_ind[ind]];
-    X_2[ind] = x;
-  }
-  X_zero(Parameters, Chan, true);
-
-  for(int ind = 0; ind < X_2_length; ++ind){
-    x = X_2[ind];
-    X_3[X_3_index[map_chan[ind]] + map_ind[ind]] += map_fac1[ind] * x;
-  }
-}
-
-void X_hh::delete_struct(Input_Parameters &Parameters, Channels &Chan)
-{
-  delete[] X_2;
-  delete[] X1_2;
-  delete[] X_3;
-  delete[] X1_3;
-  delete[] X_3d;
-  delete[] X1_3d;
-  delete[] X_3od;
-  delete[] X1_3od;
-
-  delete[] X_3_index;
-  delete[] X_3d_index;
-
-  delete[] map_chan;
-  delete[] map_ind;
-  delete[] map_fac1;
-  delete[] map_fac2;
-}
-
-X_pp::X_pp(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan)
-{
-  int chan3, ind, length;
-  int a, b;
-  two_body pp1;
-
-  length = Chan.npp1[Chan.ind0];
-  X_2 = new double[length];
-  map_chan = new int[length];
-  map_ind = new int[length];
-  map_fac1 = new double[length];
-  map_fac2 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X_2[ind] = 0.0;
-  }
-  X_2_length = length;
-
-  length = 0;
-  X_3_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_index[chan3] = length;
-    length += Chan.np[chan3] * Chan.np[chan3];
-  }
-  X_3 = new double[length];
-  X_3od = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X_3[ind] = 0.0;
-    X_3od[ind] = 0.0;
-  }
-  X_3_length = length;
-
-  length = 0;
-  X_3d_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3d_index[chan3] = length;
-    length += Chan.np[chan3];
-  }
-  X_3d = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X_3d[ind] = 0.0;
-  }
-  X_3d_length = length;
-
-  for(ind = 0; ind < X_2_length; ++ind){
-    pp1 = Chan.pp1_state(Chan.ind0, ind);
-    a = pp1.v1;
-    b = pp1.v2;
-    Map_2(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, ind, Chan.p_map,Chan.p_map,Chan.np, pp1,Space.qnums[a].j);
-  }
-}
-
-void X_pp::X_zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  int ind;
-  if( !flag ){
-    for(ind = 0; ind < X_2_length; ++ind){
-      X_2[ind] = 0.0;
-    }
-  }
-  for(ind = 0; ind < X_3_length; ++ind){
-    X_3[ind] = 0.0;
-    X_3od[ind] = 0.0;
-  }
-  for(ind = 0; ind < X_3d_length; ++ind){
-    X_3d[ind] = 0.0;
-  }
-}
-
-void X_pp::diagonalize(Input_Parameters &Parameters, Channels &Chan)
-{
-  int np, chan3, p, ind;
-  for(ind = 0; ind < X_3_length; ++ind){
-    X_3od[ind] = X_3[ind];
-  }
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    np = Chan.np[chan3];
-    for(p = 0; p < np; ++p){
-      ind = p * np + p;
-      X_3od[X_3_index[chan3] + ind] = 0.0;
-      X_3d[X_3d_index[chan3] + p] = X_3[X_3_index[chan3] + ind];
-    }
-  }
-}
-
-void X_pp::X_gather(Input_Parameters &Parameters, Channels &Chan)
-{
-  double x;
-  for(int ind = 0; ind < X_2_length; ++ind){
-    x = 0.0;
-    x += X_2[ind];
-    x += map_fac2[ind] * X_3[X_3_index[map_chan[ind]] + map_ind[ind]];
-    X_2[ind] = x;
-  }
-  X_zero(Parameters, Chan, true);
-
-  for(int ind = 0; ind < X_2_length; ++ind){
-    x = X_2[ind];
-    X_3[X_3_index[map_chan[ind]] + map_ind[ind]] += map_fac1[ind] * x;
-  }
-}
-
-void X_pp::delete_struct(Input_Parameters &Parameters, Channels &Chan)
-{
-  delete[] X_2;
-  delete[] X_3;
-  delete[] X_3d;
-  delete[] X_3od;
-
-  delete[] X_3_index;
-  delete[] X_3d_index;
-
-  delete[] map_chan;
-  delete[] map_ind;
-  delete[] map_fac1;
-  delete[] map_fac2;
-}
-
-X_hp::X_hp(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan)
-{
-  int chan3, ind, length;
-  int i, a;
-  two_body hp1;
-
-  length = Chan.nhp1[Chan.ind0];
-  X_2 = new double[length];
-  map_chan = new int[length];
-  map_ind = new int[length];
-  map_fac1 = new double[length];
-  map_fac2 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X_2[ind] = 0.0;
-  }
-  X_2_length = length;
-
-  length = 0;
-  X_3_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_index[chan3] = length;
-    length += Chan.nh[chan3] * Chan.np[chan3];
-  }
-  X_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X_3[ind] = 0.0;
-  }
-  X_3_length = length;
-
-  for(ind = 0; ind < X_2_length; ++ind){
-    hp1 = Chan.hp1_state(Chan.ind0, ind);
-    i = hp1.v1;
-    a = hp1.v2;
-    Map_2(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, ind, Chan.h_map,Chan.p_map,Chan.np, hp1,Space.qnums[i].j);
-  }
-}
-
-void X_hp::X_zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  int ind;
-  if( !flag ){
-    for(ind = 0; ind < X_2_length; ++ind){
-      X_2[ind] = 0.0;
-    }
-  }
-  for(ind = 0; ind < X_3_length; ++ind){
-    X_3[ind] = 0.0;
-  }
-}
-
-void X_hp::X_gather(Input_Parameters &Parameters, Channels &Chan)
-{
-  double x;
-  X_zero(Parameters, Chan, true);
-
-  for(int ind = 0; ind < X_2_length; ++ind){
-    x = X_2[ind];
-    X_3[X_3_index[map_chan[ind]] + map_ind[ind]] += map_fac1[ind] * x;
-  }
-}
-
-void X_hp::delete_struct(Input_Parameters &Parameters, Channels &Chan)
-{
-  delete[] X_2;
-  delete[] X_3;
-
-  delete[] X_3_index;
-
-  delete[] map_chan;
-  delete[] map_ind;
-  delete[] map_fac1;
-  delete[] map_fac2;
-}
-
-X_hhhh::X_hhhh(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan)
-{
-  int chan1, chan3, ind, length, count;
-  int i, j, k, l, nhh;
-  two_body hh1, hh2;
-  four_body ijkl, ijkl_j;
-  four_body *fb_ind;
-  four_body *fb_j;
-  int *J;
-
-  length = 0;
-  X_1_index = new int[Chan.size1];
-  for(chan1 = 0; chan1 < Chan.size1; ++chan1){
-    X_1_index[chan1] = length;
-    length += Chan.nhh[chan1] * Chan.nhh[chan1];
-  }
-  X_1 = new double[length];
-  map_num = new int[2 * length]; // X_3_3, X_3_4
-  map_index = new int[2 * length];
-  fb_ind = new four_body[length];
-  fb_j = new four_body[length];
-  J = new int[length];
-  for(ind = 0; ind < length; ++ind){
-    X_1[ind] = 0.0;
-  }
-  X_1_length = length;
-
-  length = 0;
-  X_3_3_index = new int[Chan.size3];
-  X_3_4_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_3_index[chan3] = length;
-    X_3_4_index[chan3] = length;
-    length += Chan.nhhh[chan3] * Chan.nh[chan3];
-  }
-  X_3_3 = new double[length];
-  X_3_4 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X_3_3[ind] = 0.0;
-    X_3_4[ind] = 0.0;
-  }
-  X_3_3_length = length;
-  X_3_4_length = length;
-
-  length = 0;
-  count = 0;
-  for(chan1 = 0; chan1 < Chan.size1; ++chan1){
-    nhh = Chan.nhh[chan1];
-    for(int hh1_ind = 0; hh1_ind < nhh; ++hh1_ind){
-      hh1 = Chan.hh_state(chan1, hh1_ind);
-      i = hh1.v1;
-      j = hh1.v2;
-      ijkl.v1 = i;
-      ijkl.v2 = j;
-      ijkl_j.v1 = Space.qnums[i].j;
-      ijkl_j.v2 = Space.qnums[j].j;
-      for(int hh2_ind = 0; hh2_ind < nhh; ++hh2_ind){
-	hh2 = Chan.hh_state(chan1, hh2_ind);
-	k = hh2.v1;
-	l = hh2.v2;
-	ijkl.v3 = k;
-	ijkl.v4 = l;
-	ijkl_j.v3 = Space.qnums[k].j;
-	ijkl_j.v4 = Space.qnums[l].j;
-	fb_ind[count] = ijkl;
-	fb_j[count] = ijkl_j;
-	J[count] = Chan.qnums1[chan1].j;
-
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 2,0,length,count);
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 2,1,length,count);
-	++count;
-      }
-    }
-  }
-  map_chan = new int[length];
-  map_ind = new int[length];
-  map_fac1 = new double[length];
-  map_fac2 = new double[length];
-
-  #pragma omp parallel for schedule(static)
-  for(int hhhh = 0; hhhh < X_1_length; ++hhhh){
-    Map_4_7(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 2,0,hhhh, Chan.hhh_map,Chan.h_map, Chan.nh, fb_ind,fb_j,J);
-    Map_4_8(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 2,1,hhhh, Chan.hhh_map,Chan.h_map, Chan.nh, fb_ind,fb_j,J);
-  }
-  delete[] fb_ind;
-  delete[] fb_j;
-  delete[] J;
-}
-
-void X_hhhh::X_zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  int ind;
-  if( !flag ){
-    for(ind = 0; ind < X_1_length; ++ind){
-      X_1[ind] = 0.0;
-    }
-  }
-  for(ind = 0; ind < X_3_3_length; ++ind){
-    X_3_3[ind] = 0.0;
-  }
-  for(ind = 0; ind < X_3_4_length; ++ind){
-    X_3_4[ind] = 0.0;
-  }
-}
-
-void X_hhhh::X_gather(Input_Parameters &Parameters, Channels &Chan)
-{
-  int index;
-  double x;
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = 0.0;
-    x += X_1[ind];
-    for(int n = 0; n < map_num[2*ind]; ++n){
-      index = map_index[2*ind] + n;
-      x += map_fac2[index] * X_3_3[X_3_3_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[2*ind + 1]; ++n){
-      index = map_index[2*ind + 1] + n;
-      x += map_fac2[index] * X_3_4[X_3_4_index[map_chan[index]] + map_ind[index]];
-    }
-    X_1[ind] = x;
-  }
-  X_zero(Parameters, Chan, true);
-
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = X_1[ind];
-    for(int n = 0; n < map_num[2*ind]; ++n){
-      index = map_index[2*ind] + n;
-      X_3_3[X_3_3_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[2*ind + 1]; ++n){
-      index = map_index[2*ind + 1] + n;
-      X_3_4[X_3_4_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-  }
-}
-
-void X_hhhh::delete_struct(Input_Parameters &Parameters, Channels &Chan)
-{
-  delete[] X_1;
-  delete[] X_3_3;
-  delete[] X_3_4;
-
-  delete[] X_1_index;
-  delete[] X_3_3_index;
-  delete[] X_3_4_index;
-
-  delete[] map_index;
-  delete[] map_chan;
-  delete[] map_ind;
-  delete[] map_num;
-  delete[] map_fac1;
-  delete[] map_fac2;
-}
-
-X_pppp::X_pppp(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan)
-{
-  int chan1, chan3, ind, length, count;
-  int a, b, c, d, npp;
-  two_body pp1, pp2;
-  four_body abcd, abcd_j;
-  four_body *fb_ind;
-  four_body *fb_j;
-  int *J;
-
-  length = 0;
-  X_1_index = new int[Chan.size1];
-  for(chan1 = 0; chan1 < Chan.size1; ++chan1){
-    X_1_index[chan1] = length;
-    length += Chan.npp[chan1] * Chan.npp[chan1];
-  }
-  X_1 = new double[length];
-  X1_1 = new double[length];
-  map_num = new int[2 * length]; // X1_3_1, X1_3_2
-  map_index = new int[2 * length];
-  fb_ind = new four_body[length];
-  fb_j = new four_body[length];
-  J = new int[length];
-  for(ind = 0; ind < length; ++ind){
-    X_1[ind] = 0.0;
-    X1_1[ind] = 0.0;
-  }
-  X_1_length = length;
-
-  length = 0;
-  X_3_1_index = new int[Chan.size3];
-  X_3_2_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_1_index[chan3] = length;
-    X_3_2_index[chan3] = length;
-    length += Chan.np[chan3] * Chan.nppp[chan3];
-  }
-  X1_3_1 = new double[length];
-  X1_3_2 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X1_3_1[ind] = 0.0;
-    X1_3_2[ind] = 0.0;
-  }
-  X_3_1_length = length;
-  X_3_2_length = length;
-
-  length = 0;
-  count = 0;
-  for(chan1 = 0; chan1 < Chan.size1; ++chan1){
-    npp = Chan.npp[chan1];
-    for(int pp1_ind = 0; pp1_ind < npp; ++pp1_ind){
-      pp1 = Chan.pp_state(chan1, pp1_ind);
-      a = pp1.v1;
-      b = pp1.v2;
-      abcd.v1 = a;
-      abcd.v2 = b;
-      abcd_j.v1 = Space.qnums[a].j;
-      abcd_j.v2 = Space.qnums[b].j;
-      for(int pp2_ind = 0; pp2_ind < npp; ++pp2_ind){
-	pp2 = Chan.pp_state(chan1, pp2_ind);
-	c = pp2.v1;
-	d = pp2.v2;
-	abcd.v3 = c;
-	abcd.v4 = d;
-	abcd_j.v3 = Space.qnums[c].j;
-	abcd_j.v4 = Space.qnums[d].j;
-	fb_ind[count] = abcd;
-	fb_j[count] = abcd_j;
-	J[count] = Chan.qnums1[chan1].j;
-
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 2,0,length,count);
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 2,1,length,count);
-	++count;
-      }
-    }
-  }
-  map_chan = new int[length];
-  map_ind = new int[length];
-  map_fac1 = new double[length];
-  map_fac2 = new double[length];
-
-  #pragma omp parallel for schedule(static)
-  for(int pppp = 0; pppp < X_1_length; ++pppp){
-    Map_4_5(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 2,0,pppp, Chan.p_map,Chan.ppp_map, Chan.nppp, fb_ind,fb_j,J);
-    Map_4_6(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 2,1,pppp, Chan.p_map,Chan.ppp_map, Chan.nppp, fb_ind,fb_j,J);
-  }
-  delete[] fb_ind;
-  delete[] fb_j;
-  delete[] J;
-}
-
-void X_pppp::X1_zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  int ind;
-  if( !flag ){
-    for(ind = 0; ind < X_1_length; ++ind){
-      X1_1[ind] = 0.0;
-    }
-  }
-  for(ind = 0; ind < X_3_1_length; ++ind){
-    X1_3_1[ind] = 0.0;
-  }
-  for(ind = 0; ind < X_3_2_length; ++ind){
-    X1_3_2[ind] = 0.0;
-  }
-}
-
-void X_pppp::X_zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  int ind;
-  if( !flag ){
-    for(ind = 0; ind < X_1_length; ++ind){
-      X1_1[ind] = 0.0;
-    }
-  }
-}
-
-void X_pppp::X1_gather(Input_Parameters &Parameters, Channels &Chan)
-{
-  int index;
-  double x;
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = 0.0;
-    x += X1_1[ind];
-    for(int n = 0; n < map_num[2*ind]; ++n){
-      index = map_index[2*ind] + n;
-      x += map_fac2[index] * X1_3_1[X_3_1_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[2*ind + 1]; ++n){
-      index = map_index[2*ind + 1] + n;
-      x += map_fac2[index] * X1_3_2[X_3_2_index[map_chan[index]] + map_ind[index]];
-    }
-    X1_1[ind] = x;
-  }
-  X1_zero(Parameters, Chan, true);
-
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = X1_1[ind];
-    for(int n = 0; n < map_num[2*ind]; ++n){
-      index = map_index[2*ind] + n;
-      X1_3_1[X_3_1_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[2*ind + 1]; ++n){
-      index = map_index[2*ind + 1] + n;
-      X1_3_2[X_3_2_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-  }
-}
-
-void X_pppp::delete_struct(Input_Parameters &Parameters, Channels &Chan)
-{
-  delete[] X_1;
-  delete[] X1_1;
-  delete[] X1_3_1;
-  delete[] X1_3_2;
-
-  delete[] X_1_index;
-  delete[] X_3_1_index;
-  delete[] X_3_2_index;
-
-  delete[] map_index;
-  delete[] map_chan;
-  delete[] map_ind;
-  delete[] map_num;
-  delete[] map_fac1;
-  delete[] map_fac2;
-}
-
-X_hphp::X_hphp(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan)
-{
-  int chan1, chan2, chan3, ind, length, count;
-  int i, a, j, b, nhp;
-  two_body hp1, hp2;
-  four_body iajb, iajb_j;
-  four_body *fb_ind;
-  four_body *fb_j;
-  int *J;
-
-  length = 0;
-  for(chan1 = 0; chan1 < Chan.size1; ++chan1){
-    length += Chan.nhp[chan1] * Chan.nhp[chan1];
-  }
-  map_num = new int[5 * length]; // X_2_1, X_3_1, X_3_2, X_3_3, X_3_4
-  map_index = new int[5 * length];
-  fb_ind = new four_body[length];
-  fb_j = new four_body[length];
-  J = new int[length];
-  X_1_length = length;
-
-  length = 0;
-  X_2_1_index = new int[Chan.size2];
-  for(chan2 = 0; chan2 < Chan.size2; ++chan2){
-    X_2_1_index[chan2] = length;
-    length += Chan.nhp1[chan2] * Chan.nhp1[chan2];
-  }
-  X_2_1 = new double[length];
-  X1_2_1 = new double[length];
-  X2_2_1 = new double[length];
-  X3_2_1 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X_2_1[ind] = 0.0;
-    X1_2_1[ind] = 0.0;
-    X2_2_1[ind] = 0.0;
-    X3_2_1[ind] = 0.0;
-  }
-  X_2_1_length = length;
-
-  length = 0;
-  X_3_1_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_1_index[chan3] = length;
-    length += Chan.nh[chan3] * Chan.nhpp[chan3];
-  }
-  X1_3_1 = new double[length];
-  X2_3_1 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X1_3_1[ind] = 0.0;
-    X2_3_1[ind] = 0.0;
-  }
-  X_3_1_length = length;
-
-  length = 0;
-  X_3_2_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_2_index[chan3] = length;
-    length += Chan.np[chan3] * Chan.nhph[chan3];
-  }
-  X_3_2 = new double[length];
-  X1_3_2 = new double[length];
-  X2_3_2 = new double[length];
-  X3_3_2 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X_3_2[ind] = 0.0;
-    X1_3_2[ind] = 0.0;
-    X2_3_2[ind] = 0.0;
-    X3_3_2[ind] = 0.0;
-  }
-  X_3_2_length = length;
-
-  length = 0;
-  X_3_3_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_3_index[chan3] = length;
-    length += Chan.nhpp[chan3] * Chan.nh[chan3];
-  }
-  X_3_3 = new double[length];
-  X1_3_3 = new double[length];
-  X2_3_3 = new double[length];
-  X3_3_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X_3_3[ind] = 0.0;
-    X1_3_3[ind] = 0.0;
-    X2_3_3[ind] = 0.0;
-    X3_3_3[ind] = 0.0;
-  }
-  X_3_3_length = length;
-
-  length = 0;
-  X_3_4_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_4_index[chan3] = length;
-    length += Chan.nhph[chan3] * Chan.np[chan3];
-  }
-  X3_3_4 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X3_3_4[ind] = 0.0;
-  }
-  X_3_4_length = length;
-
-  length = 0;
-  count = 0;
-  for(chan1 = 0; chan1 < Chan.size1; ++chan1){
-    nhp = Chan.nhp[chan1];
-    for(int hp1_ind = 0; hp1_ind < nhp; ++hp1_ind){
-      hp1 = Chan.hp_state(chan1, hp1_ind);
-      i = hp1.v1;
-      a = hp1.v2;
-      iajb.v1 = i;
-      iajb.v2 = a;
-      iajb_j.v1 = Space.qnums[i].j;
-      iajb_j.v2 = Space.qnums[a].j;
-      for(int hp2_ind = 0; hp2_ind < nhp; ++hp2_ind){
-	hp2 = Chan.hp_state(chan1, hp2_ind);
-	j = hp2.v1;
-	b = hp2.v2;
-	iajb.v3 = j;
-	iajb.v4 = b;
-	iajb_j.v3 = Space.qnums[j].j;
-	iajb_j.v4 = Space.qnums[b].j;
-	fb_ind[count] = iajb;
-	fb_j[count] = iajb_j;
-	J[count] = Chan.qnums1[chan1].j;
-
-	Map_4_count_1(Parameters,Space, map_index,map_num, 5,0,length,count, iajb);
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 5,1,length,count);
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 5,2,length,count);
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 5,3,length,count);
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 5,4,length,count);
-	++count;
-      }
-    }
-  }
-  map_chan = new int[length];
-  map_ind = new int[length];
-  map_fac1 = new double[length];
-  map_fac2 = new double[length];
-
-  #pragma omp parallel for schedule(static)
-  for(int hphp = 0; hphp < X_1_length; ++hphp){
-    Map_4_1(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 5,0,hphp, Chan.hp1_map,Chan.hp1_map, Chan.nhp1, fb_ind,fb_j,J);
-    Map_4_5(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 5,1,hphp, Chan.h_map,Chan.hpp_map, Chan.nhpp, fb_ind,fb_j,J);
-    Map_4_6(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 5,2,hphp, Chan.p_map,Chan.hph_map, Chan.nhph, fb_ind,fb_j,J);
-    Map_4_7(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 5,3,hphp, Chan.hpp_map,Chan.h_map, Chan.nh, fb_ind,fb_j,J);
-    Map_4_8(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 5,4,hphp, Chan.hph_map,Chan.p_map, Chan.np, fb_ind,fb_j,J);
-  }
-  delete[] fb_ind;
-  delete[] fb_j;
-  delete[] J;
-}
-
-void X_hphp::X1_zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  int ind;
-  for(ind = 0; ind < X_2_1_length; ++ind){ X1_2_1[ind] = 0.0; }
-  for(ind = 0; ind < X_3_1_length; ++ind){ X1_3_1[ind] = 0.0; }
-  for(ind = 0; ind < X_3_2_length; ++ind){ X1_3_2[ind] = 0.0; }
-  for(ind = 0; ind < X_3_3_length; ++ind){ X1_3_3[ind] = 0.0; }
-}
-
-void X_hphp::X2_zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  int ind;
-  for(ind = 0; ind < X_2_1_length; ++ind){ X2_2_1[ind] = 0.0; }
-  for(ind = 0; ind < X_3_1_length; ++ind){ X2_3_1[ind] = 0.0; }
-  for(ind = 0; ind < X_3_2_length; ++ind){ X2_3_2[ind] = 0.0; }
-  for(ind = 0; ind < X_3_3_length; ++ind){ X2_3_3[ind] = 0.0; }
-}
-
-void X_hphp::X3_zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  int ind;
-  for(ind = 0; ind < X_2_1_length; ++ind){ X3_2_1[ind] = 0.0; }
-  for(ind = 0; ind < X_3_2_length; ++ind){ X3_3_2[ind] = 0.0; }
-  for(ind = 0; ind < X_3_3_length; ++ind){ X3_3_3[ind] = 0.0; }
-  for(ind = 0; ind < X_3_4_length; ++ind){ X3_3_4[ind] = 0.0; }
-}
-
-void X_hphp::X_zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  int ind;
-  for(ind = 0; ind < X_2_1_length; ++ind){ X_2_1[ind] = 0.0; }
-  for(ind = 0; ind < X_3_2_length; ++ind){ X_3_2[ind] = 0.0; }
-  for(ind = 0; ind < X_3_3_length; ++ind){ X_3_3[ind] = 0.0; }
-}
-
-void X_hphp::X1_gather(Input_Parameters &Parameters, Channels &Chan)
-{
-  int index;
-  double x;
-  double *X_1temp = new double[X_1_length];
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = 0.0;
-    for(int n = 0; n < map_num[5*ind]; ++n){
-      index = map_index[5*ind] + n;
-      x += map_fac2[index] * X1_2_1[X_2_1_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[5*ind + 2]; ++n){
-      index = map_index[5*ind + 2] + n;
-      x += map_fac2[index] * X1_3_2[X_3_2_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[5*ind + 3]; ++n){
-      index = map_index[5*ind + 3] + n;
-      x += map_fac2[index] * X1_3_3[X_3_3_index[map_chan[index]] + map_ind[index]];
-    }
-    X_1temp[ind] = x;
-  }
-  X1_zero(Parameters, Chan, true);
-
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = X_1temp[ind];
-    for(int n = 0; n < map_num[5*ind]; ++n){
-      index = map_index[5*ind] + n;
-      X1_2_1[X_2_1_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[5*ind + 1]; ++n){
-      index = map_index[5*ind + 1] + n;
-      X1_3_1[X_3_1_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[5*ind + 2]; ++n){
-      index = map_index[5*ind + 2] + n;
-      X1_3_2[X_3_2_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[5*ind + 3]; ++n){
-      index = map_index[5*ind + 3] + n;
-      X1_3_3[X_3_3_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-  }
-  delete[] X_1temp;
-}
-
-void X_hphp::X2_gather(Input_Parameters &Parameters, Channels &Chan)
-{
-  int index;
-  double x;
-  double *X_1temp = new double[X_1_length];
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = 0.0;
-    for(int n = 0; n < map_num[5*ind]; ++n){
-      index = map_index[5*ind] + n;
-      x += map_fac2[index] * X2_2_1[X_2_1_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[5*ind + 2]; ++n){
-      index = map_index[5*ind + 2] + n;
-      x += map_fac2[index] * X2_3_2[X_3_2_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[5*ind + 3]; ++n){
-      index = map_index[5*ind + 3] + n;
-      x += map_fac2[index] * X2_3_3[X_3_3_index[map_chan[index]] + map_ind[index]];
-    }
-    X_1temp[ind] = x;
-  }
-  X2_zero(Parameters, Chan, true);
-
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = X_1temp[ind];
-    for(int n = 0; n < map_num[5*ind]; ++n){
-      index = map_index[5*ind] + n;
-      X2_2_1[X_2_1_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[5*ind + 1]; ++n){
-      index = map_index[5*ind + 1] + n;
-      X2_3_1[X_3_1_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[5*ind + 2]; ++n){
-      index = map_index[5*ind + 2] + n;
-      X2_3_2[X_3_2_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[5*ind + 3]; ++n){
-      index = map_index[5*ind + 3] + n;
-      X2_3_3[X_3_3_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-  }
-  delete[] X_1temp;
-}
-
-void X_hphp::X3_gather(Input_Parameters &Parameters, Channels &Chan)
-{
-  int index;
-  double x;
-  double *X_1temp = new double[X_1_length];
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = 0.0;
-    for(int n = 0; n < map_num[5*ind]; ++n){
-      index = map_index[5*ind] + n;
-      x += map_fac2[index] * X3_2_1[X_2_1_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[5*ind + 2]; ++n){
-      index = map_index[5*ind + 2] + n;
-      x += map_fac2[index] * X3_3_2[X_3_2_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[5*ind + 3]; ++n){
-      index = map_index[5*ind + 3] + n;
-      x += map_fac2[index] * X3_3_3[X_3_3_index[map_chan[index]] + map_ind[index]];
-    }
-    X_1temp[ind] = x;
-  }
-  X3_zero(Parameters, Chan, true);
-
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = X_1temp[ind];
-    for(int n = 0; n < map_num[5*ind]; ++n){
-      index = map_index[5*ind] + n;
-      X3_2_1[X_2_1_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[5*ind + 2]; ++n){
-      index = map_index[5*ind + 2] + n;
-      X3_3_2[X_3_2_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[5*ind + 3]; ++n){
-      index = map_index[5*ind + 3] + n;
-      X3_3_3[X_3_3_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[5*ind + 4]; ++n){
-      index = map_index[5*ind + 4] + n;
-      X3_3_4[X_3_4_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-  }
-  delete[] X_1temp;
-}
-
-void X_hphp::X_gather(Input_Parameters &Parameters, Channels &Chan)
-{
-  int index;
-  double x;
-  double *X_1temp = new double[X_1_length];
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = 0.0;
-    for(int n = 0; n < map_num[5*ind]; ++n){
-      index = map_index[5*ind] + n;
-      x += map_fac2[index] * X_2_1[X_2_1_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[5*ind + 2]; ++n){
-      index = map_index[5*ind + 2] + n;
-      x += map_fac2[index] * X_3_2[X_3_2_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[5*ind + 3]; ++n){
-      index = map_index[5*ind + 3] + n;
-      x += map_fac2[index] * X_3_3[X_3_3_index[map_chan[index]] + map_ind[index]];
-    }
-    X_1temp[ind] = x;
-  }
-  X_zero(Parameters, Chan, true);
-
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = X_1temp[ind];
-    for(int n = 0; n < map_num[5*ind]; ++n){
-      index = map_index[5*ind] + n;
-      X_2_1[X_2_1_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[5*ind + 2]; ++n){
-      index = map_index[5*ind + 2] + n;
-      X_3_2[X_3_2_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[5*ind + 3]; ++n){
-      index = map_index[5*ind + 3] + n;
-      X_3_3[X_3_3_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-  }
-  delete[] X_1temp;
-}
-
-void X_hphp::delete_struct(Input_Parameters &Parameters, Channels &Chan)
-{
-  delete[] X1_2_1;
-  delete[] X2_2_1;
-  delete[] X3_2_1;
-  delete[] X_2_1;
-  delete[] X1_3_1;
-  delete[] X2_3_1;
-  delete[] X1_3_2;
-  delete[] X2_3_2;
-  delete[] X3_3_2;
-  delete[] X_3_2;
-  delete[] X1_3_3;
-  delete[] X2_3_3;
-  delete[] X3_3_3;
-  delete[] X_3_3;
-  delete[] X3_3_4;
-
-  delete[] X_2_1_index;
-  delete[] X_3_1_index;
-  delete[] X_3_2_index;
-  delete[] X_3_3_index;
-  delete[] X_3_4_index;
-
-  delete[] map_index;
-  delete[] map_chan;
-  delete[] map_ind;
-  delete[] map_num;
-  delete[] map_fac1;
-  delete[] map_fac2;
-}
-
-X_hppp::X_hppp(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan)
-{
-  int chan1, chan2, chan3, ind, length, count;
-  int i, a, b, c, nhp, npp;
-  two_body hp, pp;
-  four_body iabc, iabc_j;
-  four_body *fb_ind;
-  four_body *fb_j;
-  int *J;
-
-  length = 0;
-  X_1_index = new int[Chan.size1];
-  for(chan1 = 0; chan1 < Chan.size1; ++chan1){
-    X_1_index[chan1] = length;
-    length += Chan.nhp[chan1] * Chan.npp[chan1];
-  }
-  X_1 = new double[length];
-  map_num = new int[4 * length]; // X_2_3, X_3_1, X_3_2, X_3_3
-  map_index = new int[4 * length];
-  fb_ind = new four_body[length];
-  fb_j = new four_body[length];
-  J = new int[length];
-  for(ind = 0; ind < length; ++ind){
-    X_1[ind] = 0.0;
-  }
-  X_1_length = length;
-
-  length = 0;
-  X_2_3_index = new int[Chan.size2];
-  for(chan2 = 0; chan2 < Chan.size2; ++chan2){
-    X_2_3_index[chan2] = length;
-    length += Chan.nhp1[chan2] * Chan.npp1[chan2];
-  }
-  X_2_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X_2_3[ind] = 0.0;
-  }
-  X_2_3_length = length;
-
-  length = 0;
-  X_3_1_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_1_index[chan3] = length;
-    length += Chan.nh[chan3] * Chan.nppp[chan3];
-  }
-  X1_3_1 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X1_3_1[ind] = 0.0;
-  }
-  X_3_1_length = length;
-
-  length = 0;
-  X_3_2_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_2_index[chan3] = length;
-    length += Chan.np[chan3] * Chan.npph[chan3];
-  }
-  X_3_2 = new double[length];
-  X1_3_2 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X_3_2[ind] = 0.0;
-    X1_3_2[ind] = 0.0;
-  }
-  X_3_2_length = length;
-
-  length = 0;
-  X_3_3_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_3_index[chan3] = length;
-    length += Chan.nhpp[chan3] * Chan.np[chan3];
-  }
-  X_3_3 = new double[length];
-  X1_3_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X_3_3[ind] = 0.0;
-    X1_3_3[ind] = 0.0;
-  }
-  X_3_3_length = length;
-
-  length = 0;
-  count = 0;
-  for(chan1 = 0; chan1 < Chan.size1; ++chan1){
-    nhp = Chan.nhp[chan1];
-    npp = Chan.npp[chan1];
-    for(int hp_ind = 0; hp_ind < nhp; ++hp_ind){
-      hp = Chan.hp_state(chan1, hp_ind);
-      i = hp.v1;
-      a = hp.v2;
-      iabc.v1 = i;
-      iabc.v2 = a;
-      iabc_j.v1 = Space.qnums[i].j;
-      iabc_j.v2 = Space.qnums[a].j;
-      for(int pp_ind = 0; pp_ind < npp; ++pp_ind){
-	pp = Chan.pp_state(chan1, pp_ind);
-	b = pp.v1;
-	c = pp.v2;
-	iabc.v3 = b;
-	iabc.v4 = c;
-	iabc_j.v3 = Space.qnums[b].j;
-	iabc_j.v4 = Space.qnums[c].j;
-	fb_ind[count] = iabc;
-	fb_j[count] = iabc_j;
-	J[count] = Chan.qnums1[chan1].j;
-
-	Map_4_count_3(Parameters,Space, map_index,map_num, 4,0,length,count, iabc);
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 4,1,length,count);
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 4,2,length,count);
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 4,3,length,count);
-	++count;
-      }
-    }
-  }
-  map_chan = new int[length];
-  map_ind = new int[length];
-  map_fac1 = new double[length];
-  map_fac2 = new double[length];
-
-  #pragma omp parallel for schedule(static)
-  for(int hppp = 0; hppp < X_1_length; ++hppp){
-    Map_4_3(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 4,0,hppp, Chan.hp1_map,Chan.pp1_map, Chan.npp1, fb_ind,fb_j,J);
-    Map_4_5(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 4,1,hppp, Chan.h_map,Chan.ppp_map, Chan.nppp, fb_ind,fb_j,J);
-    Map_4_6(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 4,2,hppp, Chan.p_map,Chan.pph_map, Chan.npph, fb_ind,fb_j,J);
-    Map_4_7(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 4,3,hppp, Chan.hpp_map,Chan.p_map, Chan.np, fb_ind,fb_j,J);
-  }
-  delete[] fb_ind;
-  delete[] fb_j;
-  delete[] J;
-}
-
-void X_hppp::X1_zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  int ind;
-  for(ind = 0; ind < X_3_1_length; ++ind){ X1_3_1[ind] = 0.0; }
-  for(ind = 0; ind < X_3_2_length; ++ind){ X1_3_2[ind] = 0.0; }
-  for(ind = 0; ind < X_3_3_length; ++ind){ X1_3_3[ind] = 0.0; }
-}
-
-void X_hppp::X_zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  int ind;
-  if( !flag ){
-    for(ind = 0; ind < X_1_length; ++ind){ X_1[ind] = 0.0; }
-  }
-  for(ind = 0; ind < X_2_3_length; ++ind){ X_2_3[ind] = 0.0; }
-  for(ind = 0; ind < X_3_2_length; ++ind){ X_3_2[ind] = 0.0; }
-  for(ind = 0; ind < X_3_3_length; ++ind){ X_3_3[ind] = 0.0; }
-}
-
-void X_hppp::X1_gather(Input_Parameters &Parameters, Channels &Chan)
-{
-  int index;
-  double x;
-  double *X1_1temp = new double[X_1_length];
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = 0.0;
-    for(int n = 0; n < map_num[4*ind + 2]; ++n){
-      index = map_index[4*ind + 2] + n;
-      x += map_fac2[index] * X1_3_2[X_3_2_index[map_chan[index]] + map_ind[index]];
-    }
-    X1_1temp[ind] = x;
-  }
-  X1_zero(Parameters, Chan, true);
-
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = X1_1temp[ind];
-    for(int n = 0; n < map_num[4*ind + 1]; ++n){
-      index = map_index[4*ind + 1] + n;
-      X1_3_1[X_3_1_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[4*ind + 2]; ++n){
-      index = map_index[4*ind + 2] + n;
-      X1_3_2[X_3_2_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[4*ind + 3]; ++n){
-      index = map_index[4*ind + 3] + n;
-      X1_3_3[X_3_3_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-  }
-  delete[] X1_1temp;
-}
-
-void X_hppp::X_gather(Input_Parameters &Parameters, Channels &Chan)
-{
-  int index;
-  double x;
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = 0.0;
-    for(int n = 0; n < map_num[4*ind + 2]; ++n){
-      index = map_index[4*ind + 2] + n;
-      x += map_fac2[index] * X_3_2[X_3_2_index[map_chan[index]] + map_ind[index]];
-    }
-    X_1[ind] = x;
-  }
-  X_zero(Parameters, Chan, true);
-
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = X_1[ind];
-    for(int n = 0; n < map_num[4*ind]; ++n){
-      index = map_index[4*ind] + n;
-      X_2_3[X_2_3_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[4*ind + 2]; ++n){
-      index = map_index[4*ind + 2] + n;
-      X_3_2[X_3_2_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[4*ind + 3]; ++n){
-      index = map_index[4*ind + 3] + n;
-      X_3_3[X_3_3_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-  }
-}
-
-void X_hppp::delete_struct(Input_Parameters &Parameters, Channels &Chan)
-{
-  delete[] X_1;
-  delete[] X_2_3;
-  delete[] X1_3_1;
-  delete[] X1_3_2;
-  delete[] X_3_2;
-  delete[] X1_3_3;
-  delete[] X_3_3;
-
-  delete[] X_1_index;
-  delete[] X_2_3_index;
-  delete[] X_3_1_index;
-  delete[] X_3_2_index;
-  delete[] X_3_3_index;
-
-  delete[] map_index;
-  delete[] map_chan;
-  delete[] map_ind;
-  delete[] map_num;
-  delete[] map_fac1;
-  delete[] map_fac2;
-}
-
-X_hhhp::X_hhhp(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan)
-{
-  int chan1, chan2, chan3, ind, length, count;
-  int i, j, k, a, nhh, nhp;
-  two_body hh, hp;
-  four_body ijka, ijka_j;
-  four_body *fb_ind;
-  four_body *fb_j;
-  int *J;
-
-  length = 0;
-  X_1_index = new int[Chan.size1];
-  for(chan1 = 0; chan1 < Chan.size1; ++chan1){
-    X_1_index[chan1] = length;
-    length += Chan.nhh[chan1] * Chan.nhp[chan1];
-  }
-  X_1 = new double[length];
-  map_num = new int[3 * length]; // X_2_3, X_3_3, X_3_4
-  map_index = new int[3 * length];
-  fb_ind = new four_body[length];
-  fb_j = new four_body[length];
-  J = new int[length];
-  for(ind = 0; ind < length; ++ind){
-    X_1[ind] = 0.0;
-  }
-  X_1_length = length;
-
-  length = 0;
-  X_2_3_index = new int[Chan.size2];
-  for(chan2 = 0; chan2 < Chan.size2; ++chan2){
-    X_2_3_index[chan2] = length;
-    length += Chan.nhh1[chan2] * Chan.nph1[chan2];
-  }
-  X_2_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X_2_3[ind] = 0.0;
-  }
-  X_2_3_length = length;
-
-  length = 0;
-  X_3_3_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_3_index[chan3] = length;
-    length += Chan.nhhp[chan3] * Chan.nh[chan3];
-  }
-  X1_3_3 = new double[length];
-  X_3_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X1_3_3[ind] = 0.0;
-    X_3_3[ind] = 0.0;
-  }
-  X_3_3_length = length;
-
-  length = 0;
-  X_3_4_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_4_index[chan3] = length;
-    length += Chan.nhhh[chan3] * Chan.np[chan3];
-  }
-  X1_3_4 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X1_3_4[ind] = 0.0;
-  }
-  X_3_4_length = length;
-
-  length = 0;
-  count = 0;
-  for(chan1 = 0; chan1 < Chan.size1; ++chan1){
-    nhh = Chan.nhh[chan1];
-    nhp = Chan.nhp[chan1];
-    for(int hh_ind = 0; hh_ind < nhh; ++hh_ind){
-      hh = Chan.hh_state(chan1, hh_ind);
-      i = hh.v1;
-      j = hh.v2;
-      ijka.v1 = i;
-      ijka.v2 = j;
-      ijka_j.v1 = Space.qnums[i].j;
-      ijka_j.v2 = Space.qnums[j].j;
-      for(int hp_ind = 0; hp_ind < nhp; ++hp_ind){
-	hp = Chan.hp_state(chan1, hp_ind);
-	k = hp.v1;
-	a = hp.v2;
-	ijka.v3 = k;
-	ijka.v4 = a;
-	ijka_j.v3 = Space.qnums[k].j;
-	ijka_j.v4 = Space.qnums[a].j;
-	fb_ind[count] = ijka;
-	fb_j[count] = ijka_j;
-	J[count] = Chan.qnums1[chan1].j;
-
-	Map_4_count_3(Parameters,Space, map_index,map_num, 3,0,length,count, ijka);
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 3,1,length,count);
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 3,2,length,count);
-	++count;
-      }
-    }
-  }
-  map_chan = new int[length];
-  map_ind = new int[length];
-  map_fac1 = new double[length];
-  map_fac2 = new double[length];
-
-  #pragma omp parallel for schedule(static)
-  for(int hhhp = 0; hhhp < X_1_length; ++hhhp){
-    Map_4_3(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 3,0,hhhp, Chan.hh1_map,Chan.ph1_map, Chan.nph1, fb_ind,fb_j,J);
-    Map_4_7(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 3,1,hhhp, Chan.hhp_map,Chan.h_map, Chan.nh, fb_ind,fb_j,J);
-    Map_4_8(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 3,2,hhhp, Chan.hhh_map,Chan.p_map, Chan.np, fb_ind,fb_j,J);
-  }
-  delete[] fb_ind;
-  delete[] fb_j;
-  delete[] J;
-}
-
-void X_hhhp::X1_zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  int ind;
-  for(ind = 0; ind < X_3_3_length; ++ind){ X1_3_3[ind] = 0.0; }
-  for(ind = 0; ind < X_3_4_length; ++ind){ X1_3_4[ind] = 0.0; }
-}
-
-void X_hhhp::X_zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  int ind;
-  if( !flag ){
-    for(ind = 0; ind < X_1_length; ++ind){ X_1[ind] = 0.0; }
-  }
-  for(ind = 0; ind < X_2_3_length; ++ind){ X_2_3[ind] = 0.0; }
-  for(ind = 0; ind < X_3_3_length; ++ind){ X_3_3[ind] = 0.0; }
-}
-
-void X_hhhp::X1_gather(Input_Parameters &Parameters, Channels &Chan)
-{
-  int index;
-  double x;
-  double *X1_1temp = new double[X_1_length];
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = 0.0;
-    for(int n = 0; n < map_num[3*ind + 1]; ++n){
-      index = map_index[3*ind + 1] + n;
-      x += map_fac2[index] * X1_3_3[X_3_3_index[map_chan[index]] + map_ind[index]];
-    }
-    X1_1temp[ind] = x;
-  }
-  X1_zero(Parameters, Chan, true);
-
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = X1_1temp[ind];
-    for(int n = 0; n < map_num[3*ind + 1]; ++n){
-      index = map_index[3*ind + 1] + n;
-      X1_3_3[X_3_3_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[3*ind + 2]; ++n){
-      index = map_index[3*ind + 2] + n;
-      X1_3_4[X_3_4_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-  }
-  delete[] X1_1temp;
-}
-
-void X_hhhp::X_gather(Input_Parameters &Parameters, Channels &Chan)
-{
-  int index;
-  double x;
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = 0.0;
-    for(int n = 0; n < map_num[3*ind + 1]; ++n){
-      index = map_index[3*ind + 1] + n;
-      x += map_fac2[index] * X_3_3[X_3_3_index[map_chan[index]] + map_ind[index]];
-    }
-    X_1[ind] = x;
-  }
-  X_zero(Parameters, Chan, true);
-
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = X_1[ind];
-    for(int n = 0; n < map_num[3*ind]; ++n){
-      index = map_index[3*ind] + n;
-      X_2_3[X_2_3_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[3*ind + 1]; ++n){
-      index = map_index[3*ind + 1] + n;
-      X_3_3[X_3_3_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-  }
-}
-
-void X_hhhp::delete_struct(Input_Parameters &Parameters, Channels &Chan)
-{
-  delete[] X_1;
-  delete[] X_2_3;
-  delete[] X1_3_3;
-  delete[] X_3_3;
-  delete[] X1_3_4;
-
-  delete[] X_1_index;
-  delete[] X_2_3_index;
-  delete[] X_3_3_index;
-  delete[] X_3_4_index;
-
-  delete[] map_index;
-  delete[] map_chan;
-  delete[] map_ind;
-  delete[] map_num;
-  delete[] map_fac1;
-  delete[] map_fac2;
-}
-
-X_hphh::X_hphh(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan)
-{
-  int chan1, chan2, chan3, ind, length, count;
-  int i, a, j, k, nhp, nhh;
-  two_body hp, hh;
-  four_body iajk, iajk_j;
-  four_body *fb_ind;
-  four_body *fb_j;
-  int *J;
-
-  length = 0;
-  X_1_index = new int[Chan.size1];
-  for(chan1 = 0; chan1 < Chan.size1; ++chan1){
-    X_1_index[chan1] = length;
-    length += Chan.nhp[chan1] * Chan.nhh[chan1];
-  }
-  X_1 = new double[length];
-  map_num = new int[6 * length]; // X_2_1, X_2_3, X_3_1, X_3_2, X_3_3, X_3_4
-  map_index = new int[6 * length];
-  fb_ind = new four_body[length];
-  fb_j = new four_body[length];
-  J = new int[length];
-  for(ind = 0; ind < length; ++ind){
-    X_1[ind] = 0.0;
-  }
-  X_1_length = length;
-
-  length = 0;
-  X_2_1_index = new int[Chan.size2];
-  for(chan2 = 0; chan2 < Chan.size2; ++chan2){
-    X_2_1_index[chan2] = length;
-    length += Chan.nhh1[chan2] * Chan.nhp1[chan2];
-  }
-  X_2_1 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X_2_1[ind] = 0.0;
-  }
-  X_2_1_length = length;
-
-  length = 0;
-  X_2_3_index = new int[Chan.size2];
-  for(chan2 = 0; chan2 < Chan.size2; ++chan2){
-    X_2_3_index[chan2] = length;
-    length += Chan.nhh1[chan2] * Chan.nhp1[chan2];
-  }
-  X_2_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X_2_3[ind] = 0.0;
-  }
-  X_2_3_length = length;
-
-  length = 0;
-  X_3_1_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_1_index[chan3] = length;
-    length += Chan.nh[chan3] * Chan.nhhp[chan3];
-  }
-  X1_3_1 = new double[length];
-  X_3_1 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X1_3_1[ind] = 0.0;
-    X_3_1[ind] = 0.0;
-  }
-  X_3_1_length = length;
-
-  length = 0;
-  X_3_2_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_2_index[chan3] = length;
-    length += Chan.np[chan3] * Chan.nhhh[chan3];
-  }
-  X1_3_2 = new double[length];
-  X_3_2 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X1_3_2[ind] = 0.0;
-    X_3_2[ind] = 0.0;
-  }
-  X_3_2_length = length;
-
-  length = 0;
-  X_3_3_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_3_index[chan3] = length;
-    length += Chan.nhph[chan3] * Chan.nh[chan3];
-  }
-  X_3_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X_3_3[ind] = 0.0;
-  }
-  X_3_3_length = length;
-
-  length = 0;
-  X_3_4_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_4_index[chan3] = length;
-    length += Chan.nhph[chan3] * Chan.nh[chan3];
-  }
-  X_3_4 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X_3_4[ind] = 0.0;
-  }
-  X_3_4_length = length;
-
-  length = 0;
-  count = 0;
-  for(chan1 = 0; chan1 < Chan.size1; ++chan1){
-    nhp = Chan.nhp[chan1];
-    nhh = Chan.nhh[chan1];
-    for(int hp_ind = 0; hp_ind < nhp; ++hp_ind){
-      hp = Chan.hp_state(chan1, hp_ind);
-      i = hp.v1;
-      a = hp.v2;
-      iajk.v1 = i;
-      iajk.v2 = a;
-      iajk_j.v1 = Space.qnums[i].j;
-      iajk_j.v2 = Space.qnums[a].j;
-      for(int hh_ind = 0; hh_ind < nhh; ++hh_ind){
-	hh = Chan.hh_state(chan1, hh_ind);
-	j = hh.v1;
-	k = hh.v2;
-	iajk.v3 = j;
-	iajk.v4 = k;
-	iajk_j.v3 = Space.qnums[j].j;
-	iajk_j.v4 = Space.qnums[k].j;
-	fb_ind[count] = iajk;
-	fb_j[count] = iajk_j;
-	J[count] = Chan.qnums1[chan1].j;
-
-	Map_4_count_1(Parameters,Space, map_index,map_num, 6,0,length,count, iajk);
-	Map_4_count_3(Parameters,Space, map_index,map_num, 6,1,length,count, iajk);
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 6,2,length,count);
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 6,3,length,count);
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 6,4,length,count);
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 6,5,length,count);
-	++count;
-      }
-    }
-  }
-  map_chan = new int[length];
-  map_ind = new int[length];
-  map_fac1 = new double[length];
-  map_fac2 = new double[length];
-
-  #pragma omp parallel for schedule(static)
-  for(int hphh = 0; hphh < X_1_length; ++hphh){
-    Map_4_1(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 6,0,hphh, Chan.hh1_map,Chan.hp1_map, Chan.nhp1, fb_ind,fb_j,J);
-    Map_4_3(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 6,1,hphh, Chan.hh1_map,Chan.hp1_map, Chan.nhp1, fb_ind,fb_j,J);
-    Map_4_5(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 6,2,hphh, Chan.h_map,Chan.hhp_map, Chan.nhhp, fb_ind,fb_j,J);
-    Map_4_6(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 6,3,hphh, Chan.p_map,Chan.hhh_map, Chan.nhhh, fb_ind,fb_j,J);
-    Map_4_7(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 6,4,hphh, Chan.hph_map,Chan.h_map, Chan.nh, fb_ind,fb_j,J);
-    Map_4_8(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 6,5,hphh, Chan.hph_map,Chan.h_map, Chan.nh, fb_ind,fb_j,J);
-  }
-  delete[] fb_ind;
-  delete[] fb_j;
-  delete[] J;
-}
-
-void X_hphh::X1_zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  int ind;
-  for(ind = 0; ind < X_3_1_length; ++ind){ X1_3_1[ind] = 0.0; }
-  for(ind = 0; ind < X_3_2_length; ++ind){ X1_3_2[ind] = 0.0; }
-}
-
-void X_hphh::X_zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  int ind;
-  if( !flag ){
-    for(ind = 0; ind < X_1_length; ++ind){ X_1[ind] = 0.0; }
-  }
-  for(ind = 0; ind < X_2_1_length; ++ind){ X_2_1[ind] = 0.0; }
-  for(ind = 0; ind < X_2_3_length; ++ind){ X_2_3[ind] = 0.0; }
-  for(ind = 0; ind < X_3_1_length; ++ind){ X_3_1[ind] = 0.0; }
-  for(ind = 0; ind < X_3_2_length; ++ind){ X_3_2[ind] = 0.0; }
-  for(ind = 0; ind < X_3_3_length; ++ind){ X_3_3[ind] = 0.0; }
-  for(ind = 0; ind < X_3_4_length; ++ind){ X_3_4[ind] = 0.0; }
-}
-
-void X_hphh::X1_gather(Input_Parameters &Parameters, Channels &Chan)
-{
-  int index;
-  double x;
-  double *X1_1temp = new double[X_1_length];
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = 0.0;
-    for(int n = 0; n < map_num[6*ind + 3]; ++n){
-      index = map_index[6*ind + 3] + n;
-      x += map_fac2[index] * X1_3_2[X_3_2_index[map_chan[index]] + map_ind[index]];
-    }
-    X1_1temp[ind] = x;
-  }
-  X1_zero(Parameters, Chan, true);
-
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = X1_1temp[ind];
-    for(int n = 0; n < map_num[6*ind + 2]; ++n){
-      index = map_index[6*ind + 2] + n;
-      X1_3_1[X_3_1_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[6*ind + 3]; ++n){
-      index = map_index[6*ind + 3] + n;
-      X1_3_2[X_3_2_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-  }
-  delete[] X1_1temp;
-}
-
-void X_hphh::X_gather(Input_Parameters &Parameters, Channels &Chan)
-{
-  int index;
-  double x;
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = 0.0;
-    x += X_1[ind];
-    for(int n = 0; n < map_num[6*ind]; ++n){
-      index = map_index[6*ind] + n;
-      x += map_fac2[index] * X_2_1[X_2_1_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[6*ind + 1]; ++n){
-      index = map_index[6*ind + 1] + n;
-      x += map_fac2[index] * X_2_3[X_2_3_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[6*ind + 2]; ++n){
-      index = map_index[6*ind + 2] + n;
-      x += map_fac2[index] * X_3_1[X_3_1_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[6*ind + 3]; ++n){
-      index = map_index[6*ind + 3] + n;
-      x += map_fac2[index] * X_3_2[X_3_2_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[6*ind + 4]; ++n){
-      index = map_index[6*ind + 4] + n;
-      x += map_fac2[index] * X_3_3[X_3_3_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[6*ind + 5]; ++n){
-      index = map_index[6*ind + 5] + n;
-      x += map_fac2[index] * X_3_4[X_3_4_index[map_chan[index]] + map_ind[index]];
-    }
-    X_1[ind] = x;
-  }
-  X_zero(Parameters, Chan, true);
-
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = X_1[ind];
-    for(int n = 0; n < map_num[6*ind]; ++n){
-      index = map_index[6*ind] + n;
-      X_2_1[X_2_1_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[6*ind + 1]; ++n){
-      index = map_index[6*ind + 1] + n;
-      X_2_3[X_2_3_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[6*ind + 2]; ++n){
-      index = map_index[6*ind + 2] + n;
-      X_3_1[X_3_1_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[6*ind + 3]; ++n){
-      index = map_index[6*ind + 3] + n;
-      X_3_2[X_3_2_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[6*ind + 4]; ++n){
-      index = map_index[6*ind + 4] + n;
-      X_3_3[X_3_3_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[6*ind + 5]; ++n){
-      index = map_index[6*ind + 5] + n;
-      X_3_4[X_3_4_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-  }
-}
-
-void X_hphh::delete_struct(Input_Parameters &Parameters, Channels &Chan)
-{
-  delete[] X_1;
-  delete[] X_2_1;
-  delete[] X_2_3;
-  delete[] X1_3_1;
-  delete[] X_3_1;
-  delete[] X1_3_2;
-  delete[] X_3_2;
-  delete[] X_3_3;
-  delete[] X_3_4;
-
-  delete[] X_1_index;
-  delete[] X_2_1_index;
-  delete[] X_2_3_index;
-  delete[] X_3_1_index;
-  delete[] X_3_2_index;
-  delete[] X_3_3_index;
-  delete[] X_3_4_index;
-
-  delete[] map_index;
-  delete[] map_chan;
-  delete[] map_ind;
-  delete[] map_num;
-  delete[] map_fac1;
-  delete[] map_fac2;
-}
-
-X_pphp::X_pphp(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan)
-{
-  int chan1, chan2, chan3, ind, length, count;
-  int a, b, i, c, npp, nhp;
-  two_body pp, hp;
-  four_body abic, abic_j;
-  four_body *fb_ind;
-  four_body *fb_j;
-  int *J;
-
-  length = 0;
-  X_1_index = new int[Chan.size1];
-  for(chan1 = 0; chan1 < Chan.size1; ++chan1){
-    X_1_index[chan1] = length;
-    length += Chan.npp[chan1] * Chan.nhp[chan1];
-  }
-  X_1 = new double[length];
-  map_num = new int[6 * length]; // X_2_2, X_2_3, X_3_1, X_3_2, X_3_3, X_3_4
-  map_index = new int[6 * length];
-  fb_ind = new four_body[length];
-  fb_j = new four_body[length];
-  J = new int[length];
-  for(ind = 0; ind < length; ++ind){
-    X_1[ind] = 0.0;
-  }
-  X_1_length = length;
-
-  length = 0;
-  X_2_2_index = new int[Chan.size2];
-  for(chan2 = 0; chan2 < Chan.size2; ++chan2){
-    X_2_2_index[chan2] = length;
-    length += Chan.nph1[chan2] * Chan.npp1[chan2];
-  }
-  X_2_2 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X_2_2[ind] = 0.0;
-  }
-  X_2_2_length = length;
-
-  length = 0;
-  X_2_3_index = new int[Chan.size2];
-  for(chan2 = 0; chan2 < Chan.size2; ++chan2){
-    X_2_3_index[chan2] = length;
-    length += Chan.nph1[chan2] * Chan.npp1[chan2];
-  }
-  X_2_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X_2_3[ind] = 0.0;
-  }
-  X_2_3_length = length;
-
-  length = 0;
-  X_3_1_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_1_index[chan3] = length;
-    length += Chan.np[chan3] * Chan.nhpp[chan3];
-  }
-  X1_3_1 = new double[length];
-  X_3_1 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X1_3_1[ind] = 0.0;
-    X_3_1[ind] = 0.0;
-  }
-  X_3_1_length = length;
-
-  length = 0;
-  X_3_2_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_2_index[chan3] = length;
-    length += Chan.np[chan3] * Chan.nhpp[chan3];
-  }
-  X1_3_2 = new double[length];
-  X_3_2 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X1_3_2[ind] = 0.0;
-    X_3_2[ind] = 0.0;
-  }
-  X_3_2_length = length;
-
-  length = 0;
-  X_3_3_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_3_index[chan3] = length;
-    length += Chan.nppp[chan3] * Chan.nh[chan3];
-  }
-  X1_3_3 = new double[length];
-  X_3_3 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X1_3_3[ind] = 0.0;
-    X_3_3[ind] = 0.0;
-  }
-  X_3_3_length = length;
-
-  length = 0;
-  X_3_4_index = new int[Chan.size3];
-  for(chan3 = 0; chan3 < Chan.size3; ++chan3){
-    X_3_4_index[chan3] = length;
-    length += Chan.npph[chan3] * Chan.np[chan3];
-  }
-  X1_3_4 = new double[length];
-  X_3_4 = new double[length];
-  for(ind = 0; ind < length; ++ind){
-    X1_3_4[ind] = 0.0;
-    X_3_4[ind] = 0.0;
-  }
-  X_3_4_length = length;
-
-  length = 0;
-  count = 0;
-  for(chan1 = 0; chan1 < Chan.size1; ++chan1){
-    npp = Chan.npp[chan1];
-    nhp = Chan.nhp[chan1];
-    for(int pp_ind = 0; pp_ind < npp; ++pp_ind){
-      pp = Chan.pp_state(chan1, pp_ind);
-      a = pp.v1;
-      b = pp.v2;
-      abic.v1 = a;
-      abic.v2 = b;
-      abic_j.v1 = Space.qnums[a].j;
-      abic_j.v2 = Space.qnums[b].j;
-      for(int hp_ind = 0; hp_ind < nhp; ++hp_ind){
-	hp = Chan.hp_state(chan1, hp_ind);
-	i = hp.v1;
-	c = hp.v2;
-	abic.v3 = i;
-	abic.v4 = c;
-	abic_j.v3 = Space.qnums[i].j;
-	abic_j.v4 = Space.qnums[c].j;
-	fb_ind[count] = abic;
-	fb_j[count] = abic_j;
-	J[count] = Chan.qnums1[chan1].j;
-
-	Map_4_count_2(Parameters,Space, map_index,map_num, 6,0,length,count, abic);
-	Map_4_count_3(Parameters,Space, map_index,map_num, 6,1,length,count, abic);
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 6,2,length,count);
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 6,3,length,count);
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 6,4,length,count);
-	Map_4_count_5678(Parameters,Space, map_index,map_num, 6,5,length,count);
-	++count;
-      }
-    }
-  }
-  map_chan = new int[length];
-  map_ind = new int[length];
-  map_fac1 = new double[length];
-  map_fac2 = new double[length];
-
-  #pragma omp parallel for schedule(static)
-  for(int pphp = 0; pphp < X_1_length; ++pphp){
-    Map_4_2(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 6,0,pphp, Chan.ph1_map,Chan.pp1_map, Chan.npp1, fb_ind,fb_j,J);
-    Map_4_3(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 6,1,pphp, Chan.ph1_map,Chan.pp1_map, Chan.npp1, fb_ind,fb_j,J);
-    Map_4_5(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 6,2,pphp, Chan.p_map,Chan.hpp_map, Chan.nhpp, fb_ind,fb_j,J);
-    Map_4_6(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 6,3,pphp, Chan.p_map,Chan.hpp_map, Chan.nhpp, fb_ind,fb_j,J);
-    Map_4_7(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 6,4,pphp, Chan.ppp_map,Chan.h_map, Chan.nh, fb_ind,fb_j,J);
-    Map_4_8(Parameters,Space, map_chan,map_ind,map_fac1,map_fac2, map_index,map_num, 6,5,pphp, Chan.pph_map,Chan.p_map, Chan.np, fb_ind,fb_j,J);
-  }
-  delete[] fb_ind;
-  delete[] fb_j;
-  delete[] J;
-}
-
-void X_pphp::X1_zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  int ind;
-  for(ind = 0; ind < X_3_1_length; ++ind){ X1_3_1[ind] = 0.0; }
-  for(ind = 0; ind < X_3_2_length; ++ind){ X1_3_2[ind] = 0.0; }
-  for(ind = 0; ind < X_3_3_length; ++ind){ X1_3_3[ind] = 0.0; }
-  for(ind = 0; ind < X_3_4_length; ++ind){ X1_3_4[ind] = 0.0; }
-}
-
-void X_pphp::X_zero(Input_Parameters &Parameters, Channels &Chan, bool flag)
-{
-  int ind;
-  if( !flag ){
-    for(ind = 0; ind < X_1_length; ++ind){ X_1[ind] = 0.0; }
-  }
-  for(ind = 0; ind < X_2_2_length; ++ind){ X_2_2[ind] = 0.0; }
-  for(ind = 0; ind < X_2_3_length; ++ind){ X_2_3[ind] = 0.0; }
-  for(ind = 0; ind < X_3_1_length; ++ind){ X_3_1[ind] = 0.0; }
-  for(ind = 0; ind < X_3_2_length; ++ind){ X_3_2[ind] = 0.0; }
-  for(ind = 0; ind < X_3_3_length; ++ind){ X_3_3[ind] = 0.0; }
-  for(ind = 0; ind < X_3_4_length; ++ind){ X_3_4[ind] = 0.0; }
-}
-
-void X_pphp::X1_gather(Input_Parameters &Parameters, Channels &Chan)
-{
-  int index;
-  double x;
-  double *X1_1temp = new double[X_1_length];
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = 0.0;
-    for(int n = 0; n < map_num[6*ind + 2]; ++n){
-      index = map_index[6*ind + 2] + n;
-      x += map_fac2[index] * X1_3_1[X_3_1_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[6*ind + 3]; ++n){
-      index = map_index[6*ind + 3] + n;
-      x += map_fac2[index] * X1_3_2[X_3_2_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[6*ind + 4]; ++n){
-      index = map_index[6*ind + 4] + n;
-      x += map_fac2[index] * X1_3_3[X_3_3_index[map_chan[index]] + map_ind[index]];
-    }
-    X1_1temp[ind] = x;
-  }
-  X1_zero(Parameters, Chan, true);
-
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = X1_1temp[ind];
-    for(int n = 0; n < map_num[6*ind + 2]; ++n){
-      index = map_index[6*ind + 2] + n;
-      X1_3_1[X_3_1_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[6*ind + 3]; ++n){
-      index = map_index[6*ind + 3] + n;
-      X1_3_2[X_3_2_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[6*ind + 4]; ++n){
-      index = map_index[6*ind + 4] + n;
-      X1_3_3[X_3_3_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[6*ind + 5]; ++n){
-      index = map_index[6*ind + 5] + n;
-      X1_3_4[X_3_4_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-  }
-  delete[] X1_1temp;
-}
-
-void X_pphp::X_gather(Input_Parameters &Parameters, Channels &Chan)
-{
-  int index;
-  double x;
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = 0.0;
-    x += X_1[ind];
-    for(int n = 0; n < map_num[6*ind]; ++n){
-      index = map_index[6*ind] + n;
-      x += map_fac2[index] * X_2_2[X_2_2_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[6*ind + 1]; ++n){
-      index = map_index[6*ind + 1] + n;
-      x += map_fac2[index] * X_2_3[X_2_3_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[6*ind + 2]; ++n){
-      index = map_index[6*ind + 2] + n;
-      x += map_fac2[index] * X_3_1[X_3_1_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[6*ind + 3]; ++n){
-      index = map_index[6*ind + 3] + n;
-      x += map_fac2[index] * X_3_2[X_3_2_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[6*ind + 4]; ++n){
-      index = map_index[6*ind + 4] + n;
-      x += map_fac2[index] * X_3_3[X_3_3_index[map_chan[index]] + map_ind[index]];
-    }
-    for(int n = 0; n < map_num[6*ind + 5]; ++n){
-      index = map_index[6*ind + 5] + n;
-      x += map_fac2[index] * X_3_4[X_3_4_index[map_chan[index]] + map_ind[index]];
-    }
-    X_1[ind] = x;
-  }
-  X_zero(Parameters, Chan, true);
-
-  for(int ind = 0; ind < X_1_length; ++ind){
-    x = X_1[ind];
-    for(int n = 0; n < map_num[6*ind]; ++n){
-      index = map_index[6*ind] + n;
-      X_2_2[X_2_2_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[6*ind + 1]; ++n){
-      index = map_index[6*ind + 1] + n;
-      X_2_3[X_2_3_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[6*ind + 2]; ++n){
-      index = map_index[6*ind + 2] + n;
-      X_3_1[X_3_1_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[6*ind + 3]; ++n){
-      index = map_index[6*ind + 3] + n;
-      X_3_2[X_3_2_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[6*ind + 4]; ++n){
-      index = map_index[6*ind + 4] + n;
-      X_3_3[X_3_3_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-    for(int n = 0; n < map_num[6*ind + 5]; ++n){
-      index = map_index[6*ind + 5] + n;
-      X_3_4[X_3_4_index[map_chan[index]] + map_ind[index]] += map_fac1[index] * x;
-    }
-  }
-}
-
-void X_pphp::delete_struct(Input_Parameters &Parameters, Channels &Chan)
-{
-  delete[] X_1;
-  delete[] X_2_2;
-  delete[] X_2_3;
-  delete[] X1_3_1;
-  delete[] X_3_1;
-  delete[] X1_3_2;
-  delete[] X_3_2;
-  delete[] X1_3_3;
-  delete[] X_3_3;
-  delete[] X1_3_4;
-  delete[] X_3_4;
-
-  delete[] X_1_index;
-  delete[] X_2_2_index;
-  delete[] X_2_3_index;
-  delete[] X_3_1_index;
-  delete[] X_3_2_index;
-  delete[] X_3_3_index;
-  delete[] X_3_4_index;
-
-  delete[] map_index;
-  delete[] map_chan;
-  delete[] map_ind;
-  delete[] map_num;
-  delete[] map_fac1;
-  delete[] map_fac2;
-}
 
-void Read_Matrix_Elements_J(Input_Parameters &Parameters, Model_Space &Space, HF_Channels &Chan, HF_Matrix_Elements &ME)
+void Interactions::get_Eref(Channels &Chan)
 {
-  std::string fullpath1 = PATH + Parameters.MatrixElements + ".int"; // file path string and string with "_M" added (for J,M-Scheme)
-  int NumElements; // number of ME read in from file
-  std::string number; // string for first word of each line
-  std::ifstream interaction;	// interaction file
-  std::string interactionline; // interaction file line
-  std::istringstream interactionstream; // stream of file line string
-  size_t index1, index2; // indicies for finding parameters among file lines
-  double TBME, hom, r2, p2; // interaction two-body interaction ME and two-body COM ME
-  int shell1, shell2, shell3, shell4, coupJ, coupT, par; // interaction file contents
-  int chan1, ind, key1, key2, key3, key4;
+  double energy = 0.0;
   State tb;
+  int nh, nhh, chan_ind, ind;
 
-  ME = HF_Matrix_Elements(Chan);
-
-  interaction.open(fullpath1.c_str());
-  if(!interaction.is_open()){ std::cerr << "Matrix Element file, " << Parameters.MatrixElements << ", does not exist" << std::endl; exit(1); }
-  getline(interaction, interactionline);
-  interactionstream.str(interactionline);
-  interactionstream >> number;
-  while (number != "Total"){ 
-    getline(interaction, interactionline);
-    interactionstream.str(interactionline);
-    interactionstream >> number;
-  }
-  index1 = interactionline.find_first_of("0123456789");
-  index2 = interactionline.find_last_of("0123456789");
-  NumElements = std::atoi( interactionline.substr(index1, index2 - index1 + 1).c_str() );
-
-  getline(interaction, interactionline);
-  interactionstream.str(interactionline);
-  interactionstream >> number;
-  while(number != "Tz"){
-    getline(interaction, interactionline);
-    interactionstream.str(interactionline);
-    interactionstream >> number;
-  }
-
-  for(int i = 0; i < NumElements; ++i){
-    getline(interaction, interactionline);
-    std::istringstream(interactionline) >> coupT >> par >> coupJ >> shell1 >> shell2 >> shell3 >> shell4 >> TBME >> hom >> r2 >> p2;
-    //TBME *= Parameters.tbstrength;
-    shell1 -= 1;
-    shell2 -= 1;
-    shell3 -= 1;
-    shell4 -= 1;
-    TBME *= d_ij(shell1, shell2); // unnormalize
-    TBME *= d_ij(shell3, shell4);
-
-    //std::cout << coupT << " " << par << " " << coupJ << " " << shell1 << " " << shell2 << " " << shell3 << " " << shell4 << ", " << TBME << std::endl;
-    plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
-    tb.j = coupJ;
-    chan1 = Space.ind_2b_dir(Parameters.basis, tb);
-    key1 = Chan.tb_map[chan1][Space.hash2(shell1, shell2, tb.j)];
-    key2 = Chan.tb_map[chan1][Space.hash2(shell3, shell4, tb.j)];
-    key3 = Chan.tb_map[chan1][Space.hash2(shell2, shell1, tb.j)];
-    key4 = Chan.tb_map[chan1][Space.hash2(shell4, shell3, tb.j)];
-    ind = ME.Index[chan1] + (key1 * Chan.ntb[chan1] + key2);
-    ME.V[ind] = TBME;
-    ind = ME.Index[chan1] + (key3 * Chan.ntb[chan1] + key2);
-    ME.V[ind] = -1.0 * phase2(Space.qnums[shell1].j + Space.qnums[shell2].j - coupJ) * TBME;
-    ind = ME.Index[chan1] + (key1 * Chan.ntb[chan1] + key4);
-    ME.V[ind] = -1.0 * phase2(Space.qnums[shell3].j + Space.qnums[shell4].j - coupJ) * TBME;
-    ind = ME.Index[chan1] + (key3 * Chan.ntb[chan1] + key4);
-    ME.V[ind] = phase2(Space.qnums[shell1].j + Space.qnums[shell2].j + Space.qnums[shell3].j + Space.qnums[shell4].j) * TBME;
-    if(shell1 != shell3 || shell2 != shell4){
-      ind = ME.Index[chan1] + (key2 * Chan.ntb[chan1] + key1);
-      ME.V[ind] = TBME;
-      ind = ME.Index[chan1] + (key4 * Chan.ntb[chan1] + key1);
-      ME.V[ind] = -1.0 * phase2(Space.qnums[shell3].j + Space.qnums[shell4].j - coupJ) * TBME;
-      ind = ME.Index[chan1] + (key2 * Chan.ntb[chan1] + key3);
-      ME.V[ind] = -1.0 * phase2(Space.qnums[shell1].j + Space.qnums[shell2].j - coupJ) * TBME;
-      ind = ME.Index[chan1] + (key4 * Chan.ntb[chan1] + key3);
-      ME.V[ind] = phase2(Space.qnums[shell1].j + Space.qnums[shell2].j + Space.qnums[shell3].j + Space.qnums[shell4].j) * TBME;
-    }
-  }
-  interaction.close();
-}
-
-void Read_Matrix_Elements_M(Input_Parameters &Parameters, Model_Space &Space, HF_Channels &Chan, HF_Matrix_Elements &ME)
-{
-  std::string fullpath1; // file path string and string with "_M" added (for J,M-Scheme)
-  int NumElements; // number of ME read in from file
-  std::string number; // string for first word of each line
-  std::ifstream interaction;	// interaction file
-  std::string interactionline; // interaction file line
-  std::istringstream interactionstream; // stream of file line string
-  double TBME; // interaction two-body interaction ME and two-body COM ME
-  int shell1, shell2, shell3, shell4; // interaction file contents
-  int chan1, ind, key1, key2, key3, key4;
-  State tb;
-  ME = HF_Matrix_Elements(Chan);
-
-  fullpath1 = PATH + Parameters.MatrixElements + ".int";
-
-  interaction.open(fullpath1.c_str());
-  if(!interaction.is_open()){ std::cerr << "Matrix Element file, " << Parameters.MatrixElements << ", does not exist" << std::endl; exit(1); }
-  getline(interaction, interactionline);
-  interactionstream.str(interactionline);
-  interactionstream >> NumElements;
-  for(int i = 0; i < NumElements; ++i){
-    getline(interaction, interactionline);
-    std::istringstream(interactionline) >> shell1 >> shell2 >> shell3 >> shell4 >> TBME;
-    TBME *= Parameters.tbstrength;
-    shell1 -= 1;
-    shell2 -= 1;
-    shell3 -= 1;
-    shell4 -= 1;
-
-    //std::cout << "? " << shell1 << " " << shell2 << " " << shell3 << " " << shell4 << "  " << TBME << std::endl;
-    if(shell1 == shell2 || shell3 == shell4){ continue; }
-    plus(tb, Space.qnums[shell1], Space.qnums[shell2]);
-    chan1 = Space.ind_2b_dir(Parameters.basis, tb);
-    key1 = Chan.tb_map[chan1][Space.hash2(shell1, shell2, tb.j)];
-    key2 = Chan.tb_map[chan1][Space.hash2(shell3, shell4, tb.j)];
-    key3 = Chan.tb_map[chan1][Space.hash2(shell2, shell1, tb.j)];
-    key4 = Chan.tb_map[chan1][Space.hash2(shell4, shell3, tb.j)];
-    ind = ME.Index[chan1] + (key1 * Chan.ntb[chan1] + key2);
-    ME.V[ind] = TBME;
-    ind = ME.Index[chan1] + (key3 * Chan.ntb[chan1] + key2);
-    ME.V[ind] = -1.0 * TBME;
-    ind = ME.Index[chan1] + (key1 * Chan.ntb[chan1] + key4);
-    ME.V[ind] = -1.0 * TBME;
-    ind = ME.Index[chan1] + (key3 * Chan.ntb[chan1] + key4);
-    ME.V[ind] = TBME;
-    if(shell1 != shell3 || shell2 != shell4){
-      ind = ME.Index[chan1] + (key2 * Chan.ntb[chan1] + key1);
-      ME.V[ind] = TBME;
-      ind = ME.Index[chan1] + (key4 * Chan.ntb[chan1] + key1);
-      ME.V[ind] = -1.0 * TBME;
-      ind = ME.Index[chan1] + (key2 * Chan.ntb[chan1] + key3);
-      ME.V[ind] = -1.0 * TBME;
-      ind = ME.Index[chan1] + (key4 * Chan.ntb[chan1] + key3);
-      ME.V[ind] = TBME;
-    }
-  }
-  interaction.close();
-}
-
-void Read_Matrix_Elements_QD(Input_Parameters &Parameters, Model_Space &Space, HF_Channels &Chan, HF_Matrix_Elements &ME)
-{
-  std::cout << "Computing Coulomb Matrix Elements for QD..." << std::endl;
-  struct timespec time1, time2;
-  double elapsed0 = 0.0;
-  ME = HF_Matrix_Elements(Chan);
-  clock_gettime(CLOCK_MONOTONIC, &time1);
-  
-  int pq, rs, p, q, r, s;
-  int ntb, ntb0;
-  int ind1, ind2, ind3, ind4;
-  int length, length0;
-  two_body *tbvec0;
-  double TBME;
   for(int chan = 0; chan < Chan.size1; ++chan){
-    ntb = Chan.ntb[chan];
-    if(ntb == 0){ continue; }
-    ntb0 = 0;
-    for(int i = 0; i < ntb; ++i){
-      if(Chan.tb_vec[Chan.tb_index[chan] + i].v1 < Chan.tb_vec[Chan.tb_index[chan] + i].v2){
-	++ntb0;
-      }
+    nhh = Chan.nhh[chan];
+    chan_ind = this->Vhhhh.V_1_index[chan];
+    for(int hh = 0; hh < nhh; ++hh){
+      ind = hh*nhh + hh;
+      if(PAR.basis == "finite_J"){ energy += (Chan.qnums1[chan].j + 1) * this->Vhhhh.V_1[chan_ind + ind]; }
+      else{ energy += this->Vhhhh.V_1[chan_ind + ind]; }
+      //std::cout << std::setprecision(10) << "Eref1: " << this->Vhhhh.V_1[chan_ind + ind] << std::endl;
     }
-    tbvec0 = new two_body[ntb0];
-    ntb0 = 0;
-    for(int i = 0; i < ntb; ++i){
-      if(Chan.tb_vec[Chan.tb_index[chan] + i].v1 < Chan.tb_vec[Chan.tb_index[chan] + i].v2){
-	tbvec0[ntb0].v1 = Chan.tb_vec[Chan.tb_index[chan] + i].v1;
-	tbvec0[ntb0].v2 = Chan.tb_vec[Chan.tb_index[chan] + i].v2;
-	++ntb0;
-      }
+  }
+  energy *= -0.5;
+
+  if(PAR.HF == 1){
+    for(int i = 0; i < SPB.num_hol; ++i){
+      if(PAR.basis == "finite_J"){ energy += (SPB.qnums[i].j + 1) * SPB.qnums[i].energy; }
+      else{ energy += SPB.qnums[i].energy; }
+      //std::cout << std::setprecision(10) << "Eref2: " << SPB.qnums[i].energy << std::endl;
     }
-    
-    length = int(0.5 * ntb0 * (ntb0 + 1));
-    #pragma omp parallel private(pq, rs, p, q, r, s, length0, ind1, ind2, ind3, ind4, TBME)
-    {
-      #pragma omp for schedule(static)
-      for(int pqrs = 0; pqrs < length; ++pqrs){
-	pq = std::floor((2*ntb0 - 1 - std::sqrt(1 + 4*ntb0 + 4*ntb0*ntb0 - 8*pqrs))/2) + 1;
-	length0 = int(0.5 * pq * (2*ntb0 - pq + 1));
-	rs = int(pq + pqrs - length0);
-	p = tbvec0[pq].v1;
-	q = tbvec0[pq].v2;
-	r = tbvec0[rs].v1;
-	s = tbvec0[rs].v2;
-	ind1 = Chan.tb_map[chan][Space.hash2(p, q, Chan.qnums1[chan].j)];
-	ind2 = Chan.tb_map[chan][Space.hash2(r, s, Chan.qnums1[chan].j)];
-	ind3 = Chan.tb_map[chan][Space.hash2(q, p, Chan.qnums1[chan].j)];
-	ind4 = Chan.tb_map[chan][Space.hash2(s, r, Chan.qnums1[chan].j)];
-	TBME = Coulomb_HO(Parameters, Space, p, q, r, s);
-	ME.V[ME.Index[chan] + (ind1 * ntb + ind2)] = TBME;
-	ME.V[ME.Index[chan] + (ind3 * ntb + ind2)] = -1.0 * TBME;
-	ME.V[ME.Index[chan] + (ind1 * ntb + ind4)] = -1.0 * TBME;
-	ME.V[ME.Index[chan] + (ind3 * ntb + ind4)] = TBME;
-	if(ind1 != ind2){
-	  ME.V[ME.Index[chan] + (ind2 * ntb + ind1)] = TBME;
-	  ME.V[ME.Index[chan] + (ind4 * ntb + ind1)] = -1.0 * TBME;
-	  ME.V[ME.Index[chan] + (ind2 * ntb + ind3)] = -1.0 * TBME;
-	  ME.V[ME.Index[chan] + (ind4 * ntb + ind3)] = TBME;
-	}
+  }
+  else if(PAR.HF == 0){
+    for(int chan = 0; chan < Chan.size3; ++chan){
+      nh = Chan.nh[chan];
+      chan_ind = this->Fmatrix.hh_3_index[chan];
+      for(int h = 0; h < nh; ++h){
+	ind = h*nh + h;
+	if(PAR.basis == "finite_J"){ energy += (Chan.qnums3[chan].j + 1) * this->Fmatrix.hh_3[chan_ind + ind]; }
+	else{ energy += this->Fmatrix.hh_3[chan_ind + ind]; }
       }
     }
   }
-
-  clock_gettime(CLOCK_MONOTONIC, &time2);
-  elapsed0 = (time2.tv_sec - time1.tv_sec);
-  elapsed0 += (time2.tv_nsec - time1.tv_nsec) / 1000000000.0;
-  std::cout << std::endl << "!! Runtime = " << elapsed0 << " sec. " << std::endl;
+  this->Eref += energy;
 }
 
-void Read_QD_ME_From_File(Input_Parameters &Parameters, Model_Space &Space, HF_Channels &Chan, HF_Matrix_Elements &ME)
+
+void Coulomb_Inf_Matrix_Elements(Channels &Chan, Interactions &Ints)
 {
-  std::string fullpath1; // file path string and string with "_M" added (for J,M-Scheme)
-  std::ifstream interaction;	// interaction file
-  ME = HF_Matrix_Elements(Chan);
-
-  fullpath1 = PATH + "coulomb-ho2d-elements-20-shells.dat";
-
-  interaction.open(fullpath1.c_str(), std::ios::binary);
-  if(interaction.is_open()){
-    //get length of file
-    interaction.seekg(0, interaction.end);
-    int length = interaction.tellg();
-    interaction.seekg(0, interaction.beg);
-
-    char *buffer = new char[length];
-    interaction.read(buffer, length);
-    interaction.close();
-    length /= 16;
-
-    unsigned int neg1 = 128;
-    unsigned int neg2 = 4294967040;
-    int nmax = Parameters.Shells;
-    #pragma omp parallel
-    {
-      double TBME;
-      unsigned int n1, n2, n3, n4;
-      int ml1, ml2, ml3, ml4;
-      int key, key1, key2;
-      State tb;
-      int ind, chan1;
-      State statep, stateq, stater, states;
-      int p, q, r, s;
-      statep.t = -1, stateq.t = -1, stater.t = -1, states.t = -1;
-
-      #pragma omp for schedule(static)
-      for(int i = 0; i < length; ++i){
-	n1 = 0, n2 = 0, n3 = 0, n4 = 0;
-	ml1 = 0, ml2 = 0, ml3 = 0, ml4 = 0;
-	
-	n1 = *(buffer + 16*i);
-	ml1 = *(buffer + 16*i + 1);
-	if((neg1 & ml1) != 0){ ml1 = (ml1 | neg2); }// ml1 < 0
-	n2 = *(buffer + 16*i + 2);
-	ml2 = *(buffer + 16*i + 3);
-	if((neg1 & ml2) != 0){ ml2 = (ml2 | neg2); }// ml2 < 0
-	n3 = *(buffer + 16*i + 4);
-	ml3 = *(buffer + 16*i + 5);
-	if((neg1 & ml3) != 0){ ml3 = (ml3 | neg2); }// ml3 < 0
-	n4 = *(buffer + 16*i + 6);
-	ml4 = *(buffer + 16*i + 7);
-	if((neg1 & ml4) != 0){ ml4 = (ml4 | neg2); }// ml4 < 0
-	TBME = *(double*)(buffer + 16*i + 8);
-	if(int(2*n1 + abs(ml1)) >= nmax || int(2*n2 + abs(ml2)) >= nmax || int(2*n3 + abs(ml3)) >= nmax || int(2*n4 + abs(ml4)) >= nmax){ continue; }
-	TBME *= std::sqrt(Parameters.density);
-	statep.n = n1;
-	statep.ml = ml1;
-	stateq.n = n2;
-	stateq.ml = ml2;
-	stater.n = n3;
-	stater.ml = ml3;
-	states.n = n4;
-	states.ml = ml4;
-	for(int s1 = -1; s1 <= 1; s1 += 2){
-	  statep.m = s1;
-	  key = Space.ind_state(Parameters.basis, statep);
-	  p = Space.map_state[key];
-	  for(int s2 = -1; s2 <= 1; s2 += 2){
-	    stateq.m = s2;
-	    key = Space.ind_state(Parameters.basis, stateq);
-	    q = Space.map_state[key];
-	    if(p == q){ continue; }
-	    for(int s3 = -1; s3 <= 1; s3 += 2){
-	      stater.m = s3;
-	      key = Space.ind_state(Parameters.basis, stater);
-	      r = Space.map_state[key];
-	      if(s3 != s1){ continue; }
-	      for(int s4 = -1; s4 <= 1; s4 += 2){
-		states.m = s4;
-		key = Space.ind_state(Parameters.basis, states);
-		s = Space.map_state[key];
-		if(r == s || s4 != s2){ continue; }
-		
-		plus(tb, Space.qnums[p], Space.qnums[q]);
-		chan1 = Space.ind_2b_dir(Parameters.basis, tb);
-
-		// C(p1q2r3s4) -> <p1q2 || r3s4>
-		key1 = Chan.tb_map[chan1][Space.hash2(p, q, 0)];
-		key2 = Chan.tb_map[chan1][Space.hash2(r, s, 0)];
-		ind = ME.Index[chan1] + (key1 * Chan.ntb[chan1] + key2);
-		ME.V[ind] += TBME;
-		// C(p1q2r3s4) -> -<p1q2 || s4r3>
-		key2 = Chan.tb_map[chan1][Space.hash2(s, r, 0)];
-		ind = ME.Index[chan1] + (key1 * Chan.ntb[chan1] + key2);
-		ME.V[ind] -= TBME;
-		if((n1 != n2 || ml1 != ml2) || (n3 != n4 || ml3 != ml4)){
-		  // C(p1q2r3s4) = C(q2p1s4r3) -> <q2p1 || s4r3>
-		  key1 = Chan.tb_map[chan1][Space.hash2(q, p, 0)];
-		  key2 = Chan.tb_map[chan1][Space.hash2(s, r, 0)];
-		  ind = ME.Index[chan1] + (key1 * Chan.ntb[chan1] + key2);
-		  ME.V[ind] += TBME;
-		  // C(p1q2r3s4) = C(q2p1s4r3) -> -<q2p1 || r3s4>
-		  key2 = Chan.tb_map[chan1][Space.hash2(r, s, 0)];
-		  ind = ME.Index[chan1] + (key1 * Chan.ntb[chan1] + key2);
-		  ME.V[ind] -= TBME;
-		}
-		if(((n1 == n3 && ml1 == ml3) && (n2 == n4 && ml2 == ml4)) || ((n1 == n4 && ml1 == ml4) && (n2 == n3 && ml2 == ml3))){ continue; }
-		// C(p1q2r3s4) = C(r3s4p1q2) -> <r3s4 || p1q2>
-		key1 = Chan.tb_map[chan1][Space.hash2(r, s, 0)];
-		key2 = Chan.tb_map[chan1][Space.hash2(p, q, 0)];
-		ind = ME.Index[chan1] + (key1 * Chan.ntb[chan1] + key2);
-		ME.V[ind] += TBME;
-		// C(p1q2r3s4) = C(r3s4p1q2) -> -<r3s4 || q2p1>
-		key2 = Chan.tb_map[chan1][Space.hash2(q, p, 0)];
-		ind = ME.Index[chan1] + (key1 * Chan.ntb[chan1] + key2);
-		ME.V[ind] -= TBME;
-		if((n1 != n2 || ml1 != ml2) || (n3 != n4 || ml3 != ml4)){
-		  // C(p1q2r3s4) = C(s4r3q2p1) -> <s4r3 || q2p1>
-		  key1 = Chan.tb_map[chan1][Space.hash2(s, r, 0)];
-		  key2 = Chan.tb_map[chan1][Space.hash2(q, p, 0)];
-		  ind = ME.Index[chan1] + (key1 * Chan.ntb[chan1] + key2);
-		  ME.V[ind] += TBME;
-		  // C(p1q2r3s4) = C(s4r3q2p1) -> -<s4r3 || p1q2>
-		  key2 = Chan.tb_map[chan1][Space.hash2(p, q, 0)];
-		  ind = ME.Index[chan1] + (key1 * Chan.ntb[chan1] + key2);
-		  ME.V[ind] -= TBME;
-		}
-	      }
-	    }
-	  }
-	}
-      }
-    }
-    delete[] buffer;
-  }
-}
-
-void Coulomb_Inf_Matrix_Elements(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints)
-{
-  double L = pow(Space.num_hol/Parameters.density, 1.0/3.0);
+  double L = pow(SPB.num_hol/PAR.density, 1.0/3.0);
   int h1, h2, h3, h4, p1, p2, p3, p4;
   int nhh, npp, nh, np, npph, nhhp, nhp1, nph1;
   int chan_ind1, chan_ind2, chan_ind3, chan_ind4;
@@ -2993,7 +457,7 @@ void Coulomb_Inf_Matrix_Elements(Input_Parameters &Parameters, Model_Space &Spac
     nhh = Chan.nhh[chan1];
     npp = Chan.npp[chan1];
     chan_ind1 = Ints.Vpppp.V_1_index[chan1];
-    chan_ind2 = Ints.Vpphh.V_1_index[chan1];
+    //chan_ind2 = Ints.Vpphh.V_1_index[chan1];
     chan_ind3 = Ints.Vhhpp.V_1_index[chan1];
     chan_ind4 = Ints.Vhhhh.V_1_index[chan1];
     for(int pp1_ind = 0; pp1_ind < npp; ++pp1_ind){
@@ -3006,7 +470,7 @@ void Coulomb_Inf_Matrix_Elements(Input_Parameters &Parameters, Model_Space &Spac
 	p3 = pp2.v1;
 	p4 = pp2.v2;
 	if(p3 == p4){ continue; }
-	TBME = Coulomb_Inf(Space, p1, p2, p3, p4, L);
+	TBME = Coulomb_Inf(p1, p2, p3, p4, L);
 	Ints.Vpppp.V_1[chan_ind1 + (npp*pp1_ind + pp2_ind)] = TBME;
 	Ints.Vpppp.V_1[chan_ind1 + (npp*pp2_ind + pp1_ind)] = TBME;
       }
@@ -3015,8 +479,8 @@ void Coulomb_Inf_Matrix_Elements(Input_Parameters &Parameters, Model_Space &Spac
 	h1 = hh1.v1;
 	h2 = hh1.v2;
 	if(h1 == h2){ continue; }
-	TBME = Coulomb_Inf(Space, p1, p2, h1, h2, L);
-	Ints.Vpphh.V_1[chan_ind2 + (nhh*pp1_ind + hh1_ind)] = TBME;
+	TBME = Coulomb_Inf(p1, p2, h1, h2, L);
+	//Ints.Vpphh.V_1[chan_ind2 + (nhh*pp1_ind + hh1_ind)] = TBME;
 	Ints.Vhhpp.V_1[chan_ind3 + (npp*hh1_ind + pp1_ind)] = TBME;
       }
     }
@@ -3030,7 +494,7 @@ void Coulomb_Inf_Matrix_Elements(Input_Parameters &Parameters, Model_Space &Spac
 	h3 = hh1.v1;
 	h4 = hh1.v2;
 	if(h3 == h4){ continue; }
-	TBME = Coulomb_Inf(Space, h1, h2, h3, h4, L);
+	TBME = Coulomb_Inf(h1, h2, h3, h4, L);
 	Ints.Vhhhh.V_1[chan_ind4 + (nhh*hh1_ind + hh2_ind)] = TBME;
 	Ints.Vhhhh.V_1[chan_ind4 + (nhh*hh2_ind + hh1_ind)] = TBME;
       }
@@ -3051,14 +515,14 @@ void Coulomb_Inf_Matrix_Elements(Input_Parameters &Parameters, Model_Space &Spac
 	p1 = ph1.v1;
 	h2 = ph1.v2;
 	if(h1 == h2 || p1 == p2){ continue; }
-	TBME = Coulomb_Inf(Space, h1, h2, p1, p2, L);
+	TBME = Coulomb_Inf(h1, h2, p1, p2, L);
 	Ints.Vhhpp.V_2_1[chan_ind1 + (nph1*hp1_ind + ph1_ind)] = TBME;
       }
       for(int hp2_ind = hp1_ind; hp2_ind < nhp1; ++hp2_ind){
 	hp2 = Chan.hp1_state(chan2, hp2_ind);
 	h2 = hp2.v1;
 	p1 = hp2.v2;
-	TBME = Coulomb_Inf(Space, h1, p1, h2, p2, L);
+	TBME = Coulomb_Inf(h1, p1, h2, p2, L);
 	Ints.Vhphp.V_2_1[chan_ind2 + (nhp1*hp1_ind + hp2_ind)] = TBME;
 	Ints.Vhphp.V_2_1[chan_ind2 + (nhp1*hp2_ind + hp1_ind)] = TBME;
       }
@@ -3081,7 +545,7 @@ void Coulomb_Inf_Matrix_Elements(Input_Parameters &Parameters, Model_Space &Spac
 	p2 = pph.v2;
 	h2 = pph.v3;
 	if(h1 == h2 || p1 == p2){ continue; }
-	TBME = Coulomb_Inf(Space, h1, h2, p1, p2, L);
+	TBME = Coulomb_Inf(h1, h2, p1, p2, L);
 	Ints.Vhhpp.V_3_1[chan_ind1 + (npph*h_ind + pph_ind)] = TBME;
       }
     }
@@ -3095,35 +559,35 @@ void Coulomb_Inf_Matrix_Elements(Input_Parameters &Parameters, Model_Space &Spac
 	p = Chan.p_state(chan3, p_ind);
 	p1 = p.v1;
 	if(p1 == p2){ continue; }
-	TBME = Coulomb_Inf(Space, h1, h2, p1, p2, L);
+	TBME = Coulomb_Inf(h1, h2, p1, p2, L);
 	Ints.Vhhpp.V_3_3[chan_ind2 + (np*hhp_ind + p_ind)] = TBME;
       }
     }
   }
 }
 
-double Coulomb_Inf(Model_Space &Space, int &qi, int &qj, int &qk, int &ql, double &L)
+double Coulomb_Inf(int &qi, int &qj, int &qk, int &ql, double &L)
 {
   double term = 0.0;
   double e_sq = hbarc_HartA * fine_struct;
   double prefactor = e_sq/(L*L*L);
   double qSquared1;
   double kX1, kY1, kZ1;
-  if(Space.qnums[qi].nx + Space.qnums[qj].nx != Space.qnums[qk].nx + Space.qnums[ql].nx || 
-     Space.qnums[qi].ny + Space.qnums[qj].ny != Space.qnums[qk].ny + Space.qnums[ql].ny || 
-     Space.qnums[qi].nz + Space.qnums[qj].nz != Space.qnums[qk].nz + Space.qnums[ql].nz){ return 0.0; }
-  if(Space.qnums[qi].m == Space.qnums[qk].m && Space.qnums[qj].m == Space.qnums[ql].m){
-    kX1 = (2.0*M_PI/L) * (Space.qnums[qi].nx - Space.qnums[qk].nx);
-    kY1 = (2.0*M_PI/L) * (Space.qnums[qi].ny - Space.qnums[qk].ny);
-    kZ1 = (2.0*M_PI/L) * (Space.qnums[qi].nz - Space.qnums[qk].nz);
+  if(SPB.qnums[qi].nx + SPB.qnums[qj].nx != SPB.qnums[qk].nx + SPB.qnums[ql].nx || 
+     SPB.qnums[qi].ny + SPB.qnums[qj].ny != SPB.qnums[qk].ny + SPB.qnums[ql].ny || 
+     SPB.qnums[qi].nz + SPB.qnums[qj].nz != SPB.qnums[qk].nz + SPB.qnums[ql].nz){ return 0.0; }
+  if(SPB.qnums[qi].m == SPB.qnums[qk].m && SPB.qnums[qj].m == SPB.qnums[ql].m){
+    kX1 = (2.0*M_PI/L) * (SPB.qnums[qi].nx - SPB.qnums[qk].nx);
+    kY1 = (2.0*M_PI/L) * (SPB.qnums[qi].ny - SPB.qnums[qk].ny);
+    kZ1 = (2.0*M_PI/L) * (SPB.qnums[qi].nz - SPB.qnums[qk].nz);
     qSquared1 = kX1 * kX1 + kY1 * kY1 + kZ1 * kZ1;
     if(qSquared1 < 1.0e-15){ term += 0.0; }
     else{ term += 4.0 * prefactor * M_PI / qSquared1; }
   }
-  if(Space.qnums[qi].m == Space.qnums[ql].m && Space.qnums[qj].m == Space.qnums[qk].m){
-    kX1 = (2.0*M_PI/L) * (Space.qnums[qi].nx - Space.qnums[ql].nx);
-    kY1 = (2.0*M_PI/L) * (Space.qnums[qi].ny - Space.qnums[ql].ny);
-    kZ1 = (2.0*M_PI/L) * (Space.qnums[qi].nz - Space.qnums[ql].nz);
+  if(SPB.qnums[qi].m == SPB.qnums[ql].m && SPB.qnums[qj].m == SPB.qnums[qk].m){
+    kX1 = (2.0*M_PI/L) * (SPB.qnums[qi].nx - SPB.qnums[ql].nx);
+    kY1 = (2.0*M_PI/L) * (SPB.qnums[qi].ny - SPB.qnums[ql].ny);
+    kZ1 = (2.0*M_PI/L) * (SPB.qnums[qi].nz - SPB.qnums[ql].nz);
     qSquared1 = kX1 * kX1 + kY1 * kY1 + kZ1 * kZ1;
     if(qSquared1 < 1.0e-15){ term -= 0.0; }
     else{ term -= 4.0 * prefactor * M_PI / qSquared1; }
@@ -3131,10 +595,10 @@ double Coulomb_Inf(Model_Space &Space, int &qi, int &qj, int &qk, int &ql, doubl
   return term;
 }
 
-void Minnesota_Matrix_Elements(Input_Parameters &Parameters, Model_Space &Space, Channels &Chan, Interactions &Ints)
+void Minnesota_Matrix_Elements(Channels &Chan, Interactions &Ints)
 {
   std::cout << "Building Interaction Matrices ... " << std::endl;  
-  double L = pow((Parameters.P + Parameters.N)/Parameters.density, 1./3.);
+  double L = pow((PAR.P + PAR.N)/PAR.density, 1./3.);
   int h1, h2, h3, h4, p1, p2, p3, p4;
   int nhh, npp, nh, np, npph, nhhp, nhp1, nph1;
   int chan_ind1, chan_ind2, chan_ind3, chan_ind4;
@@ -3147,7 +611,7 @@ void Minnesota_Matrix_Elements(Input_Parameters &Parameters, Model_Space &Space,
     nhh = Chan.nhh[chan1];
     npp = Chan.npp[chan1];
     chan_ind1 = Ints.Vpppp.V_1_index[chan1];
-    chan_ind2 = Ints.Vpphh.V_1_index[chan1];
+    //chan_ind2 = Ints.Vpphh.V_1_index[chan1];
     chan_ind3 = Ints.Vhhpp.V_1_index[chan1];
     chan_ind4 = Ints.Vhhhh.V_1_index[chan1];
     for(int pp1_ind = 0; pp1_ind < npp; ++pp1_ind){
@@ -3160,7 +624,7 @@ void Minnesota_Matrix_Elements(Input_Parameters &Parameters, Model_Space &Space,
 	p3 = pp2.v1;
 	p4 = pp2.v2;
 	if(p3 == p4){ continue; }
-	TBME = vint_Minnesota_Momentum(Space, p1, p2, p3, p4, L);
+	TBME = vint_Minnesota_Momentum(p1, p2, p3, p4, L);
 	Ints.Vpppp.V_1[chan_ind1 + (npp*pp1_ind + pp2_ind)] = TBME;
 	Ints.Vpppp.V_1[chan_ind1 + (npp*pp2_ind + pp1_ind)] = TBME;
       }
@@ -3169,8 +633,8 @@ void Minnesota_Matrix_Elements(Input_Parameters &Parameters, Model_Space &Space,
 	h1 = hh1.v1;
 	h2 = hh1.v2;
 	if(h1 == h2){ continue; }
-	TBME = vint_Minnesota_Momentum(Space, p1, p2, h1, h2, L);
-	Ints.Vpphh.V_1[chan_ind2 + (nhh*pp1_ind + hh1_ind)] = TBME;
+	TBME = vint_Minnesota_Momentum(p1, p2, h1, h2, L);
+	//Ints.Vpphh.V_1[chan_ind2 + (nhh*pp1_ind + hh1_ind)] = TBME;
 	Ints.Vhhpp.V_1[chan_ind3 + (npp*hh1_ind + pp1_ind)] = TBME;
       }
     }
@@ -3184,7 +648,7 @@ void Minnesota_Matrix_Elements(Input_Parameters &Parameters, Model_Space &Space,
 	h3 = hh1.v1;
 	h4 = hh1.v2;
 	if(h3 == h4){ continue; }
-	TBME = vint_Minnesota_Momentum(Space, h1, h2, h3, h4, L);
+	TBME = vint_Minnesota_Momentum(h1, h2, h3, h4, L);
 	Ints.Vhhhh.V_1[chan_ind4 + (nhh*hh1_ind + hh2_ind)] = TBME;
 	Ints.Vhhhh.V_1[chan_ind4 + (nhh*hh2_ind + hh1_ind)] = TBME;
       }
@@ -3205,14 +669,14 @@ void Minnesota_Matrix_Elements(Input_Parameters &Parameters, Model_Space &Space,
 	p1 = ph1.v1;
 	h2 = ph1.v2;
 	if(h1 == h2 || p1 == p2){ continue; }
-	TBME = vint_Minnesota_Momentum(Space, h1, h2, p1, p2, L);
+	TBME = vint_Minnesota_Momentum(h1, h2, p1, p2, L);
 	Ints.Vhhpp.V_2_1[chan_ind1 + (nph1*hp1_ind + ph1_ind)] = TBME;
       }
       for(int hp2_ind = hp1_ind; hp2_ind < nhp1; ++hp2_ind){
 	hp2 = Chan.hp1_state(chan2, hp2_ind);
 	h2 = hp2.v1;
 	p1 = hp2.v2;
-	TBME = vint_Minnesota_Momentum(Space, h1, p1, h2, p2, L);
+	TBME = vint_Minnesota_Momentum(h1, p1, h2, p2, L);
 	Ints.Vhphp.V_2_1[chan_ind2 + (nhp1*hp1_ind + hp2_ind)] = TBME;
 	Ints.Vhphp.V_2_1[chan_ind2 + (nhp1*hp2_ind + hp1_ind)] = TBME;
       }
@@ -3235,7 +699,7 @@ void Minnesota_Matrix_Elements(Input_Parameters &Parameters, Model_Space &Space,
 	p2 = pph.v2;
 	h2 = pph.v3;
 	if(h1 == h2 || p1 == p2){ continue; }
-	TBME = vint_Minnesota_Momentum(Space, h1, h2, p1, p2, L);
+	TBME = vint_Minnesota_Momentum(h1, h2, p1, p2, L);
 	Ints.Vhhpp.V_3_1[chan_ind1 + (npph*h_ind + pph_ind)] = TBME;
       }
     }
@@ -3249,7 +713,7 @@ void Minnesota_Matrix_Elements(Input_Parameters &Parameters, Model_Space &Space,
 	p = Chan.p_state(chan3, p_ind);
 	p1 = p.v1;
 	if(p1 == p2){ continue; }
-	TBME = vint_Minnesota_Momentum(Space, h1, h2, p1, p2, L);
+	TBME = vint_Minnesota_Momentum(h1, h2, p1, p2, L);
 	Ints.Vhhpp.V_3_3[chan_ind2 + (np*hhp_ind + p_ind)] = TBME;
       }
     }
@@ -3268,7 +732,7 @@ int spinExchangeMtxEle(int &i, int &j, int &k, int &l)
 }
 
 // Minnesota Potential for momentum basis
-double vint_Minnesota_Momentum(Model_Space &Space, int &qi, int &qj, int &qk, int &ql, double &L)
+double vint_Minnesota_Momentum(int &qi, int &qj, int &qk, int &ql, double &L)
 {
   double V_R1, V_T1, V_S1, V_R2, V_T2, V_S2;
   double V_0R, V_0T, V_0S;
@@ -3283,19 +747,19 @@ double vint_Minnesota_Momentum(Model_Space &Space, int &qi, int &qj, int &qk, in
   kappa_T = 0.639; //fm^-2
   kappa_S = 0.465; //fm^-2
 
-  if(Space.qnums[qi].nx + Space.qnums[qj].nx != Space.qnums[qk].nx + Space.qnums[ql].nx){ return 0.0; }
-  if(Space.qnums[qi].ny + Space.qnums[qj].ny != Space.qnums[qk].ny + Space.qnums[ql].ny){ return 0.0; }
-  if(Space.qnums[qi].nz + Space.qnums[qj].nz != Space.qnums[qk].nz + Space.qnums[ql].nz){ return 0.0; }
-  if(Space.qnums[qi].m + Space.qnums[qj].m != Space.qnums[qk].m + Space.qnums[ql].m){ return 0.0; }
-  if(Space.qnums[qi].t + Space.qnums[qj].t != Space.qnums[qk].t + Space.qnums[ql].t){ return 0.0; }
+  if(SPB.qnums[qi].nx + SPB.qnums[qj].nx != SPB.qnums[qk].nx + SPB.qnums[ql].nx){ return 0.0; }
+  if(SPB.qnums[qi].ny + SPB.qnums[qj].ny != SPB.qnums[qk].ny + SPB.qnums[ql].ny){ return 0.0; }
+  if(SPB.qnums[qi].nz + SPB.qnums[qj].nz != SPB.qnums[qk].nz + SPB.qnums[ql].nz){ return 0.0; }
+  if(SPB.qnums[qi].m + SPB.qnums[qj].m != SPB.qnums[qk].m + SPB.qnums[ql].m){ return 0.0; }
+  if(SPB.qnums[qi].t + SPB.qnums[qj].t != SPB.qnums[qk].t + SPB.qnums[ql].t){ return 0.0; }
 
-  kX1 = (M_PI/L) * (Space.qnums[qi].nx - Space.qnums[qj].nx - Space.qnums[qk].nx + Space.qnums[ql].nx);
-  kY1 = (M_PI/L) * (Space.qnums[qi].ny - Space.qnums[qj].ny - Space.qnums[qk].ny + Space.qnums[ql].ny);
-  kZ1 = (M_PI/L) * (Space.qnums[qi].nz - Space.qnums[qj].nz - Space.qnums[qk].nz + Space.qnums[ql].nz);
+  kX1 = (M_PI/L) * (SPB.qnums[qi].nx - SPB.qnums[qj].nx - SPB.qnums[qk].nx + SPB.qnums[ql].nx);
+  kY1 = (M_PI/L) * (SPB.qnums[qi].ny - SPB.qnums[qj].ny - SPB.qnums[qk].ny + SPB.qnums[ql].ny);
+  kZ1 = (M_PI/L) * (SPB.qnums[qi].nz - SPB.qnums[qj].nz - SPB.qnums[qk].nz + SPB.qnums[ql].nz);
 
-  kX2 = (M_PI/L) * (Space.qnums[qi].nx - Space.qnums[qj].nx - Space.qnums[ql].nx + Space.qnums[qk].nx);
-  kY2 = (M_PI/L) * (Space.qnums[qi].ny - Space.qnums[qj].ny - Space.qnums[ql].ny + Space.qnums[qk].ny);
-  kZ2 = (M_PI/L) * (Space.qnums[qi].nz - Space.qnums[qj].nz - Space.qnums[ql].nz + Space.qnums[qk].nz);
+  kX2 = (M_PI/L) * (SPB.qnums[qi].nx - SPB.qnums[qj].nx - SPB.qnums[ql].nx + SPB.qnums[qk].nx);
+  kY2 = (M_PI/L) * (SPB.qnums[qi].ny - SPB.qnums[qj].ny - SPB.qnums[ql].ny + SPB.qnums[qk].ny);
+  kZ2 = (M_PI/L) * (SPB.qnums[qi].nz - SPB.qnums[qj].nz - SPB.qnums[ql].nz + SPB.qnums[qk].nz);
 
   qSquared1 = kX1 * kX1 + kY1 * kY1 + kZ1 * kZ1;
   qSquared2 = kX2 * kX2 + kY2 * kY2 + kZ2 * kZ2;
@@ -3308,23 +772,23 @@ double vint_Minnesota_Momentum(Model_Space &Space, int &qi, int &qj, int &qk, in
   V_T2 = -V_0T/(L*L*L)*pow(M_PI/kappa_T,1.5) * exp(-qSquared2/(4*kappa_T));
   V_S2 = -V_0S/(L*L*L)*pow(M_PI/kappa_S,1.5) * exp(-qSquared2/(4*kappa_S));
   
-  spinEx1 = spinExchangeMtxEle(Space.qnums[qi].m, Space.qnums[qj].m, Space.qnums[qk].m, Space.qnums[ql].m);
-  isoSpinEx1 = spinExchangeMtxEle(Space.qnums[qi].t, Space.qnums[qj].t, Space.qnums[qk].t, Space.qnums[ql].t);
+  spinEx1 = spinExchangeMtxEle(SPB.qnums[qi].m, SPB.qnums[qj].m, SPB.qnums[qk].m, SPB.qnums[ql].m);
+  isoSpinEx1 = spinExchangeMtxEle(SPB.qnums[qi].t, SPB.qnums[qj].t, SPB.qnums[qk].t, SPB.qnums[ql].t);
 
-  spinEx2 = spinExchangeMtxEle(Space.qnums[qi].m, Space.qnums[qj].m, Space.qnums[ql].m, Space.qnums[qk].m);
-  isoSpinEx2 = spinExchangeMtxEle(Space.qnums[qi].t, Space.qnums[qj].t, Space.qnums[ql].t, Space.qnums[qk].t);
+  spinEx2 = spinExchangeMtxEle(SPB.qnums[qi].m, SPB.qnums[qj].m, SPB.qnums[ql].m, SPB.qnums[qk].m);
+  isoSpinEx2 = spinExchangeMtxEle(SPB.qnums[qi].t, SPB.qnums[qj].t, SPB.qnums[ql].t, SPB.qnums[qk].t);
   
-  IsIt1 = kron_del(Space.qnums[qi].m, Space.qnums[qk].m) * kron_del(Space.qnums[qj].m, Space.qnums[ql].m) * 
-    kron_del(Space.qnums[qi].t, Space.qnums[qk].t) * kron_del(Space.qnums[qj].t, Space.qnums[ql].t);
-  PsIt1 = spinEx1 * kron_del(Space.qnums[qi].t, Space.qnums[qk].t) * kron_del(Space.qnums[qj].t, Space.qnums[ql].t);
+  IsIt1 = kron_del(SPB.qnums[qi].m, SPB.qnums[qk].m) * kron_del(SPB.qnums[qj].m, SPB.qnums[ql].m) * 
+    kron_del(SPB.qnums[qi].t, SPB.qnums[qk].t) * kron_del(SPB.qnums[qj].t, SPB.qnums[ql].t);
+  PsIt1 = spinEx1 * kron_del(SPB.qnums[qi].t, SPB.qnums[qk].t) * kron_del(SPB.qnums[qj].t, SPB.qnums[ql].t);
   PsPt1 = spinEx1 * isoSpinEx1;
-  IsPt1 = kron_del(Space.qnums[qi].m, Space.qnums[qk].m)*kron_del(Space.qnums[qj].m, Space.qnums[ql].m) * isoSpinEx1;
+  IsPt1 = kron_del(SPB.qnums[qi].m, SPB.qnums[qk].m)*kron_del(SPB.qnums[qj].m, SPB.qnums[ql].m) * isoSpinEx1;
 
-  IsIt2 = kron_del(Space.qnums[qi].m, Space.qnums[ql].m) * kron_del(Space.qnums[qj].m, Space.qnums[qk].m) * 
-    kron_del(Space.qnums[qi].t, Space.qnums[ql].t) * kron_del(Space.qnums[qj].t, Space.qnums[qk].t);
-  PsIt2 = spinEx2 * kron_del(Space.qnums[qi].t, Space.qnums[ql].t) * kron_del(Space.qnums[qj].t, Space.qnums[qk].t);
+  IsIt2 = kron_del(SPB.qnums[qi].m, SPB.qnums[ql].m) * kron_del(SPB.qnums[qj].m, SPB.qnums[qk].m) * 
+    kron_del(SPB.qnums[qi].t, SPB.qnums[ql].t) * kron_del(SPB.qnums[qj].t, SPB.qnums[qk].t);
+  PsIt2 = spinEx2 * kron_del(SPB.qnums[qi].t, SPB.qnums[ql].t) * kron_del(SPB.qnums[qj].t, SPB.qnums[qk].t);
   PsPt2 = spinEx2 * isoSpinEx2;
-  IsPt2 = kron_del(Space.qnums[qi].m, Space.qnums[ql].m) * kron_del(Space.qnums[qj].m, Space.qnums[qk].m) * isoSpinEx2;
+  IsPt2 = kron_del(SPB.qnums[qi].m, SPB.qnums[ql].m) * kron_del(SPB.qnums[qj].m, SPB.qnums[qk].m) * isoSpinEx2;
 
   return 0.5 * (V_R1 + 0.5*V_T1 + 0.5*V_S1) * IsIt1 + 
     0.25 * (V_T1 - V_S1) * PsIt1 - 
@@ -3338,22 +802,22 @@ double vint_Minnesota_Momentum(Model_Space &Space, int &qi, int &qj, int &qk, in
 
 
 // Minnesota Potential for momentum basis
-double Coulomb_HO(Input_Parameters &Parameters, Model_Space &Space, int &qi, int &qj, int &qk, int &ql)
+double Coulomb_HO(int &qi, int &qj, int &qk, int &ql)
 {
   int g1, g2, g3, g4, G, L;
   double dir = 0.0;
   double exch = 0.0;
   int n1, m1, n2, m2, n3, m3, n4, m4;
   double LogRatio1, LogProd2, LogRatio2, temp;
-  n1 = Space.qnums[qi].n; //1
-  m1 = Space.qnums[qi].ml;
-  n2 = Space.qnums[qj].n; //2
-  m2 = Space.qnums[qj].ml;
-  n3 = Space.qnums[ql].n; //4
-  m3 = Space.qnums[ql].ml;
-  n4 = Space.qnums[qk].n; //3
-  m4 = Space.qnums[qk].ml;
-  if((m1 + m2 == m3 + m4) && Space.qnums[qi].m == Space.qnums[qk].m && Space.qnums[qj].m == Space.qnums[ql].m){
+  n1 = SPB.qnums[qi].n; //1
+  m1 = SPB.qnums[qi].ml;
+  n2 = SPB.qnums[qj].n; //2
+  m2 = SPB.qnums[qj].ml;
+  n3 = SPB.qnums[ql].n; //4
+  m3 = SPB.qnums[ql].ml;
+  n4 = SPB.qnums[qk].n; //3
+  m4 = SPB.qnums[qk].ml;
+  if((m1 + m2 == m3 + m4) && SPB.qnums[qi].m == SPB.qnums[qk].m && SPB.qnums[qj].m == SPB.qnums[ql].m){
     for(int j1 = 0; j1 <= n1; ++j1){
       for(int j2 = 0; j2 <= n2; ++j2){
 	for(int j3 = 0; j3 <= n3; ++j3){
@@ -3387,15 +851,15 @@ double Coulomb_HO(Input_Parameters &Parameters, Model_Space &Space, int &qi, int
     dir *= product1(n1, m1, n2, m2, n3, m3, n4, m4);
   }
 
-  n1 = Space.qnums[qi].n; //1
-  m1 = Space.qnums[qi].ml;
-  n2 = Space.qnums[qj].n; //2
-  m2 = Space.qnums[qj].ml;
-  n3 = Space.qnums[qk].n; //3
-  m3 = Space.qnums[qk].ml;
-  n4 = Space.qnums[ql].n; //4
-  m4 = Space.qnums[ql].ml;
-  if((m1 + m2 == m3 + m4) && Space.qnums[qi].m == Space.qnums[ql].m && Space.qnums[qj].m == Space.qnums[qk].m){
+  n1 = SPB.qnums[qi].n; //1
+  m1 = SPB.qnums[qi].ml;
+  n2 = SPB.qnums[qj].n; //2
+  m2 = SPB.qnums[qj].ml;
+  n3 = SPB.qnums[qk].n; //3
+  m3 = SPB.qnums[qk].ml;
+  n4 = SPB.qnums[ql].n; //4
+  m4 = SPB.qnums[ql].ml;
+  if((m1 + m2 == m3 + m4) && SPB.qnums[qi].m == SPB.qnums[ql].m && SPB.qnums[qj].m == SPB.qnums[qk].m){
     for(int j1 = 0; j1 <= n1; ++j1){
       for(int j2 = 0; j2 <= n2; ++j2){
 	for(int j3 = 0; j3 <= n3; ++j3){
@@ -3428,10 +892,10 @@ double Coulomb_HO(Input_Parameters &Parameters, Model_Space &Space, int &qi, int
     }
     exch *= product1(n1, m1, n2, m2, n3, m3, n4, m4);
   }
-  return std::sqrt(Parameters.density)*(dir - exch);
+  return std::sqrt(PAR.density)*(dir - exch);
 }
 
-void Get_Fock_Matrix(Input_Parameters &Parameters, HF_Channels &HF_Chan, HF_Matrix_Elements &HF_ME, Single_Particle_States &HF, Model_Space &Space, Channels &Chan, Interactions &Ints)
+void Get_Fock_Matrix(HF_Channels &HF_Chan, HF_Matrix_Elements &HF_ME, Single_Particle_States &HF, Channels &Chan, Interactions &Ints)
 {
   int p_ind, q_ind, t_ind;
   int key1, key2, chan1, ind1, minj;
@@ -3453,35 +917,35 @@ void Get_Fock_Matrix(Input_Parameters &Parameters, HF_Channels &HF_Chan, HF_Matr
 	fock0 = 0.0;
 	for(int t = 0; t < nob0; ++t){
 	  t_ind = HF_Chan.ob_state(chan0, t).v1;
-	  fock0 += Space.qnums[t_ind].energy * HF.vectors[vector_ind + (p*nob0 + t)] * HF.vectors[vector_ind + (q*nob0 + t)];
+	  fock0 += SPB.qnums[t_ind].energy * HF.vectors[vector_ind + (p*nob0 + t)] * HF.vectors[vector_ind + (q*nob0 + t)];
 	}
 	fock += fock0;
 	for(int chan = 0; chan < HF_Chan.size3; ++chan){
 	  nob = HF_Chan.nob[chan];
 	  for(int t = 0; t < nob; ++t){ // Sum over occupied levels
 	    t_ind = HF_Chan.ob_state(chan, t).v1;
-	    if(t_ind >= Space.num_hol){ continue; } 
-	    plus(tb, Space.qnums[p_ind], Space.qnums[t_ind]);
+	    if(t_ind >= SPB.num_hol){ continue; } 
+	    plus(tb, SPB.qnums[p_ind], SPB.qnums[t_ind]);
 	    minj = abs(HF_Chan.qnums3[chan0].j - HF_Chan.qnums3[chan].j);
 	    while(tb.j >= minj){
 	      if( (p_ind == t_ind || q_ind == t_ind) && tb.j%4 != 0 ){ tb.j -= 2; continue; }
-	      chan1 = Space.ind_2b_dir(Parameters.basis, tb);
-	      key1 = HF_Chan.tb_map[chan1][Space.hash2(p_ind, t_ind, tb.j)];
-	      key2 = HF_Chan.tb_map[chan1][Space.hash2(q_ind, t_ind, tb.j)];
+	      chan1 = Ind_Chan1(tb);
+	      key1 = HF_Chan.tb_map[chan1][Hash(p_ind, t_ind, tb.j)];
+	      key2 = HF_Chan.tb_map[chan1][Hash(q_ind, t_ind, tb.j)];
 	      ind1 = HF_ME.Index[chan1] + (key1 * HF_Chan.ntb[chan1] + key2);
 	      fock += (tb.j + 1.0)/(HF_Chan.qnums3[chan0].j + 1.0) * HF_ME.V[ind1];
 	      tb.j -= 2;
 	    }
 	  }
 	}
-	if(p_ind < Space.num_hol){
+	if(p_ind < SPB.num_hol){
 	  key1 = Chan.h_map[chan0][p_ind];
-	  if(q_ind < Space.num_hol){ // hh
+	  if(q_ind < SPB.num_hol){ // hh
 	    key2 = Chan.h_map[chan0][q_ind];
 	    chan_ind = Ints.Fmatrix.hh_3_index[chan0];
 	    ind3 = key1 * Chan.nh[chan0] + key2;
-	    minus(tb, Space.qnums[p_ind], Space.qnums[q_ind]);
-	    ind2 = Chan.hh1_map[Chan.ind0][Space.hash2(p_ind, q_ind, tb.j)];
+	    minus(tb, SPB.qnums[p_ind], SPB.qnums[q_ind]);
+	    ind2 = Chan.hh1_map[Chan.ind0][Hash(p_ind, q_ind, tb.j)];
 	    Ints.Fmatrix.hh_3[chan_ind + ind3] = fock;
 	    Ints.Fmatrix.hh_2[ind2] = fock;
 	  }
@@ -3489,20 +953,20 @@ void Get_Fock_Matrix(Input_Parameters &Parameters, HF_Channels &HF_Chan, HF_Matr
 	    key2 = Chan.p_map[chan0][q_ind];
 	    chan_ind = Ints.Fmatrix.hp_3_index[chan0];
 	    ind3 = key1 * Chan.np[chan0] + key2;
- 	    minus(tb, Space.qnums[p_ind], Space.qnums[q_ind]);
-	    ind2 = Chan.hp1_map[Chan.ind0][Space.hash2(p_ind, q_ind, tb.j)];
+ 	    minus(tb, SPB.qnums[p_ind], SPB.qnums[q_ind]);
+	    ind2 = Chan.hp1_map[Chan.ind0][Hash(p_ind, q_ind, tb.j)];
 	    Ints.Fmatrix.hp_3[chan_ind + ind3] = fock;
 	    Ints.Fmatrix.hp_2[ind2] = fock;
 	  }
 	}
 	else{
 	  key1 = Chan.p_map[chan0][p_ind];
-	  if(q_ind < Space.num_hol){ // ph
+	  if(q_ind < SPB.num_hol){ // ph
 	    key2 = Chan.h_map[chan0][q_ind];
 	    chan_ind = Ints.Fmatrix.ph_3_index[chan0];
 	    ind3 = key1 * Chan.nh[chan0] + key2;
- 	    minus(tb, Space.qnums[p_ind], Space.qnums[q_ind]);
-	    ind2 = Chan.ph1_map[Chan.ind0][Space.hash2(p_ind, q_ind, tb.j)];
+ 	    minus(tb, SPB.qnums[p_ind], SPB.qnums[q_ind]);
+	    ind2 = Chan.ph1_map[Chan.ind0][Hash(p_ind, q_ind, tb.j)];
 	    Ints.Fmatrix.ph_3[chan_ind + ind3] = fock;
 	    Ints.Fmatrix.ph_2[ind2] = fock;
 	  }
@@ -3510,8 +974,8 @@ void Get_Fock_Matrix(Input_Parameters &Parameters, HF_Channels &HF_Chan, HF_Matr
 	    key2 = Chan.p_map[chan0][q_ind];
 	    chan_ind = Ints.Fmatrix.pp_3_index[chan0];
 	    ind3 = key1 * Chan.np[chan0] + key2;
- 	    minus(tb, Space.qnums[p_ind], Space.qnums[q_ind]);
-	    ind2 = Chan.pp1_map[Chan.ind0][Space.hash2(p_ind, q_ind, tb.j)];
+ 	    minus(tb, SPB.qnums[p_ind], SPB.qnums[q_ind]);
+	    ind2 = Chan.pp1_map[Chan.ind0][Hash(p_ind, q_ind, tb.j)];
 	    Ints.Fmatrix.pp_3[chan_ind + ind3] = fock;
 	    Ints.Fmatrix.pp_2[ind2] = fock;
 	  }
@@ -3521,7 +985,7 @@ void Get_Fock_Matrix(Input_Parameters &Parameters, HF_Channels &HF_Chan, HF_Matr
   }
 }
 
-void Get_Matrix_Elements(Input_Parameters &Parameters, HF_Channels &HF_Chan, HF_Matrix_Elements &HF_ME, Model_Space &Space, Channels &Chan, Interactions &Ints)
+void Get_Matrix_Elements(HF_Channels &HF_Chan, HF_Matrix_Elements &HF_ME, Channels &Chan, Interactions &Ints)
 {
   int ntb, length;
   for(int chan1 = 0; chan1 < HF_Chan.size1; ++chan1){
@@ -3543,13 +1007,13 @@ void Get_Matrix_Elements(Input_Parameters &Parameters, HF_Channels &HF_Chan, HF_
 	tb2 = HF_Chan.tb_state(chan1, tb2_ind);
 	p = tb1.v1;
 	q = tb1.v2;
-	ptype = Space.qnums[p].type;
-	qtype = Space.qnums[q].type;
+	ptype = SPB.qnums[p].type;
+	qtype = SPB.qnums[q].type;
 	if(p == q){ continue; }
 	r = tb2.v1;
 	s = tb2.v2;
-	rtype = Space.qnums[r].type;
-	stype = Space.qnums[s].type;
+	rtype = SPB.qnums[r].type;
+	stype = SPB.qnums[s].type;
 	if(r == s){ continue; }
 	TBME = HF_ME.V[HF_ME.Index[chan1] + (tb1_ind*ntb + tb2_ind)];
 	/*if(p < q && r < s && p <= r){
@@ -3557,86 +1021,86 @@ void Get_Matrix_Elements(Input_Parameters &Parameters, HF_Channels &HF_Chan, HF_
 	  }*/
 	if(rtype == 1 && stype == 1){
 	  if(ptype == 1 && qtype == 1){
-	    key1 = Chan.pp_map[chan1][Space.hash2(p, q, 0)];
-	    key2 = Chan.pp_map[chan1][Space.hash2(r, s, 0)];
+	    key1 = Chan.pp_map[chan1][Hash(p, q, 0)];
+	    key2 = Chan.pp_map[chan1][Hash(r, s, 0)];
 	    chan_ind = Ints.Vpppp.V_1_index[chan1];
 	    ind = key1 * Chan.npp[chan1] + key2;
 	    Ints.Vpppp.V_1[chan_ind + ind] = TBME;
 	    
-	    chan = Space.ind_1b(Parameters.basis, Space.qnums[r]);
-	    key1 = Chan.ppp_map[chan][Space.hash3(p, q, s, 0)];
+	    /*chan = Ind_Chan3(SPB.qnums[r]);
+	    key1 = Chan.ppp_map[chan][Hash(p, q, s, 0)];
 	    key2 = Chan.p_map[chan][r];
 	    chan_ind = Ints.Vpppp.V_3_3_index[chan];
 	    ind = key1 * Chan.np[chan] + key2;
-	    Ints.Vpppp.V_3_3[chan_ind + ind] = TBME;
+	    Ints.Vpppp.V_3_3[chan_ind + ind] = TBME;*/
 	  }
 	  else if(ptype == 0 && qtype == 1){
-	    chan = Space.ind_1b(Parameters.basis, Space.qnums[q]);
+	    chan = Ind_Chan3(SPB.qnums[q]);
 	    key1 = Chan.p_map[chan][q];
-	    key2 = Chan.pph_map[chan][Space.hash3(r, s, p, 0)];
+	    key2 = Chan.pph_map[chan][Hash(r, s, p, 0)];
 	    chan_ind = Ints.Vhppp.V_3_2_index[chan];
 	    ind = key1 * Chan.npph[chan] + key2;
 	    Ints.Vhppp.V_3_2[chan_ind + ind] = TBME;
 	    
-	    minus(tb, Space.qnums[q], Space.qnums[s]);
-	    chan = Space.ind_2b_cross(Parameters.basis, tb);
-	    key1 = Chan.pp1_map[chan][Space.hash2(q, s, 0)];
-	    key2 = Chan.ph1_map[chan][Space.hash2(r, p, 0)];
+	    minus(tb, SPB.qnums[q], SPB.qnums[s]);
+	    chan = Ind_Chan2(tb);
+	    key1 = Chan.pp1_map[chan][Hash(q, s, 0)];
+	    key2 = Chan.ph1_map[chan][Hash(r, p, 0)];
 	    chan_ind = Ints.Vhppp.V_2_4_index[chan];
 	    ind = key1 * Chan.nph1[chan] + key2;
 	    Ints.Vhppp.V_2_4[chan_ind + ind] = TBME;
 	    
 	    // Vpphp -> rspq
-	    chan = Space.ind_1b(Parameters.basis, Space.qnums[p]);
-	    key1 = Chan.ppp_map[chan][Space.hash3(r, s, q, 0)];
+	    chan = Ind_Chan3(SPB.qnums[p]);
+	    key1 = Chan.ppp_map[chan][Hash(r, s, q, 0)];
 	    key2 = Chan.h_map[chan][p];
 	    chan_ind = Ints.Vpphp.V_3_3_index[chan];
 	    ind = key1 * Chan.nh[chan] + key2;
 	    Ints.Vpphp.V_3_3[chan_ind + ind] = TBME;
 	  }
 	  else if(ptype == 0 && qtype == 0){
-	    key1 = Chan.hh_map[chan1][Space.hash2(p, q, 0)];
-	    key2 = Chan.pp_map[chan1][Space.hash2(r, s, 0)];
+	    key1 = Chan.hh_map[chan1][Hash(p, q, 0)];
+	    key2 = Chan.pp_map[chan1][Hash(r, s, 0)];
 	    chan_ind = Ints.Vhhpp.V_1_index[chan1];
 	    ind = key1 * Chan.npp[chan1] + key2;
 	    Ints.Vhhpp.V_1[chan_ind + ind] = TBME;
-	    chan_ind = Ints.Vpphh.V_1_index[chan1];
+	    /*chan_ind = Ints.Vpphh.V_1_index[chan1];
 	    ind = key2 * Chan.nhh[chan1] + key1;
-	    Ints.Vpphh.V_1[chan_ind + ind] = TBME;
+	    Ints.Vpphh.V_1[chan_ind + ind] = TBME;*/
 	    
-	    chan = Space.ind_1b(Parameters.basis, Space.qnums[p]);
+	    chan = Ind_Chan3(SPB.qnums[p]);
 	    key1 = Chan.h_map[chan][p];
-	    key2 = Chan.pph_map[chan][Space.hash3(r, s, q, 0)];
+	    key2 = Chan.pph_map[chan][Hash(r, s, q, 0)];
 	    chan_ind = Ints.Vhhpp.V_3_1_index[chan];
 	    ind = key1 * Chan.npph[chan] + key2;
 	    Ints.Vhhpp.V_3_1[chan_ind + ind] = TBME;
 	    
-	    chan = Space.ind_1b(Parameters.basis, Space.qnums[q]);
+	    chan = Ind_Chan3(SPB.qnums[q]);
 	    key1 = Chan.h_map[chan][q];
-	    key2 = Chan.pph_map[chan][Space.hash3(r, s, p, 0)];
+	    key2 = Chan.pph_map[chan][Hash(r, s, p, 0)];
 	    chan_ind = Ints.Vhhpp.V_3_2_index[chan];
 	    ind = key1 * Chan.npph[chan] + key2;
 	    Ints.Vhhpp.V_3_2[chan_ind + ind] = TBME;
 	    
-	    chan = Space.ind_1b(Parameters.basis, Space.qnums[r]);
-	    key1 = Chan.hhp_map[chan][Space.hash3(p, q, s, 0)];
+	    chan = Ind_Chan3(SPB.qnums[r]);
+	    key1 = Chan.hhp_map[chan][Hash(p, q, s, 0)];
 	    key2 = Chan.p_map[chan][r];
 	    chan_ind = Ints.Vhhpp.V_3_3_index[chan];
 	    ind = key1 * Chan.np[chan] + key2;
 	    Ints.Vhhpp.V_3_3[chan_ind + ind] = TBME;
 	    
-	    minus(tb, Space.qnums[p], Space.qnums[s]);
-	    chan = Space.ind_2b_cross(Parameters.basis, tb);
-	    key1 = Chan.hp1_map[chan][Space.hash2(p, s, 0)];
-	    key2 = Chan.ph1_map[chan][Space.hash2(r, q, 0)];
+	    minus(tb, SPB.qnums[p], SPB.qnums[s]);
+	    chan = Ind_Chan2(tb);
+	    key1 = Chan.hp1_map[chan][Hash(p, s, 0)];
+	    key2 = Chan.ph1_map[chan][Hash(r, q, 0)];
 	    chan_ind = Ints.Vhhpp.V_2_1_index[chan];
 	    ind = key1 * Chan.nph1[chan] + key2;
 	    Ints.Vhhpp.V_2_1[chan_ind + ind] = TBME;
 	    
-	    minus(tb, Space.qnums[p], Space.qnums[r]);
-	    chan = Space.ind_2b_cross(Parameters.basis, tb);
-	    key1 = Chan.hp1_map[chan][Space.hash2(p, r, 0)];
-	    key2 = Chan.ph1_map[chan][Space.hash2(s, q, 0)];
+	    minus(tb, SPB.qnums[p], SPB.qnums[r]);
+	    chan = Ind_Chan2(tb);
+	    key1 = Chan.hp1_map[chan][Hash(p, r, 0)];
+	    key2 = Chan.ph1_map[chan][Hash(s, q, 0)];
 	    chan_ind = Ints.Vhhpp.V_2_3_index[chan];
 	    ind = key1 * Chan.nph1[chan] + key2;
 	    Ints.Vhhpp.V_2_3[chan_ind + ind] = TBME;
@@ -3644,49 +1108,49 @@ void Get_Matrix_Elements(Input_Parameters &Parameters, HF_Channels &HF_Chan, HF_
 	}
 	else if(rtype == 0 && stype == 1){
 	  if(ptype == 0 && qtype == 1){
-	    minus(tb, Space.qnums[p], Space.qnums[s]);
-	    chan = Space.ind_2b_cross(Parameters.basis, tb);
-	    key1 = Chan.hp1_map[chan][Space.hash2(p, s, 0)];
-	    key2 = Chan.hp1_map[chan][Space.hash2(r, q, 0)];
+	    minus(tb, SPB.qnums[p], SPB.qnums[s]);
+	    chan = Ind_Chan2(tb);
+	    key1 = Chan.hp1_map[chan][Hash(p, s, 0)];
+	    key2 = Chan.hp1_map[chan][Hash(r, q, 0)];
 	    chan_ind = Ints.Vhphp.V_2_1_index[chan];
 	    ind = key1 * Chan.nhp1[chan] + key2;
 	    Ints.Vhphp.V_2_1[chan_ind + ind] = TBME;
 	    
-	    minus(tb, Space.qnums[q], Space.qnums[r]);
-	    chan = Space.ind_2b_cross(Parameters.basis, tb);
-	    key1 = Chan.ph1_map[chan][Space.hash2(q, r, 0)];
-	    key2 = Chan.ph1_map[chan][Space.hash2(s, p, 0)];
+	    minus(tb, SPB.qnums[q], SPB.qnums[r]);
+	    chan = Ind_Chan2(tb);
+	    key1 = Chan.ph1_map[chan][Hash(q, r, 0)];
+	    key2 = Chan.ph1_map[chan][Hash(s, p, 0)];
 	    chan_ind = Ints.Vhphp.V_2_2_index[chan];
 	    ind = key1 * Chan.nph1[chan] + key2;
 	    Ints.Vhphp.V_2_2[chan_ind + ind] = TBME;
 	  }
 	  else if(ptype == 0 && qtype == 0){
-	    chan = Space.ind_1b(Parameters.basis, Space.qnums[q]);
+	    chan = Ind_Chan3(SPB.qnums[q]);
 	    key1 = Chan.h_map[chan][q];
-	    key2 = Chan.hph_map[chan][Space.hash3(r, s, p, 0)];
+	    key2 = Chan.hph_map[chan][Hash(r, s, p, 0)];
 	    chan_ind = Ints.Vhhhp.V_3_2_index[chan];
 	    ind = key1 * Chan.nhph[chan] + key2;
 	    Ints.Vhhhp.V_3_2[chan_ind + ind] = TBME;
 	    
-	    chan = Space.ind_1b(Parameters.basis, Space.qnums[r]);
-	    key1 = Chan.hhp_map[chan][Space.hash3(p, q, s, 0)];
+	    chan = Ind_Chan3(SPB.qnums[r]);
+	    key1 = Chan.hhp_map[chan][Hash(p, q, s, 0)];
 	    key2 = Chan.h_map[chan][r];
 	    chan_ind = Ints.Vhhhp.V_3_3_index[chan];
 	    ind = key1 * Chan.nh[chan] + key2;
 	    Ints.Vhhhp.V_3_3[chan_ind + ind] = TBME;
 	    
-	    minus(tb, Space.qnums[p], Space.qnums[r]);
-	    chan = Space.ind_2b_cross(Parameters.basis, tb);
-	    key1 = Chan.hh1_map[chan][Space.hash2(p, r, 0)];
-	    key2 = Chan.ph1_map[chan][Space.hash2(s, q, 0)];
+	    minus(tb, SPB.qnums[p], SPB.qnums[r]);
+	    chan = Ind_Chan2(tb);
+	    key1 = Chan.hh1_map[chan][Hash(p, r, 0)];
+	    key2 = Chan.ph1_map[chan][Hash(s, q, 0)];
 	    chan_ind = Ints.Vhhhp.V_2_3_index[chan];
 	    ind = key1 * Chan.nph1[chan] + key2;
 	    Ints.Vhhhp.V_2_3[chan_ind + ind] = TBME;
 	    
 	    // Vhphh -> rspq
-	    chan = Space.ind_1b(Parameters.basis, Space.qnums[s]);
+	    chan = Ind_Chan3(SPB.qnums[s]);
 	    key1 = Chan.p_map[chan][s];
-	    key2 = Chan.hhh_map[chan][Space.hash3(p, q, r, 0)];
+	    key2 = Chan.hhh_map[chan][Hash(p, q, r, 0)];
 	    chan_ind = Ints.Vhphh.V_3_2_index[chan];
 	    ind = key1 * Chan.nhhh[chan] + key2;
 	    Ints.Vhphh.V_3_2[chan_ind + ind] = TBME;
@@ -3694,15 +1158,15 @@ void Get_Matrix_Elements(Input_Parameters &Parameters, HF_Channels &HF_Chan, HF_
 	}
 	else if(rtype == 0 && stype == 0){
 	  if(ptype == 0 && qtype == 0){
-	    key1 = Chan.hh_map[chan1][Space.hash2(p, q, 0)];
-	    key2 = Chan.hh_map[chan1][Space.hash2(r, s, 0)];
+	    key1 = Chan.hh_map[chan1][Hash(p, q, 0)];
+	    key2 = Chan.hh_map[chan1][Hash(r, s, 0)];
 	    chan_ind = Ints.Vhhhh.V_1_index[chan1];
 	    ind = key1 * Chan.nhh[chan1] + key2;
 	    Ints.Vhhhh.V_1[chan_ind + ind] = TBME;
 	    
-	    chan = Space.ind_1b(Parameters.basis, Space.qnums[q]);
+	    chan = Ind_Chan3(SPB.qnums[q]);
 	    key1 = Chan.h_map[chan][q];
-	    key2 = Chan.hhh_map[chan][Space.hash3(r, s, p, 0)];
+	    key2 = Chan.hhh_map[chan][Hash(r, s, p, 0)];
 	    chan_ind = Ints.Vhhhh.V_3_2_index[chan];
 	    ind = key1 * Chan.nhhh[chan] + key2;
 	    Ints.Vhhhh.V_3_2[chan_ind + ind] = TBME;
@@ -3713,7 +1177,7 @@ void Get_Matrix_Elements(Input_Parameters &Parameters, HF_Channels &HF_Chan, HF_
   }
 }
 
-void Get_Matrix_Elements_J(Input_Parameters &Parameters, HF_Channels &HF_Chan, HF_Matrix_Elements &HF_ME, Model_Space &Space, Channels &Chan, Interactions &Ints)
+void Get_Matrix_Elements_J(HF_Channels &HF_Chan, HF_Matrix_Elements &HF_ME, Channels &Chan, Interactions &Ints)
 {
   struct timespec time1, time2;
   double elapsed0 = 0.0;
@@ -3765,14 +1229,14 @@ void Get_Matrix_Elements_J(Input_Parameters &Parameters, HF_Channels &HF_Chan, H
       q = pqrs_vec[ind1].v2;
       r = pqrs_vec[ind1].v3;
       s = pqrs_vec[ind1].v4;
-      ptype = Space.qnums[p].type;
-      qtype = Space.qnums[q].type;
-      rtype = Space.qnums[r].type;
-      stype = Space.qnums[s].type;
-      pj = Space.qnums[p].j;
-      qj = Space.qnums[q].j;
-      rj = Space.qnums[r].j;
-      sj = Space.qnums[s].j;
+      ptype = SPB.qnums[p].type;
+      qtype = SPB.qnums[q].type;
+      rtype = SPB.qnums[r].type;
+      stype = SPB.qnums[s].type;
+      pj = SPB.qnums[p].j;
+      qj = SPB.qnums[q].j;
+      rj = SPB.qnums[r].j;
+      sj = SPB.qnums[s].j;
       TBME = HF_ME.V[ind1];
       chan1 = pqrs_chan[ind1];
       J = pqrs_j[ind1];
@@ -3782,35 +1246,36 @@ void Get_Matrix_Elements_J(Input_Parameters &Parameters, HF_Channels &HF_Chan, H
 	}*/
       if(rtype == 1 && stype == 1){
 	if(ptype == 1 && qtype == 1){
-	  key1 = Chan.pp_map[chan1][Space.hash2(p, q, J)];
-	  key2 = Chan.pp_map[chan1][Space.hash2(r, s, J)];
+	  key1 = Chan.pp_map[chan1][Hash(p, q, J)];
+	  key2 = Chan.pp_map[chan1][Hash(r, s, J)];
 	  chan_ind = Ints.Vpppp.V_1_index[chan1];
 	  ind = key1 * Chan.npp[chan1] + key2;
 	  Ints.Vpppp.V_1[chan_ind + ind] = TBME;
 	  
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[r]);
-	  key1 = Chan.ppp_map[chan][Space.hash3(p, q, s, J)];
+	  /*chan = Ind_Chan3(SPB.qnums[r]);
+	  key1 = Chan.ppp_map[chan][Hash(p, q, s, J)];
 	  key2 = Chan.p_map[chan][r];
 	  chan_ind = Ints.Vpppp.V_3_3_index[chan];
 	  ind = key1 * Chan.np[chan] + key2;
-	  Ints.Vpppp.V_3_3[chan_ind + ind] = phase2(rj + sj - J) * std::sqrt((J + 1.0)/(rj + 1.0)) * TBME;
+	  Ints.Vpppp.V_3_3[chan_ind + ind] = phase2(rj + sj - J) * std::sqrt((J + 1.0)/(rj + 1.0)) * TBME;*/
 	}
 	else if(ptype == 0 && qtype == 1){
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[q]);
+	  chan = Ind_Chan3(SPB.qnums[q]);
 	  key1 = Chan.p_map[chan][q];
-	  key2 = Chan.pph_map[chan][Space.hash3(r, s, p, J)];
+	  key2 = Chan.pph_map[chan][Hash(r, s, p, J)];
 	  chan_ind = Ints.Vhppp.V_3_2_index[chan];
 	  ind = key1 * Chan.npph[chan] + key2;
-	  Ints.Vhppp.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((J + 1.0)/(qj + 1.0)) * TBME;
+	  Ints.Vhppp.V_3_2[chan_ind + ind] = std::sqrt((J + 1.0)/(qj + 1.0)) * TBME;
+	  //Ints.Vhppp.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((J + 1.0)/(qj + 1.0)) * TBME;
 	  
-	  minus(tb, Space.qnums[q], Space.qnums[s]);
-	  if(Space.qnums[r].j + Space.qnums[p].j < tb.j){ tb.j = rj + pj; }
+	  minus(tb, SPB.qnums[q], SPB.qnums[s]);
+	  if(SPB.qnums[r].j + SPB.qnums[p].j < tb.j){ tb.j = rj + pj; }
 	  jmin = std::abs(qj - sj);
 	  if(std::abs(rj - pj) > jmin){ jmin = std::abs(rj - pj); }
 	  while(tb.j >= jmin){
-	    chan = Space.ind_2b_cross(Parameters.basis, tb);
-	    key1 = Chan.pp1_map[chan][Space.hash2(q, s, tb.j)];
-	    key2 = Chan.ph1_map[chan][Space.hash2(r, p, tb.j)];
+	    chan = Ind_Chan2(tb);
+	    key1 = Chan.pp1_map[chan][Hash(q, s, tb.j)];
+	    key2 = Chan.ph1_map[chan][Hash(r, p, tb.j)];
 	    chan_ind = Ints.Vhppp.V_2_4_index[chan];
 	    ind = key1 * Chan.nph1[chan] + key2;
 	    X = phase2(pj + qj - J) * (J + 1.0) * CGC6(qj,pj,J,rj,sj,tb.j);
@@ -3819,67 +1284,69 @@ void Get_Matrix_Elements_J(Input_Parameters &Parameters, HF_Channels &HF_Chan, H
 	  }	  
 	  
 	  // Vpphp -> rspq
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[p]);
-	  key1 = Chan.ppp_map[chan][Space.hash3(r, s, q, J)];
+	  chan = Ind_Chan3(SPB.qnums[p]);
+	  key1 = Chan.ppp_map[chan][Hash(r, s, q, J)];
 	  key2 = Chan.h_map[chan][p];
 	  chan_ind = Ints.Vpphp.V_3_3_index[chan];
 	  ind = key1 * Chan.nh[chan] + key2;
 	  Ints.Vpphp.V_3_3[chan_ind + ind] = phase2(pj + qj - J) * std::sqrt((J + 1.0)/(pj + 1.0)) * TBME;
 	}
 	else if(ptype == 0 && qtype == 0){
-	  key1 = Chan.hh_map[chan1][Space.hash2(p, q, J)];
-	  key2 = Chan.pp_map[chan1][Space.hash2(r, s, J)];
+	  key1 = Chan.hh_map[chan1][Hash(p, q, J)];
+	  key2 = Chan.pp_map[chan1][Hash(r, s, J)];
 	  chan_ind = Ints.Vhhpp.V_1_index[chan1];
 	  ind = key1 * Chan.npp[chan1] + key2;
 	  Ints.Vhhpp.V_1[chan_ind + ind] = TBME;
-	  chan_ind = Ints.Vpphh.V_1_index[chan1];
+	  /*chan_ind = Ints.Vpphh.V_1_index[chan1];
 	  ind = key2 * Chan.nhh[chan1] + key1;
-	  Ints.Vpphh.V_1[chan_ind + ind] = TBME;
+	  Ints.Vpphh.V_1[chan_ind + ind] = TBME;*/
 
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[p]);
+	  chan = Ind_Chan3(SPB.qnums[p]);
 	  key1 = Chan.h_map[chan][p];
-	  key2 = Chan.pph_map[chan][Space.hash3(r, s, q, J)];
+	  key2 = Chan.pph_map[chan][Hash(r, s, q, J)];
 	  chan_ind = Ints.Vhhpp.V_3_1_index[chan];
 	  ind = key1 * Chan.npph[chan] + key2;
 	  Ints.Vhhpp.V_3_1[chan_ind + ind] = phase2(pj + qj - J) * std::sqrt((J + 1.0)/(pj + 1.0)) * TBME;
 	  
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[r]);
-	  key1 = Chan.hhp_map[chan][Space.hash3(p, q, s, J)];
+	  chan = Ind_Chan3(SPB.qnums[r]);
+	  key1 = Chan.hhp_map[chan][Hash(p, q, s, J)];
 	  key2 = Chan.p_map[chan][r];
 	  chan_ind = Ints.Vhhpp.V_3_3_index[chan];
 	  ind = key1 * Chan.np[chan] + key2;
 	  Ints.Vhhpp.V_3_3[chan_ind + ind] = phase2(rj + sj - J) * std::sqrt((J + 1.0)/(rj + 1.0)) * TBME;
 	  
-	  minus(tb, Space.qnums[p], Space.qnums[s]);
+	  minus(tb, SPB.qnums[p], SPB.qnums[s]);
 	  if(rj + qj < tb.j){ tb.j = rj + qj; }
 	  jmin = std::abs(pj - sj);
 	  if(std::abs(rj - qj) > jmin){ jmin = std::abs(rj - qj); }
 	  while(tb.j >= jmin){
-	    chan = Space.ind_2b_cross(Parameters.basis, tb);
-	    key1 = Chan.hp1_map[chan][Space.hash2(p, s, tb.j)];
-	    key2 = Chan.ph1_map[chan][Space.hash2(r, q, tb.j)];
+	    chan = Ind_Chan2(tb);
+	    key1 = Chan.hp1_map[chan][Hash(p, s, tb.j)];
+	    key2 = Chan.ph1_map[chan][Hash(r, q, tb.j)];
 	    chan_ind = Ints.Vhhpp.V_2_1_index[chan];
 	    ind = key1 * Chan.nph1[chan] + key2;
-	    X = -1.0 * (J + 1.0) * CGC6(pj,qj,J,rj,sj,tb.j);
+	    X = (J + 1.0) * CGC6(pj,qj,J,rj,sj,tb.j);
+	    //X = -1.0 * (J + 1.0) * CGC6(pj,qj,J,rj,sj,tb.j);
 	    Ints.Vhhpp.V_2_1[chan_ind + ind] += X * TBME;
 	    tb.j -= 2;
 	  }
 	  
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[q]);
+	  chan = Ind_Chan3(SPB.qnums[q]);
 	  key1 = Chan.h_map[chan][q];
-	  key2 = Chan.pph_map[chan][Space.hash3(r, s, p, J)];
+	  key2 = Chan.pph_map[chan][Hash(r, s, p, J)];
 	  chan_ind = Ints.Vhhpp.V_3_2_index[chan];
 	  ind = key1 * Chan.npph[chan] + key2;
-	  Ints.Vhhpp.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((J + 1.0)/(qj + 1.0)) * TBME;
+	  Ints.Vhhpp.V_3_2[chan_ind + ind] = std::sqrt((J + 1.0)/(qj + 1.0)) * TBME;
+	  //Ints.Vhhpp.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((J + 1.0)/(qj + 1.0)) * TBME;
 	  
-	  minus(tb, Space.qnums[p], Space.qnums[r]);
+	  minus(tb, SPB.qnums[p], SPB.qnums[r]);
 	  if(sj + qj < tb.j){ tb.j = sj + qj; }
 	  jmin = std::abs(pj - rj);
 	  if(std::abs(sj - qj) > jmin){ jmin = std::abs(sj - qj); }
 	  while(tb.j >= jmin){
-	    chan = Space.ind_2b_cross(Parameters.basis, tb);
-	    key1 = Chan.hp1_map[chan][Space.hash2(p, r, tb.j)];
-	    key2 = Chan.ph1_map[chan][Space.hash2(s, q, tb.j)];
+	    chan = Ind_Chan2(tb);
+	    key1 = Chan.hp1_map[chan][Hash(p, r, tb.j)];
+	    key2 = Chan.ph1_map[chan][Hash(s, q, tb.j)];
 	    chan_ind = Ints.Vhhpp.V_2_3_index[chan];
 	    ind = key1 * Chan.nph1[chan] + key2;
 	    X = phase2(rj + sj - J) * (J + 1.0) * CGC6(pj,qj,J,sj,rj,tb.j);
@@ -3890,59 +1357,62 @@ void Get_Matrix_Elements_J(Input_Parameters &Parameters, HF_Channels &HF_Chan, H
       }
       else if(rtype == 0 && stype == 1){
 	if(ptype == 0 && qtype == 1){
-	  minus(tb, Space.qnums[p], Space.qnums[s]);
+	  minus(tb, SPB.qnums[p], SPB.qnums[s]);
 	  if(rj + qj < tb.j){ tb.j = rj + qj; }
 	  jmin = std::abs(pj - sj);
 	  if(std::abs(rj - qj) > jmin){ jmin = std::abs(rj - qj); }
 	  while(tb.j >= jmin){
-	    chan = Space.ind_2b_cross(Parameters.basis, tb);
-	    key1 = Chan.hp1_map[chan][Space.hash2(p, s, tb.j)];
-	    key2 = Chan.hp1_map[chan][Space.hash2(r, q, tb.j)];
+	    chan = Ind_Chan2(tb);
+	    key1 = Chan.hp1_map[chan][Hash(p, s, tb.j)];
+	    key2 = Chan.hp1_map[chan][Hash(r, q, tb.j)];
 	    chan_ind = Ints.Vhphp.V_2_1_index[chan];
 	    ind = key1 * Chan.nhp1[chan] + key2;
-	    X = -1.0 * (J + 1.0) * CGC6(pj,qj,J,rj,sj,tb.j);
+	    X = (J + 1.0) * CGC6(pj,qj,J,rj,sj,tb.j);
+	    //X = -1.0 * (J + 1.0) * CGC6(pj,qj,J,rj,sj,tb.j);
 	    Ints.Vhphp.V_2_1[chan_ind + ind] += X * TBME;
 	    tb.j -= 2;
 	  }
 	  
-	  minus(tb, Space.qnums[q], Space.qnums[r]);
+	  minus(tb, SPB.qnums[q], SPB.qnums[r]);
 	  if(sj + pj < tb.j){ tb.j = sj + pj; }
 	  jmin = std::abs(qj - rj);
 	  if(std::abs(sj - pj) > jmin){ jmin = std::abs(sj - pj); }
 	  while(tb.j >= jmin){
-	    chan = Space.ind_2b_cross(Parameters.basis, tb);
-	    key1 = Chan.ph1_map[chan][Space.hash2(q, r, tb.j)];
-	    key2 = Chan.ph1_map[chan][Space.hash2(s, p, tb.j)];
+	    chan = Ind_Chan2(tb);
+	    key1 = Chan.ph1_map[chan][Hash(q, r, tb.j)];
+	    key2 = Chan.ph1_map[chan][Hash(s, p, tb.j)];
 	    chan_ind = Ints.Vhphp.V_2_2_index[chan];
 	    ind = key1 * Chan.nph1[chan] + key2;
-	    X = -1.0 * phase2(pj + qj + rj + sj) * (J + 1.0) * CGC6(qj,pj,J,sj,rj,tb.j);
+	    X = phase2(pj + qj + rj + sj) * (J + 1.0) * CGC6(qj,pj,J,sj,rj,tb.j);
+	    //X = -1.0 * phase2(pj + qj + rj + sj) * (J + 1.0) * CGC6(qj,pj,J,sj,rj,tb.j);
 	    Ints.Vhphp.V_2_2[chan_ind + ind] += X * TBME;
 	    tb.j -= 2;
 	  }
 	}
 	else if(ptype == 0 && qtype == 0){
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[r]);
-	  key1 = Chan.hhp_map[chan][Space.hash3(p, q, s, J)];
+	  chan = Ind_Chan3(SPB.qnums[r]);
+	  key1 = Chan.hhp_map[chan][Hash(p, q, s, J)];
 	  key2 = Chan.h_map[chan][r];
 	  chan_ind = Ints.Vhhhp.V_3_3_index[chan];
 	  ind = key1 * Chan.nh[chan] + key2;
 	  Ints.Vhhhp.V_3_3[chan_ind + ind] = phase2(rj + sj - J) * std::sqrt((J + 1.0)/(rj + 1.0)) * TBME;
 	  
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[q]);
+	  chan = Ind_Chan3(SPB.qnums[q]);
 	  key1 = Chan.h_map[chan][q];
-	  key2 = Chan.hph_map[chan][Space.hash3(r, s, p, J)];
+	  key2 = Chan.hph_map[chan][Hash(r, s, p, J)];
 	  chan_ind = Ints.Vhhhp.V_3_2_index[chan];
 	  ind = key1 * Chan.nhph[chan] + key2;
-	  Ints.Vhhhp.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((J + 1.0)/(qj + 1.0)) * TBME;
+	  Ints.Vhhhp.V_3_2[chan_ind + ind] = std::sqrt((J + 1.0)/(qj + 1.0)) * TBME;
+	  //Ints.Vhhhp.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((J + 1.0)/(qj + 1.0)) * TBME;
 	  
-	  minus(tb, Space.qnums[p], Space.qnums[r]);
+	  minus(tb, SPB.qnums[p], SPB.qnums[r]);
 	  if(sj + qj < tb.j){ tb.j = sj + qj; }
 	  jmin = std::abs(pj - rj);
 	  if(std::abs(sj - qj) > jmin){ jmin = std::abs(sj - qj); }
 	  while(tb.j >= jmin){
-	    chan = Space.ind_2b_cross(Parameters.basis, tb);
-	    key1 = Chan.hh1_map[chan][Space.hash2(p, r, tb.j)];
-	    key2 = Chan.ph1_map[chan][Space.hash2(s, q, tb.j)];
+	    chan = Ind_Chan2(tb);
+	    key1 = Chan.hh1_map[chan][Hash(p, r, tb.j)];
+	    key2 = Chan.ph1_map[chan][Hash(s, q, tb.j)];
 	    chan_ind = Ints.Vhhhp.V_2_3_index[chan];
 	    ind = key1 * Chan.nph1[chan] + key2;
 	    X = phase2(rj + sj - J) * (J + 1.0) * CGC6(pj,qj,J,sj,rj,tb.j);
@@ -3951,28 +1421,30 @@ void Get_Matrix_Elements_J(Input_Parameters &Parameters, HF_Channels &HF_Chan, H
 	  }
 	  
 	  // Vhphh -> rspq
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[s]);
+	  chan = Ind_Chan3(SPB.qnums[s]);
 	  key1 = Chan.p_map[chan][s];
-	  key2 = Chan.hhh_map[chan][Space.hash3(p, q, r, J)];
+	  key2 = Chan.hhh_map[chan][Hash(p, q, r, J)];
 	  chan_ind = Ints.Vhphh.V_3_2_index[chan];
 	  ind = key1 * Chan.nhhh[chan] + key2;
-	  Ints.Vhphh.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((J + 1.0)/(sj + 1.0)) * TBME;
+	  Ints.Vhphh.V_3_2[chan_ind + ind] = std::sqrt((J + 1.0)/(sj + 1.0)) * TBME;
+	  //Ints.Vhphh.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((J + 1.0)/(sj + 1.0)) * TBME;
 	}
       }
       else if(rtype == 0 && stype == 0){
 	if(ptype == 0 && qtype == 0){
-	  key1 = Chan.hh_map[chan1][Space.hash2(p, q, J)];
-	  key2 = Chan.hh_map[chan1][Space.hash2(r, s, J)];
+	  key1 = Chan.hh_map[chan1][Hash(p, q, J)];
+	  key2 = Chan.hh_map[chan1][Hash(r, s, J)];
 	  chan_ind = Ints.Vhhhh.V_1_index[chan1];
 	  ind = key1 * Chan.nhh[chan1] + key2;
 	  Ints.Vhhhh.V_1[chan_ind + ind] = TBME;
 	  
-	  chan = Space.ind_1b(Parameters.basis, Space.qnums[q]);
+	  chan = Ind_Chan3(SPB.qnums[q]);
 	  key1 = Chan.h_map[chan][q];
-	  key2 = Chan.hhh_map[chan][Space.hash3(r, s, p, J)];
+	  key2 = Chan.hhh_map[chan][Hash(r, s, p, J)];
 	  chan_ind = Ints.Vhhhh.V_3_2_index[chan];
 	  ind = key1 * Chan.nhhh[chan] + key2;
-	  Ints.Vhhhh.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((J + 1.0)/(qj + 1.0)) * TBME;
+	  Ints.Vhhhh.V_3_2[chan_ind + ind] = std::sqrt((J + 1.0)/(qj + 1.0)) * TBME;
+	  //Ints.Vhhhh.V_3_2[chan_ind + ind] = -1.0 * std::sqrt((J + 1.0)/(qj + 1.0)) * TBME;
 	}
       }
     }
@@ -3987,7 +1459,7 @@ void Get_Matrix_Elements_J(Input_Parameters &Parameters, HF_Channels &HF_Chan, H
   std::cout << std::endl << "Interaction load Runtime = " << elapsed0 << " sec. " << std::endl;
 }
 
-void Get_Matrix_Elements_JM(Input_Parameters &Parameters, HF_Channels &HF_Chan, HF_Matrix_Elements &HF_ME, Model_Space &Space, Channels &Chan, Interactions &Ints)
+void Get_Matrix_Elements_JM(HF_Channels &HF_Chan, HF_Matrix_Elements &HF_ME, Channels &Chan, Interactions &Ints)
 {
   int J, ntb, length;
   for(int chan1 = 0; chan1 < HF_Chan.size1; ++chan1){
@@ -4018,32 +1490,32 @@ void Get_Matrix_Elements_JM(Input_Parameters &Parameters, HF_Channels &HF_Chan, 
 	TBME0 = HF_ME.V[HF_ME.Index[chan1] + (tb1_ind*ntb + tb2_ind)];
 
 	for(int M = -J; M <= J; M+=2){
-	  for(int p1 = 0; p1 < Space.shellsnum[p]; ++p1){
-	    pind = Space.shellsm[p][p1];
-	    pj = Space.shellsj[pind];
-	    pm = Space.qnums[pind].m;
-	    ptype = Space.qnums[pind].type;
-	    for(int q1 = 0; q1 < Space.shellsnum[q]; ++q1){
-	      qind = Space.shellsm[q][q1];
-	      qj = Space.shellsj[qind];
-	      qm = Space.qnums[qind].m;
-	      qtype = Space.qnums[qind].type;
+	  for(int p1 = 0; p1 < SPB.shellsnum[p]; ++p1){
+	    pind = SPB.shellsm[p][p1];
+	    pj = SPB.shellsj[pind];
+	    pm = SPB.qnums[pind].m;
+	    ptype = SPB.qnums[pind].type;
+	    for(int q1 = 0; q1 < SPB.shellsnum[q]; ++q1){
+	      qind = SPB.shellsm[q][q1];
+	      qj = SPB.shellsj[qind];
+	      qm = SPB.qnums[qind].m;
+	      qtype = SPB.qnums[qind].type;
 	      m1 = pm + qm;
-	      t1 = Space.qnums[pind].t + Space.qnums[qind].t;
+	      t1 = SPB.qnums[pind].t + SPB.qnums[qind].t;
 	      if(pind == qind){ continue; }
-	      for(int r1 = 0; r1 < Space.shellsnum[r]; ++r1){
-		rind = Space.shellsm[r][r1];
-		rj = Space.shellsj[rind];
-		rm = Space.qnums[rind].m;
-		rtype = Space.qnums[rind].type;
-		for(int s1 = 0; s1 < Space.shellsnum[s]; ++s1){
-		  sind = Space.shellsm[s][s1];
-		  sj = Space.shellsj[sind];
-		  sm = Space.qnums[sind].m;
-		  stype = Space.qnums[sind].type;
+	      for(int r1 = 0; r1 < SPB.shellsnum[r]; ++r1){
+		rind = SPB.shellsm[r][r1];
+		rj = SPB.shellsj[rind];
+		rm = SPB.qnums[rind].m;
+		rtype = SPB.qnums[rind].type;
+		for(int s1 = 0; s1 < SPB.shellsnum[s]; ++s1){
+		  sind = SPB.shellsm[s][s1];
+		  sj = SPB.shellsj[sind];
+		  sm = SPB.qnums[sind].m;
+		  stype = SPB.qnums[sind].type;
 
 		  m2 = rm + sm;
-		  t2 = Space.qnums[rind].t + Space.qnums[sind].t;
+		  t2 = SPB.qnums[rind].t + SPB.qnums[sind].t;
 		  if(rind == sind){ continue; }
 		  
 		  if(t1 != t2 || m1 != M || m2 != M){ continue; }
@@ -4053,90 +1525,90 @@ void Get_Matrix_Elements_JM(Input_Parameters &Parameters, HF_Channels &HF_Chan, 
 
 		  if(rtype == 1 && stype == 1){
 		    if(ptype == 1 && qtype == 1){
-		      plus(tb, Space.qnums[pind], Space.qnums[qind]);
-		      chan = Space.ind_2b_dir(Parameters.basis, tb);
-		      key1 = Chan.pp_map[chan][Space.hash2(pind, qind, 0)];
-		      key2 = Chan.pp_map[chan][Space.hash2(rind, sind, 0)];
+		      plus(tb, SPB.qnums[pind], SPB.qnums[qind]);
+		      chan = Ind_Chan1(tb);
+		      key1 = Chan.pp_map[chan][Hash(pind, qind, 0)];
+		      key2 = Chan.pp_map[chan][Hash(rind, sind, 0)];
 		      chan_ind = Ints.Vpppp.V_1_index[chan];
 		      ind = key1 * Chan.npp[chan] + key2;
 		      Ints.Vpppp.V_1[chan_ind + ind] += TBME;
 		      
-		      chan = Space.ind_1b(Parameters.basis, Space.qnums[rind]);
-		      key1 = Chan.ppp_map[chan][Space.hash3(pind, qind, sind, 0)];
+		      /*chan = Ind_Chan3(SPB.qnums[rind]);
+		      key1 = Chan.ppp_map[chan][Hash(pind, qind, sind, 0)];
 		      key2 = Chan.p_map[chan][rind];
 		      chan_ind = Ints.Vpppp.V_3_3_index[chan];
 		      ind = key1 * Chan.np[chan] + key2;
-		      Ints.Vpppp.V_3_3[chan_ind + ind] += TBME;
+		      Ints.Vpppp.V_3_3[chan_ind + ind] += TBME;*/
 		    }
 		    else if(ptype == 0 && qtype == 1){
-		      chan = Space.ind_1b(Parameters.basis, Space.qnums[qind]);
+		      chan = Ind_Chan3(SPB.qnums[qind]);
 		      key1 = Chan.p_map[chan][qind];
-		      key2 = Chan.pph_map[chan][Space.hash3(rind, sind, pind, 0)];
+		      key2 = Chan.pph_map[chan][Hash(rind, sind, pind, 0)];
 		      chan_ind = Ints.Vhppp.V_3_2_index[chan];
 		      ind = key1 * Chan.npph[chan] + key2;
 		      Ints.Vhppp.V_3_2[chan_ind + ind] += TBME;
 		      
-		      minus(tb, Space.qnums[qind], Space.qnums[sind]);
-		      chan = Space.ind_2b_cross(Parameters.basis, tb);
-		      key1 = Chan.pp1_map[chan][Space.hash2(qind, sind, 0)];
-		      key2 = Chan.ph1_map[chan][Space.hash2(rind, pind, 0)];
+		      minus(tb, SPB.qnums[qind], SPB.qnums[sind]);
+		      chan = Ind_Chan2(tb);
+		      key1 = Chan.pp1_map[chan][Hash(qind, sind, 0)];
+		      key2 = Chan.ph1_map[chan][Hash(rind, pind, 0)];
 		      chan_ind = Ints.Vhppp.V_2_4_index[chan];
 		      ind = key1 * Chan.nph1[chan] + key2;
 		      Ints.Vhppp.V_2_4[chan_ind + ind] += TBME;
 		      
 		      // Vpphp -> rspq
-		      chan = Space.ind_1b(Parameters.basis, Space.qnums[pind]);
-		      key1 = Chan.ppp_map[chan][Space.hash3(rind, sind, qind, 0)];
+		      chan = Ind_Chan3(SPB.qnums[pind]);
+		      key1 = Chan.ppp_map[chan][Hash(rind, sind, qind, 0)];
 		      key2 = Chan.h_map[chan][pind];
 		      chan_ind = Ints.Vpphp.V_3_3_index[chan];
 		      ind = key1 * Chan.nh[chan] + key2;
 		      Ints.Vpphp.V_3_3[chan_ind + ind] += TBME;
 		    }
 		    else if(ptype == 0 && qtype == 0){
-		      plus(tb, Space.qnums[pind], Space.qnums[qind]);
-		      chan = Space.ind_2b_dir(Parameters.basis, tb);
-		      key1 = Chan.hh_map[chan][Space.hash2(pind, qind, 0)];
-		      key2 = Chan.pp_map[chan][Space.hash2(rind, sind, 0)];
+		      plus(tb, SPB.qnums[pind], SPB.qnums[qind]);
+		      chan = Ind_Chan1(tb);
+		      key1 = Chan.hh_map[chan][Hash(pind, qind, 0)];
+		      key2 = Chan.pp_map[chan][Hash(rind, sind, 0)];
 		      chan_ind = Ints.Vhhpp.V_1_index[chan];
 		      ind = key1 * Chan.npp[chan] + key2;
 		      Ints.Vhhpp.V_1[chan_ind + ind] += TBME;
-		      chan_ind = Ints.Vpphh.V_1_index[chan];
+		      /*chan_ind = Ints.Vpphh.V_1_index[chan];
 		      ind = key2 * Chan.nhh[chan] + key1;
-		      Ints.Vpphh.V_1[chan_ind + ind] += TBME;
+		      Ints.Vpphh.V_1[chan_ind + ind] += TBME;*/
 
-		      chan = Space.ind_1b(Parameters.basis, Space.qnums[pind]);
+		      chan = Ind_Chan3(SPB.qnums[pind]);
 		      key1 = Chan.h_map[chan][pind];
-		      key2 = Chan.pph_map[chan][Space.hash3(rind, sind, qind, 0)];
+		      key2 = Chan.pph_map[chan][Hash(rind, sind, qind, 0)];
 		      chan_ind = Ints.Vhhpp.V_3_1_index[chan];
 		      ind = key1 * Chan.npph[chan] + key2;
 		      Ints.Vhhpp.V_3_1[chan_ind + ind] += TBME;
 	    
-		      chan = Space.ind_1b(Parameters.basis, Space.qnums[qind]);
+		      chan = Ind_Chan3(SPB.qnums[qind]);
 		      key1 = Chan.h_map[chan][qind];
-		      key2 = Chan.pph_map[chan][Space.hash3(rind, sind, pind, 0)];
+		      key2 = Chan.pph_map[chan][Hash(rind, sind, pind, 0)];
 		      chan_ind = Ints.Vhhpp.V_3_2_index[chan];
 		      ind = key1 * Chan.npph[chan] + key2;
 		      Ints.Vhhpp.V_3_2[chan_ind + ind] += TBME;
 		      
-		      chan = Space.ind_1b(Parameters.basis, Space.qnums[rind]);
-		      key1 = Chan.hhp_map[chan][Space.hash3(pind, qind, sind, 0)];
+		      chan = Ind_Chan3(SPB.qnums[rind]);
+		      key1 = Chan.hhp_map[chan][Hash(pind, qind, sind, 0)];
 		      key2 = Chan.p_map[chan][rind];
 		      chan_ind = Ints.Vhhpp.V_3_3_index[chan];
 		      ind = key1 * Chan.np[chan] + key2;
 		      Ints.Vhhpp.V_3_3[chan_ind + ind] += TBME;
 		      
-		      minus(tb, Space.qnums[pind], Space.qnums[sind]);
-		      chan = Space.ind_2b_cross(Parameters.basis, tb);
-		      key1 = Chan.hp1_map[chan][Space.hash2(pind, sind, 0)];
-		      key2 = Chan.ph1_map[chan][Space.hash2(rind, qind, 0)];
+		      minus(tb, SPB.qnums[pind], SPB.qnums[sind]);
+		      chan = Ind_Chan2(tb);
+		      key1 = Chan.hp1_map[chan][Hash(pind, sind, 0)];
+		      key2 = Chan.ph1_map[chan][Hash(rind, qind, 0)];
 		      chan_ind = Ints.Vhhpp.V_2_1_index[chan];
 		      ind = key1 * Chan.nph1[chan] + key2;
 		      Ints.Vhhpp.V_2_1[chan_ind + ind] += TBME;
 		      
-		      minus(tb, Space.qnums[pind], Space.qnums[rind]);
-		      chan = Space.ind_2b_cross(Parameters.basis, tb);
-		      key1 = Chan.hp1_map[chan][Space.hash2(pind, rind, 0)];
-		      key2 = Chan.ph1_map[chan][Space.hash2(sind, qind, 0)];
+		      minus(tb, SPB.qnums[pind], SPB.qnums[rind]);
+		      chan = Ind_Chan2(tb);
+		      key1 = Chan.hp1_map[chan][Hash(pind, rind, 0)];
+		      key2 = Chan.ph1_map[chan][Hash(sind, qind, 0)];
 		      chan_ind = Ints.Vhhpp.V_2_3_index[chan];
 		      ind = key1 * Chan.nph1[chan] + key2;
 		      Ints.Vhhpp.V_2_3[chan_ind + ind] += TBME;
@@ -4144,49 +1616,49 @@ void Get_Matrix_Elements_JM(Input_Parameters &Parameters, HF_Channels &HF_Chan, 
 		  }
 		  else if(rtype == 0 && stype == 1){
 		    if(ptype == 0 && qtype == 1){
-		      minus(tb, Space.qnums[pind], Space.qnums[sind]);
-		      chan = Space.ind_2b_cross(Parameters.basis, tb);
-		      key1 = Chan.hp1_map[chan][Space.hash2(pind, sind, 0)];
-		      key2 = Chan.hp1_map[chan][Space.hash2(rind, qind, 0)];
+		      minus(tb, SPB.qnums[pind], SPB.qnums[sind]);
+		      chan = Ind_Chan2(tb);
+		      key1 = Chan.hp1_map[chan][Hash(pind, sind, 0)];
+		      key2 = Chan.hp1_map[chan][Hash(rind, qind, 0)];
 		      chan_ind = Ints.Vhphp.V_2_1_index[chan];
 		      ind = key1 * Chan.nhp1[chan] + key2;
 		      Ints.Vhphp.V_2_1[chan_ind + ind] += TBME;
 		      
-		      minus(tb, Space.qnums[qind], Space.qnums[rind]);
-		      chan = Space.ind_2b_cross(Parameters.basis, tb);
-		      key1 = Chan.ph1_map[chan][Space.hash2(qind, rind, 0)];
-		      key2 = Chan.ph1_map[chan][Space.hash2(sind, pind, 0)];
+		      minus(tb, SPB.qnums[qind], SPB.qnums[rind]);
+		      chan = Ind_Chan2(tb);
+		      key1 = Chan.ph1_map[chan][Hash(qind, rind, 0)];
+		      key2 = Chan.ph1_map[chan][Hash(sind, pind, 0)];
 		      chan_ind = Ints.Vhphp.V_2_2_index[chan];
 		      ind = key1 * Chan.nph1[chan] + key2;
 		      Ints.Vhphp.V_2_2[chan_ind + ind] += TBME;
 		    }
 		    else if(ptype == 0 && qtype == 0){
-		      chan = Space.ind_1b(Parameters.basis, Space.qnums[qind]);
+		      chan = Ind_Chan3(SPB.qnums[qind]);
 		      key1 = Chan.h_map[chan][qind];
-		      key2 = Chan.hph_map[chan][Space.hash3(rind, sind, pind, 0)];
+		      key2 = Chan.hph_map[chan][Hash(rind, sind, pind, 0)];
 		      chan_ind = Ints.Vhhhp.V_3_2_index[chan];
 		      ind = key1 * Chan.nhph[chan] + key2;
 		      Ints.Vhhhp.V_3_2[chan_ind + ind] += TBME;
 
-		      chan = Space.ind_1b(Parameters.basis, Space.qnums[rind]);
-		      key1 = Chan.hhp_map[chan][Space.hash3(pind, qind, sind, 0)];
+		      chan = Ind_Chan3(SPB.qnums[rind]);
+		      key1 = Chan.hhp_map[chan][Hash(pind, qind, sind, 0)];
 		      key2 = Chan.h_map[chan][rind];
 		      chan_ind = Ints.Vhhhp.V_3_3_index[chan];
 		      ind = key1 * Chan.nh[chan] + key2;
 		      Ints.Vhhhp.V_3_3[chan_ind + ind] += TBME;
 		      
-		      minus(tb, Space.qnums[pind], Space.qnums[rind]);
-		      chan = Space.ind_2b_cross(Parameters.basis, tb);
-		      key1 = Chan.hh1_map[chan][Space.hash2(pind, rind, 0)];
-		      key2 = Chan.ph1_map[chan][Space.hash2(sind, qind, 0)];
+		      minus(tb, SPB.qnums[pind], SPB.qnums[rind]);
+		      chan = Ind_Chan2(tb);
+		      key1 = Chan.hh1_map[chan][Hash(pind, rind, 0)];
+		      key2 = Chan.ph1_map[chan][Hash(sind, qind, 0)];
 		      chan_ind = Ints.Vhhhp.V_2_3_index[chan];
 		      ind = key1 * Chan.nph1[chan] + key2;
 		      Ints.Vhhhp.V_2_3[chan_ind + ind] += TBME;
 
 		      // Vhphh -> rspq
-		      chan = Space.ind_1b(Parameters.basis, Space.qnums[sind]);
+		      chan = Ind_Chan3(SPB.qnums[sind]);
 		      key1 = Chan.p_map[chan][sind];
-		      key2 = Chan.hhh_map[chan][Space.hash3(pind, qind, rind, 0)];
+		      key2 = Chan.hhh_map[chan][Hash(pind, qind, rind, 0)];
 		      chan_ind = Ints.Vhphh.V_3_2_index[chan];
 		      ind = key1 * Chan.nhhh[chan] + key2;
 		      Ints.Vhphh.V_3_2[chan_ind + ind] += TBME;
@@ -4194,17 +1666,17 @@ void Get_Matrix_Elements_JM(Input_Parameters &Parameters, HF_Channels &HF_Chan, 
 		  }
 		  else if(rtype == 0 && stype == 0){
 		    if(ptype == 0 && qtype == 0){
-		      plus(tb, Space.qnums[pind], Space.qnums[qind]);
-		      chan = Space.ind_2b_dir(Parameters.basis, tb);
-		      key1 = Chan.hh_map[chan][Space.hash2(pind, qind, 0)];
-		      key2 = Chan.hh_map[chan][Space.hash2(rind, sind, 0)];
+		      plus(tb, SPB.qnums[pind], SPB.qnums[qind]);
+		      chan = Ind_Chan1(tb);
+		      key1 = Chan.hh_map[chan][Hash(pind, qind, 0)];
+		      key2 = Chan.hh_map[chan][Hash(rind, sind, 0)];
 		      chan_ind = Ints.Vhhhh.V_1_index[chan];
 		      ind = key1 * Chan.nhh[chan] + key2;
 		      Ints.Vhhhh.V_1[chan_ind + ind] += TBME;
 		      
-		      chan = Space.ind_1b(Parameters.basis, Space.qnums[qind]);
+		      chan = Ind_Chan3(SPB.qnums[qind]);
 		      key1 = Chan.h_map[chan][qind];
-		      key2 = Chan.hhh_map[chan][Space.hash3(rind, sind, pind, 0)];
+		      key2 = Chan.hhh_map[chan][Hash(rind, sind, pind, 0)];
 		      chan_ind = Ints.Vhhhh.V_3_2_index[chan];
 		      ind = key1 * Chan.nhhh[chan] + key2;
 		      Ints.Vhhhh.V_3_2[chan_ind + ind] += TBME;
@@ -4218,4 +1690,1024 @@ void Get_Matrix_Elements_JM(Input_Parameters &Parameters, HF_Channels &HF_Chan, 
       }
     }
   }
+}
+
+void Darmstadt_Setup(HF_Channels &HF_Chan, HF_Matrix_Elements &HF_ME)
+{
+  int eMax = 1000, nMax = 1000, lMax = 1000, EMax = 1000, hwHO = 1000;
+  std::string PATH0 = "/mnt/research/imsrg/nsuite/me/";
+  std::string fullpath = PATH0 + PAR.MatrixElements;
+  int stringlength = PAR.MatrixElements.length();
+  std::string substring, fileend, eMaxstring;
+  int filetype = 1; // type .gz
+  std::ifstream interaction;	// interaction file
+  std::string interactionline; // interaction file line
+  double scale;
+
+  for(int i = 0; i < stringlength-2; ++i){
+    if(i == stringlength-3){
+      substring = PAR.MatrixElements.substr(i,3);
+      fileend = substring; // bin or .gz
+      if( fileend == "bin" ){ filetype = 0; }
+      else if( fileend == ".gz" ){ filetype = 1; }
+    }
+    else{
+      substring = PAR.MatrixElements.substr(i,4);
+      if(substring == "eMax"){
+	i += 4;
+	eMax = std::stoi(PAR.MatrixElements.substr(i,2));
+	eMaxstring = PAR.MatrixElements.substr(i,2);
+	i += 1;
+      }
+      else if(substring == "lMax" || substring == "LMax"){
+	i += 4;
+	lMax = std::stoi(PAR.MatrixElements.substr(i,2));
+	i += 1;
+      }
+      else if(substring == "EMax"){
+	i += 4;
+	EMax = std::stoi(PAR.MatrixElements.substr(i,2));
+	i += 1;
+      }
+      else if(substring == "hwHO"){
+	i += 4;
+	hwHO = std::stoi(PAR.MatrixElements.substr(i,3));
+	i += 2;
+      }
+    }
+  }
+  SPB.eMax = eMax;
+  SPB.nMax = (eMax - eMax%2)/2;
+  SPB.EMax = (EMax < 2*eMax ? EMax : 2*eMax);
+  SPB.lMax = (lMax < eMax ? lMax : eMax);
+  PAR.ho_energy = double(hwHO);
+  PAR.ho_length = std::sqrt(2.0 * INVM / PAR.ho_energy); // 20.7355285386 = hbarc^2/(2 MN)  [MeV fm^2]
+  //double COM_ho_length = std::sqrt(2.0 * INVM / COM_hw);
+  std::cout << "eMax = " << SPB.eMax << ", EMax = " << SPB.EMax << ", nMax = " << SPB.nMax << ", lMax = " << SPB.lMax << ", hwHO = " << PAR.ho_energy << std::endl;
+  std::cout << "HO_hw = " << PAR.ho_energy << ", HO_a = " << PAR.ho_length << " !! " << INVM/(PAR.ho_length*PAR.ho_length) << std::endl;
+
+  //*************************//
+  //SPB.eMax = 2;
+
+  //*** determine nljMax, count states
+  int lMin, n, twojMin, twojMax;
+  SPB.nljMax = 0;
+  for(int e0 = 0; e0 <= SPB.eMax; e0++){
+    lMin = e0%2;
+    for(int l = lMin; l <= std::min(e0,lMax); l += 2){
+      n = (e0-l)/2;
+      if(n>nMax) continue;
+      twojMin = std::abs(2*l - 1);
+      twojMax = 2*l + 1;
+      for(int twoj = twojMin; twoj <= twojMax; twoj += 2){
+	//*** n, l and j determine nlj
+	SPB.nljMax++;
+      }
+    }
+  }
+  //*** allocate lookups
+  SPB.nljDim = SPB.nljMax;
+  SPB.e_nlj = new int[SPB.nljDim];
+  SPB.n_nlj = new int[SPB.nljDim];
+  SPB.l_nlj = new int[SPB.nljDim];
+  SPB.twoj_nlj = new int[SPB.nljDim];
+
+  SPB.Build_Darmstadt();
+  Print_Parameters();
+  HF_Chan.Build();
+  HF_ME.Build(HF_Chan);
+
+  // Count ME combinations
+  int JMin, JMax, MEcount = 0;
+  //*** bra loops
+  for(int nlj1 = 0; nlj1 < SPB.nljMax; nlj1++){
+    for(int nlj2 = 0; nlj2 <= nlj1; nlj2++){ // nlj1 >= nlj2
+      if(SPB.e_nlj[nlj1] + SPB.e_nlj[nlj2] > EMax){ break; } // e1+e2 <= EMax
+      //*** ket loops
+      for(int nnlj1 = 0; nnlj1 <= nlj1; nnlj1++){ // nlj1*nljDim + nlj2 >= nnlj1*nljDim + nnlj2
+        for(int nnlj2 = 0; nnlj2 <= (nnlj1 == nlj1 ? nlj2 : nnlj1); nnlj2++){ // nnlj1 >= nnlj2 and nlj1*nljDim + nlj2 >= nnlj1*nljDim + nnlj2
+	  if( SPB.e_nlj[nnlj1] + SPB.e_nlj[nnlj2] > SPB.EMax){ break; } // ee1+ee2 <= EMax
+	  if( (SPB.l_nlj[nlj1] + SPB.l_nlj[nlj2] - SPB.l_nlj[nnlj1] - SPB.l_nlj[nnlj2])%2 ){ continue; } // parity conservation
+	  // triangular condition
+	  JMin = std::max( std::abs(SPB.twoj_nlj[nlj1] - SPB.twoj_nlj[nlj2]), std::abs(SPB.twoj_nlj[nnlj1] - SPB.twoj_nlj[nnlj2]) );
+          JMax = std::min( (SPB.twoj_nlj[nlj1] + SPB.twoj_nlj[nlj2]), (SPB.twoj_nlj[nnlj1] + SPB.twoj_nlj[nnlj2]) );
+          if(JMin > JMax){ continue; }
+          //*** diagonal loops
+	  for(int J = JMin; J <= JMax; J += 2){
+	    for(int T = 0; T <= 2; T += 2){
+              for(int MT = -T; MT <= T; MT += 2){
+		MEcount++; // counter
+	      }
+	    }
+          }
+        }
+      }
+    }
+  }
+  double *ME0 = new double[MEcount];
+  scale = 1.0;
+  //scale = 0.0;
+  Darmstadt_Read(fullpath, ME0, MEcount, filetype);
+  Darmstadt_Fill(HF_Chan, HF_ME, ME0, scale);
+
+  std::string fullpath_com1;
+  std::string fullpath_com2;
+  // pi.pj CoM Correction for intrinsic Hamiltonian
+  fullpath_com1 = PATH0 + "tpp_eMax" + eMaxstring + ".me2j.gz";
+  scale = 2.0 / (PAR.A * PAR.ho_length * PAR.ho_length);
+  //scale = 0.0;
+  Darmstadt_Read(fullpath_com1, ME0, MEcount, 1);
+  Darmstadt_Fill(HF_Chan, HF_ME, ME0, scale);
+
+  /////////////////////////////////////////////
+  /*HF_Matrix_Elements HF_ME2;
+  HF_ME2.Build(HF_Chan);
+  std::string fullpath_heiko = "sam_com/ho_reference/He4_hcm_eMax06_hwHO020.ham0.me2b.gz";
+  scale = 1.0;
+  Darmstadt_Read(fullpath_heiko, ME0, MEcount, 1);
+  Darmstadt_Fill(HF_Chan, HF_ME2, ME0, scale);*/
+  ////////////////////////////////////////////
+
+  // pi.pj and ri.rj for CoM Hamiltonian
+  if(PAR.CoM == 2){
+    fullpath_com1 = PATH0 + "tpp_eMax" + eMaxstring + ".me2j.gz";
+    fullpath_com2 = PATH0 + "r1r2_eMax" + eMaxstring + ".me2j.gz";
+    scale = -2.0 * PAR.CoM_fac / (PAR.A * PAR.ho_length * PAR.ho_length);
+    Darmstadt_Read(fullpath_com1, ME0, MEcount, 1);
+    Darmstadt_Fill(HF_Chan, HF_ME, ME0, scale);
+    scale = PAR.CoM_fac * PAR.ho_energy / PAR.A;
+    Darmstadt_Read(fullpath_com2, ME0, MEcount, 1);
+    Darmstadt_Fill(HF_Chan, HF_ME, ME0, scale);
+  }
+
+  /*for(int chan1 = 0; chan1 < HF_Chan.size1; ++chan1){
+    for(int ind1 = 0; ind1 < HF_Chan.ntb[chan1]; ++ind1){
+      for(int ind2 = ind1; ind2 < HF_Chan.ntb[chan1]; ++ind2){
+	if( std::fabs(HF_ME.V[HF_ME.Index[chan1] + (ind1*HF_Chan.ntb[chan1] + ind2)]) > 1.0e-6 ){
+	  std::cout << "!!  " << HF_ME.V[HF_ME.Index[chan1] + (ind1*HF_Chan.ntb[chan1] + ind2)] << std::endl;
+	}
+      }
+    }
+  }
+  exit(1);*/
+
+  delete[] ME0;
+}
+
+void Darmstadt_Read(std::string filepath, double *ME0, int count, int type)
+{
+  int ME2J_HEADERSIZE = 255;
+  int BUFSIZE = ME2J_HEADERSIZE*sizeof(char);
+  gzFile gzfd;
+  FILE *fd;
+  char buf[BUFSIZE], *d;
+
+  if( type == 0 ){
+    // open file
+    fd = fopen(filepath.c_str(), "rb");
+    if( fd == NULL ){ std::cerr << "Matrix Element file, " << filepath << ", does not exist" << std::endl; exit(1); }
+    // read and check header
+    fread(buf, sizeof(char), ME2J_HEADERSIZE, fd);
+    if( std::strstr(buf,"me2j-f2-bin") == NULL ){ std::cerr << "Matrix Element file, " << filepath << " is wrong format" << std::endl; exit(1); }
+    // read data
+    fread(ME0, sizeof(double), count, fd);
+    // close file
+    fclose(fd);
+  }
+  else if( type == 1 ){
+    // open file
+    gzfd = gzopen(filepath.c_str(), "r");
+    if( !gzfd ){ std::cerr << "Matrix Element file, " << filepath << ", does not exist" << std::endl; exit(1); }
+    // read and check format identifier
+    gzgets(gzfd, buf, BUFSIZE);
+    if( std::strstr(buf,"me2j-f2") == NULL ){ std::cerr << "Matrix Element file, " << filepath << " is wrong format" << std::endl; exit(1); }
+    // read matrix elements
+    for(int i = 0; i < count; i += 10){
+      gzgets(gzfd, buf, BUFSIZE);
+      d = std::strtok(buf, " ");
+      ME0[i] = std::atof(d);
+
+      for(int i0 = i+1; i0 < std::min(i+10, count); ++i0){
+	d = std::strtok(NULL, " ");
+	ME0[i0] = std::atof(d);
+      }
+    }
+    // close file
+    gzclose(gzfd);
+  }
+  else{ std::cerr << "Wrong Darmstadt Matrix Element type" << std::endl; exit(1); }
+}
+
+void Darmstadt_Fill(HF_Channels &HF_Chan, HF_Matrix_Elements &HF_ME, double *ME0, double factor)
+{
+  State statep, stateq, stater, states, tb;
+  int p, q, r, s, key1, key2, key3, key4, key, ind, chan1, JMin, JMax;
+  double TBME;
+  int count = 0;
+  //*** bra loops
+  for(int nlj1 = 0; nlj1 < SPB.nljMax; nlj1++){
+    statep.n = SPB.n_nlj[nlj1];
+    statep.l = SPB.l_nlj[nlj1];
+    statep.par = -2*(SPB.l_nlj[nlj1]%2) + 1;
+    statep.j = SPB.twoj_nlj[nlj1];
+    for(int nlj2 = 0; nlj2 <= nlj1; nlj2++){ // nlj1 >= nlj2
+      stateq.n = SPB.n_nlj[nlj2];
+      stateq.l = SPB.l_nlj[nlj2];
+      stateq.par = -2*(SPB.l_nlj[nlj2]%2) + 1;
+      stateq.j = SPB.twoj_nlj[nlj2];
+      if(SPB.e_nlj[nlj1] + SPB.e_nlj[nlj2] > SPB.EMax){ break; } // e1+e2 <= EMax
+      //*** ket loops
+      for(int nnlj1 = 0; nnlj1 <= nlj1; nnlj1++){ // nlj1*nljDim + nlj2 >= nnlj1*nljDim + nnlj2
+	stater.n = SPB.n_nlj[nnlj1];
+	stater.l = SPB.l_nlj[nnlj1];
+	stater.par = -2*(SPB.l_nlj[nnlj1]%2) + 1;
+	stater.j = SPB.twoj_nlj[nnlj1];
+	for(int nnlj2 = 0; nnlj2 <= (nnlj1 == nlj1 ? nlj2 : nnlj1); nnlj2++){ // nnlj1 >= nnlj2 and nlj1*nljDim + nlj2 >= nnlj1*nljDim + nnlj2
+	  states.n = SPB.n_nlj[nnlj2];
+	  states.l = SPB.l_nlj[nnlj2];
+	  states.par = -2*(SPB.l_nlj[nnlj2]%2) + 1;
+	  states.j = SPB.twoj_nlj[nnlj2];
+	  if( SPB.e_nlj[nnlj1] + SPB.e_nlj[nnlj2] > SPB.EMax ){ break; } // ee1+ee2 <= EMax
+	  if( (SPB.l_nlj[nlj1] + SPB.l_nlj[nlj2] - SPB.l_nlj[nnlj1] - SPB.l_nlj[nnlj2])%2 ){ continue; } // parity conservation
+	  // triangular condition
+	  JMin = std::max( std::abs(SPB.twoj_nlj[nlj1] - SPB.twoj_nlj[nlj2]), std::abs(SPB.twoj_nlj[nnlj1] - SPB.twoj_nlj[nnlj2]) );
+	  JMax = std::min( SPB.twoj_nlj[nlj1] + SPB.twoj_nlj[nlj2], SPB.twoj_nlj[nnlj1] + SPB.twoj_nlj[nnlj2] );
+	  if(JMin > JMax){ continue; }
+	  //*** diagonal loops
+	  for(int J = JMin; J <= JMax; J += 2){
+	    for(int T = 0; T <= 2; T += 2){
+	      for(int MT = -T; MT <= T; MT += 2){
+		/*if(std::fabs(ME0[count]) > 1e-10){
+		  std::cout << "T = " << T << "(" << MT << "), J = " << J << " : < " << nlj1 << " " << nlj2 << " | " << nnlj1 << " " << nnlj2 << " > = " << ME0[count] << std::endl;
+ 		  }*/
+ 		for(statep.t = -1; statep.t <= 1; statep.t += 2){
+		  key = Ind_State(statep);
+		  p = SPB.map_state[key];
+		  stateq.t = -MT - statep.t; // Darmstadt uses t(p) = 1 and t(n) = -1
+ 		  if( std::abs(stateq.t) > 1 ){ continue; }
+		  key = Ind_State(stateq);
+		  q = SPB.map_state[key];
+ 		  if(p == q && J%4 != 0){ continue; }
+		  for(stater.t = -1; stater.t <= 1; stater.t += 2){
+		    key = Ind_State(stater);
+		    r = SPB.map_state[key];
+		    states.t = -MT - stater.t; // Darmstadt uses t(p) = 1 and t(n) = -1
+		    if( std::abs(states.t) > 1 ){ continue; }
+		    key = Ind_State(states);
+		    s = SPB.map_state[key];
+		    if(r == s && J%4 != 0){ continue; }
+		    
+		    TBME = PAR.tbstrength * factor * ME0[count] * CGC(1, statep.t, 1, stateq.t, T, -MT) * CGC(1, stater.t, 1, states.t, T, -MT);
+		    /*if(std::fabs(TBME) > 1e-10){
+		      std::cout << "T = " << T << "(" << MT << "), J = " << J << " : < " << p << " " << q << " | " << r << " " << s << " > = ";
+		      std::cout << TBME << "   " << CGC(1, statep.t, 1, stateq.t, T, MT) << " " << CGC(1, stater.t, 1, states.t, T, MT) << std::endl;
+		      }*/
+
+		    plus(tb, SPB.qnums[p], SPB.qnums[q]);
+		    tb.j = J;
+		    chan1 = Ind_Chan1(tb);
+		    key1 = HF_Chan.tb_map[chan1][Hash(p, q, tb.j)];
+		    key2 = HF_Chan.tb_map[chan1][Hash(r, s, tb.j)];
+		    key3 = HF_Chan.tb_map[chan1][Hash(q, p, tb.j)];
+		    key4 = HF_Chan.tb_map[chan1][Hash(s, r, tb.j)];
+		    
+		    ind = HF_ME.Index[chan1] + (key1 * HF_Chan.ntb[chan1] + key2);
+		    HF_ME.V[ind] += TBME;
+		    if( nlj1 != nlj2 ){
+		      ind = HF_ME.Index[chan1] + (key3 * HF_Chan.ntb[chan1] + key2);
+		      HF_ME.V[ind] += -1.0 * phase2(SPB.twoj_nlj[nlj1] + SPB.twoj_nlj[nlj2] - J) * TBME;
+		    }
+		    if( nnlj1 != nnlj2 ){
+		      ind = HF_ME.Index[chan1] + (key1 * HF_Chan.ntb[chan1] + key4);
+		      HF_ME.V[ind] += -1.0 * phase2(SPB.twoj_nlj[nnlj1] + SPB.twoj_nlj[nnlj2] - J) * TBME;
+		    }
+		    if( nlj1 != nlj2 && nnlj1 != nnlj2 ){
+		      ind = HF_ME.Index[chan1] + (key3 * HF_Chan.ntb[chan1] + key4);
+		      HF_ME.V[ind] += phase2(SPB.twoj_nlj[nlj1] + SPB.twoj_nlj[nlj2] + SPB.twoj_nlj[nnlj1] + SPB.twoj_nlj[nnlj2]) * TBME;
+		    }
+ 		    if( nlj1 != nnlj1 || nlj2 != nnlj2 ){
+		      ind = HF_ME.Index[chan1] + (key2 * HF_Chan.ntb[chan1] + key1);
+		      HF_ME.V[ind] += TBME;
+		      if( nnlj1 != nnlj2 ){
+ 			ind = HF_ME.Index[chan1] + (key4 * HF_Chan.ntb[chan1] + key1);
+			HF_ME.V[ind] += -1.0 * phase2(SPB.twoj_nlj[nnlj1] + SPB.twoj_nlj[nnlj2] - J) * TBME;
+		      }
+		      if( nlj1 != nlj2 ){
+ 			ind = HF_ME.Index[chan1] + (key2 * HF_Chan.ntb[chan1] + key3);
+			HF_ME.V[ind] += -1.0 * phase2(SPB.twoj_nlj[nlj1] + SPB.twoj_nlj[nlj2] - J) * TBME;
+		      }
+		      if( nlj1 != nlj2 && nnlj1 != nnlj2 ){
+ 			ind = HF_ME.Index[chan1] + (key4 * HF_Chan.ntb[chan1] + key3);
+			HF_ME.V[ind] += phase2(SPB.twoj_nlj[nlj1] + SPB.twoj_nlj[nlj2] + SPB.twoj_nlj[nnlj1] + SPB.twoj_nlj[nnlj2]) * TBME;
+		      }
+		    }
+		  }
+ 		}
+		// counter
+		count++;
+	      }
+	    }
+	  }	  
+	}
+      }
+    }
+  }
+}
+
+// one-body kinetic energy = p^2/2m
+double Kinetic_Energy(int p, int q)
+{
+  double obcm;
+  if( PAR.CoM > 0 ){ obcm = 1.0 - (1.0/PAR.A); }
+  else{ obcm = 1.0; }
+
+  int n1 = SPB.qnums[p].n;
+  int n2 = SPB.qnums[q].n;
+  //std::cout << "??  " << n1 << " " << n2 << " " << SPB.qnums[p].l << " " << SPB.qnums[q].l << " " << PAR.ho_energy << std::endl;
+  if( SPB.qnums[p].l != SPB.qnums[q].l || SPB.qnums[p].j != SPB.qnums[q].j || SPB.qnums[p].t != SPB.qnums[q].t ){ return 0.0; }
+  if(n1 == n2){ return obcm * 0.5 * PAR.ho_energy * (2*n1 + SPB.qnums[p].l + 1.5); }
+  if(n1 == n2-1){ return obcm * 0.5 * PAR.ho_energy * std::sqrt((n1 + 1)*(n1 + SPB.qnums[p].l + 1.5)); }
+  if(n1 == n2+1){ return obcm * 0.5 * PAR.ho_energy * std::sqrt((n2 + 1)*(n2 + SPB.qnums[p].l + 1.5)); }
+  else{ return 0.0; }
+}
+
+// one-body part of CoM Hamiltonian = p^2/2mA + mw^2r^2/2A
+double Hcom_1_Body(int p, int q, double hwBar)
+{
+  // we get a^2 from the r^2 m.e.:
+  // 0.5 *m*wBar^2 * a^2 = 0.5 * m * wBar^2 * hbar^2/(m * hw) = 0.5 * hwBar^2/hw
+  int n1 = SPB.qnums[p].n;
+  int n2 = SPB.qnums[q].n;
+  //std::cout << "??  " << n1 << " " << n2 << " " << SPB.qnums[p].l << " " << SPB.qnums[q].l << " " << PAR.ho_energy << " " << hwBar << " " << PAR.A << " " << PAR.CoM_fac << std::endl;
+  if( SPB.qnums[p].l != SPB.qnums[q].l || SPB.qnums[p].j != SPB.qnums[q].j || SPB.qnums[p].t != SPB.qnums[q].t ){ return 0.0; }
+  if(n1 == n2){ return PAR.CoM_fac * 0.5 * (PAR.ho_energy + hwBar*hwBar/PAR.ho_energy)/PAR.A * (2*n1 + SPB.qnums[p].l + 1.5); }
+  if(n1 == n2-1){ return PAR.CoM_fac * 0.5 * (PAR.ho_energy - hwBar*hwBar/PAR.ho_energy)/PAR.A * std::sqrt((n1 + 1)*(n1 + SPB.qnums[p].l + 1.5)); }
+  if(n1 == n2+1){ return PAR.CoM_fac * 0.5 * (PAR.ho_energy - hwBar*hwBar/PAR.ho_energy)/PAR.A * std::sqrt((n2 + 1)*(n2 + SPB.qnums[p].l + 1.5)); }
+  else{ return 0.0; }
+}
+
+void Darmstadt3_Setup(HF_Channels &HF_Chan, HF_Matrix_Elements &HF_ME)
+{
+  int eMax = 1000, nMax = 1000, lMax = 1000, EMax = 1000, hwHO = 1000;
+  std::string PATH0 = "/mnt/research/imsrg/nsuite/me/";
+  std::string fullpath = PATH0 + PAR.MatrixElements3;
+  int stringlength = PAR.MatrixElements3.length();
+  std::string substring, fileend, eMaxstring;
+  int filetype = 1; // type .gz
+  std::ifstream interaction;	// interaction file
+  std::string interactionline; // interaction file line
+  
+  for(int i = 0; i < stringlength-2; ++i){
+    if(i == stringlength-3){
+      substring = PAR.MatrixElements3.substr(i,3);
+      fileend = substring; // bin or .gz
+      if( fileend == "bin" ){ filetype = 0; }
+      else if( fileend == ".gz" ){ filetype = 1; }
+    }
+    else{
+      substring = PAR.MatrixElements3.substr(i,4);
+      if(substring == "eMax"){
+	i += 4;
+ 	eMax = std::stoi(PAR.MatrixElements3.substr(i,2));
+ 	eMaxstring = PAR.MatrixElements3.substr(i,2);
+ 	i += 1;
+      }
+      else if(substring == "lMax" || substring == "LMax"){
+	i += 4;
+ 	lMax = std::stoi(PAR.MatrixElements3.substr(i,2));
+ 	i += 1;
+      }
+      else if(substring == "EMax"){
+	i += 4;
+	EMax = std::stoi(PAR.MatrixElements3.substr(i,2));
+	i += 1;
+      }
+      else if(substring == "nMax"){
+	i += 4;
+	nMax = std::stoi(PAR.MatrixElements3.substr(i,2));
+	i += 1;
+      }
+      else if(substring == "hwHO"){
+	i += 4;
+	hwHO = std::stoi(PAR.MatrixElements3.substr(i,3));
+	i += 2;
+      }
+    }
+  }
+  SPB.e3Max = eMax;
+  SPB.n3Max = ((eMax - eMax%2)/2 < nMax ? (eMax - eMax%2)/2 : nMax);
+  SPB.E3Max = (EMax < 3*eMax ? EMax : 3*eMax);
+  SPB.l3Max = (lMax < eMax ? lMax : eMax);
+  if( double(hwHO) != PAR.ho_energy ){ std::cerr << "ME-3N HO hw doesn't match, " << double(hwHO) << ", " << PAR.ho_energy << std::endl; exit(1); }
+
+  std::cout << "eMax3 = " << SPB.e3Max << ", EMax3 = " << SPB.E3Max << ", nMax3 = " << SPB.n3Max << ", lMax3 = " << SPB.l3Max << ", hwHO3 = " << PAR.ho_energy << std::endl;
+  std::cout << "HO_hw3 = " << PAR.ho_energy << ", HO_a3 = " << PAR.ho_length << " !! " << INVM/(PAR.ho_length*PAR.ho_length) << std::endl;
+
+  //*** determine nljMax, count states
+  int lMin, n, twojMin, twojMax;
+  SPB.nljMax3 = 0;
+  for(int e0 = 0; e0 <= SPB.e3Max; e0++){
+    lMin = e0%2;
+    for(int l = lMin; l <= std::min(e0,SPB.l3Max); l += 2){
+      n = (e0-l)/2;
+      if(n > SPB.n3Max){ continue; }
+      twojMin = std::abs(2*l - 1);
+      twojMax = 2*l + 1;
+      for(int twoj = twojMin; twoj <= twojMax; twoj += 2){
+	//*** n, l and j determine nlj
+	SPB.nljMax3++;
+      }
+    }
+  }
+  //*** allocate lookups
+  SPB.nljDim3 = SPB.nljMax3;
+  SPB.e_nlj3 = new int[SPB.nljDim3];
+  SPB.n_nlj3 = new int[SPB.nljDim3];
+  SPB.l_nlj3 = new int[SPB.nljDim3];
+  SPB.twoj_nlj3 = new int[SPB.nljDim3];
+
+  //*** construct nlj index ******************************************
+  int nlj = 0, ind = 0;
+  for(int e0 = 0; e0 <= SPB.e3Max; e0++){
+    lMin = e0%2;
+    for(int l = lMin; l <= std::min(e0,SPB.l3Max); l += 2){
+      n = (e0 - l)/2;
+      if(n > SPB.n3Max){ continue; }
+      twojMin = std::abs(2*l - 1);
+      twojMax = 2*l + 1;
+      for(int twoj = twojMin; twoj <= twojMax; twoj += 2){
+        //*** n, l and j determine nlj
+        SPB.e_nlj3[nlj]     = e0;
+        SPB.n_nlj3[nlj]     = n;
+        SPB.l_nlj3[nlj]     = l;
+        SPB.twoj_nlj3[nlj]  = twoj;
+	++nlj;
+      }
+    }
+  }
+
+  // reconcile existent basis from 2BME with 3BME
+  // -- qnums.nlj3[ind] = -1 if 2B basis contained within 3B basis
+  ind = 0;
+  nlj = 0;
+  for(int e0 = 0; e0 <= SPB.eMax; e0++){
+    lMin = e0%2;
+    for(int l = lMin; l <= std::min(e0,SPB.lMax); l += 2){
+      n = (e0 - l)/2;
+      if(n > SPB.nMax){ continue; }
+      twojMin = std::abs(2*l - 1);
+      twojMax = 2*l + 1;
+      for(int twoj = twojMin; twoj <= twojMax; twoj += 2){
+	for(int t = -1; t <= 1; t += 2){
+	  if( e0 > SPB.e3Max || l > SPB.l3Max || n > SPB.n3Max ){ SPB.qnums[ind].nlj3 = -1; }
+	  else{ SPB.qnums[ind].nlj3 = nlj; }
+	  ++ind;
+	}
+	++nlj;
+      }
+    }
+  }
+
+  /*std::cout << "Basis Set..." << std::endl;
+  for(int ind = 0; ind < SPB.num_states; ++ind){
+    std::cout << ind << ": " << SPB.qnums[ind].nlj << ", " << SPB.qnums[ind].nlj3 << std::endl;
+  }
+  std::cout << std::endl;*/
+
+  int 	nlj1, nlj2, nlj3, nnlj1, nnlj2, nnlj3, nnlj3Max;
+  int 	nlj1count, nlj2count, nlj3count, nnlj1count, nnlj2count, nnlj3count;
+  int 	Jab2, JabMin2, JabMax2, JJab2, JJabMin2, JJabMax2, twoJC, twoJCMin, twoJCMax;
+  long long	MEcount, Dim;
+
+  Dim = 0;
+  nlj1count = 0;
+  for(nlj1 = 0; nlj1 < SPB.nljMax3; nlj1++){
+    if( SPB.e_nlj3[nlj1] > SPB.E3Max){ break; }
+    nlj1count++;
+  }
+  Dim += nlj1count;
+
+  //std::cout << "## nlj1count = " << nlj1count << std::endl;
+  if(nlj1count != 0){ HF_ME.ME3Idx = new long long*****[nlj1count]; }
+  if(HF_ME.ME3Idx == NULL){ std::cerr << "ME3Idx could not be allocated..." << std::endl; exit(1); }
+
+  for(nlj1 = 0; nlj1 < SPB.nljMax3; nlj1++){
+    if( SPB.e_nlj3[nlj1] > SPB.E3Max){ break; }
+    nlj2count = 0;
+    for(nlj2 = 0; nlj2 <= nlj1; nlj2++){
+      if( SPB.e_nlj3[nlj1] + SPB.e_nlj3[nlj2] > SPB.E3Max){ break; }
+      nlj2count++;
+    }
+    Dim += nlj2count;
+
+    //std::cout << "## nlj2count = " << nlj2count << std::endl;
+    if(nlj2count != 0){ HF_ME.ME3Idx[nlj1] = new long long****[nlj2count]; }
+    if(HF_ME.ME3Idx[nlj1] == NULL){ std::cerr << "ME3Idx[nlj1] could not be allocated..." << std::endl; exit(1); }
+
+    for(nlj2 = 0; nlj2 <= nlj1; nlj2++){
+      if( SPB.e_nlj3[nlj1] + SPB.e_nlj3[nlj2] > SPB.E3Max){ break; }
+      nlj3count = 0;
+      for(nlj3 = 0; nlj3 <= nlj2; nlj3++){
+        if( SPB.e_nlj3[nlj1] + SPB.e_nlj3[nlj2] + SPB.e_nlj3[nlj3] > SPB.E3Max){ break; }
+        nlj3count++;
+      }
+      Dim += nlj3count;
+
+      //std::cout << "### nlj3count = " << nlj3count << std::endl;
+      if(nlj3count != 0){ HF_ME.ME3Idx[nlj1][nlj2] = new long long***[nlj3count]; }
+      if(HF_ME.ME3Idx[nlj1][nlj2] == NULL){ std::cerr << "ME3Idx[nlj1][nlj2] could not be allocated..." << std::endl; exit(1); }
+
+      for(nlj3 = 0; nlj3 <= nlj2; nlj3++){
+        if( SPB.e_nlj3[nlj1] + SPB.e_nlj3[nlj2] + SPB.e_nlj3[nlj3] > SPB.E3Max){ break; }
+        nnlj1count = 0;
+        for(nnlj1 = 0; nnlj1 <= nlj1; nnlj1++){
+          if( SPB.e_nlj3[nnlj1] > SPB.E3Max){ break; } // could be neglected
+          nnlj1count++;
+        }
+        Dim += nnlj1count;
+
+	//std::cout << "###@ nnlj1count = " << nnlj1count << std::endl;
+	if(nnlj1count != 0){ HF_ME.ME3Idx[nlj1][nlj2][nlj3] = new long long**[nnlj1count]; }
+	if(HF_ME.ME3Idx[nlj1][nlj2][nlj3] == NULL){ std::cerr << "ME3Idx[nlj1][nlj2][nlj3] could not be allocated..." << std::endl; exit(1); }
+
+        for(nnlj1 = 0; nnlj1 <= nlj1; nnlj1++){
+          if( SPB.e_nlj3[nnlj1] > SPB.E3Max){ break; } // could be neglected
+          nnlj2count = 0;
+          for(nnlj2 = 0; nnlj2 <= ((nlj1==nnlj1) ? nlj2 : nnlj1); nnlj2++){
+            if( SPB.e_nlj3[nnlj1] + SPB.e_nlj3[nnlj2] > SPB.E3Max ){ break; }
+            nnlj2count++;
+          }
+          Dim += nnlj2count;
+
+	  //std::cout << "###@@ nnlj2count = " << nnlj2count << std::endl;
+	  if(nnlj2count != 0){ HF_ME.ME3Idx[nlj1][nlj2][nlj3][nnlj1] = new long long*[nnlj2count]; }
+	  if(HF_ME.ME3Idx[nlj1][nlj2][nlj3][nnlj1] == NULL){ std::cerr << "ME3Idx[nlj1][nlj2][nlj3][nnlj1] could not be allocated..." << std::endl; exit(1); }
+
+          for(nnlj2 = 0; nnlj2 <= ((nlj1==nnlj1) ? nlj2 : nnlj1); nnlj2++){
+            if( SPB.e_nlj3[nnlj1] + SPB.e_nlj3[nnlj2] > SPB.E3Max){ break; }
+            nnlj3count = 0;
+            if( nlj1 == nnlj1 && nlj2 == nnlj2 ){ nnlj3Max = nlj3; }
+	    else{ nnlj3Max = nnlj2; }
+            for(nnlj3 = 0; nnlj3 <= nnlj3Max; nnlj3++) {
+              if( SPB.e_nlj3[nnlj1] + SPB.e_nlj3[nnlj2] + SPB.e_nlj3[nnlj3] > SPB.E3Max ){ break; }
+              nnlj3count++;
+            }
+            Dim += nnlj3count;
+
+	    //std::cout << "###@@@ nnlj3count = " << nnlj3count << std::endl;
+	    if(nnlj3count != 0){ HF_ME.ME3Idx[nlj1][nlj2][nlj3][nnlj1][nnlj2] = new long long[nnlj3count]; }
+	    if(HF_ME.ME3Idx[nlj1][nlj2][nlj3][nnlj1][nnlj2] == NULL){ std::cerr << "ME3Idx[nlj1][nlj2][nlj3][nnlj1][nnlj2] could not be allocated..." << std::endl; exit(1); }
+
+          }//nnlj2
+        }//nnlj1
+      }//nlj3
+    }//nlj2
+  }//nlj1
+
+  std::cout << "!!! Dim = " << Dim << std::endl;
+
+  MEcount = 0;
+  for(nlj1 = 0; nlj1 < SPB.nljMax3; nlj1++){
+    if( SPB.e_nlj3[nlj1] > SPB.E3Max ){ break; }
+    for(nlj2 = 0; nlj2 <= nlj1; nlj2++){
+      if( SPB.e_nlj3[nlj1] + SPB.e_nlj3[nlj2] > SPB.E3Max){ break; }
+      for(nlj3 = 0; nlj3 <= nlj2; nlj3++){
+        if( SPB.e_nlj3[nlj1] + SPB.e_nlj3[nlj2] + SPB.e_nlj3[nlj3] > SPB.E3Max){ break; }
+        for(nnlj1 = 0; nnlj1 <= nlj1; nnlj1++){
+          if( SPB.e_nlj3[nnlj1] > SPB.E3Max){ break; }
+          for(nnlj2 = 0; nnlj2 <= ((nlj1==nnlj1) ? nlj2 : nnlj1); nnlj2++){
+            if( SPB.e_nlj3[nnlj1] + SPB.e_nlj3[nnlj2] > SPB.E3Max){ break; }
+            if( nlj1 == nnlj1 && nlj2 == nnlj2 ){ nnlj3Max = nlj3; }
+	    else{ nnlj3Max = nnlj2; }
+            for(nnlj3 = 0; nnlj3 <= nnlj3Max; nnlj3++){
+              if( SPB.e_nlj3[nnlj1] + SPB.e_nlj3[nnlj2] + SPB.e_nlj3[nnlj3] > SPB.E3Max){ break; }
+
+              // set index to unphysical
+              HF_ME.ME3Idx[nlj1][nlj2][nlj3][nnlj1][nnlj2][nnlj3] = -1;
+              // check parity
+              if( (SPB.l_nlj3[nlj1] + SPB.l_nlj3[nlj2] + SPB.l_nlj3[nlj3] - SPB.l_nlj3[nnlj1] - SPB.l_nlj3[nnlj2] - SPB.l_nlj3[nnlj3])%2){ continue; }
+              // summation bounds
+              JabMax2  = (SPB.twoj_nlj3[nlj1] + SPB.twoj_nlj3[nlj2]);
+              JabMin2  = std::abs(SPB.twoj_nlj3[nlj1] - SPB.twoj_nlj3[nlj2]);
+              JJabMax2 = (SPB.twoj_nlj3[nnlj1] + SPB.twoj_nlj3[nnlj2]);
+              JJabMin2 = std::abs(SPB.twoj_nlj3[nnlj1] - SPB.twoj_nlj3[nnlj2]);
+              if( JabMin2 > JabMax2 || JJabMin2 > JJabMax2 ){ continue; }
+
+              //***set index
+              HF_ME.ME3Idx[nlj1][nlj2][nlj3][nnlj1][nnlj2][nnlj3] = MEcount;
+	      //std::cout << "***   " << nlj1 << ", " << nlj2 << ", " << nlj3 << " | " << nnlj1 << ", " << nnlj2 << ", " << nnlj3 << " -> " << MEcount << std::endl;
+
+              // inner loops
+              for(Jab2 = JabMin2; Jab2 <= JabMax2; Jab2 += 2){
+                for(JJab2 = JJabMin2; JJab2 <= JJabMax2; JJab2 += 2){
+                  //summation bounds
+                  twoJCMin = std::max(std::abs(Jab2 - SPB.twoj_nlj3[nlj3]), std::abs(JJab2 - SPB.twoj_nlj3[nnlj3]));
+                  twoJCMax = std::min(Jab2 + SPB.twoj_nlj3[nlj3], JJab2 + SPB.twoj_nlj3[nnlj3]);
+		  
+                  for(twoJC = twoJCMin; twoJC <= twoJCMax; twoJC += 2){
+		    // the total isospin loop can be replaced by i+=5
+		    MEcount += 5;
+		    /*for(tab2 = 0; tab2 <= 2; tab2 += 2){
+                      for(ttab2 = 0; ttab2 <= 2; ttab2 +=2){
+                        //summation bounds
+                        twoTMin = std::max( std::abs(tab2 - 1), std::abs(ttab2 - 1)); // twoTMin can just be used as 1
+                        twoTMax = std::min( tab2 + 1, ttab2 + 1);
+			
+                        for(twoT = twoTMin; twoT <= twoTMax; twoT += 2){
+                          ++MEcount;
+			  //printf("--%i: j=%i, jj=%i, twoJ=%i, t=%i, tt=%i, twoT=%i\n", i, Jab, JJab, twoJC, tab, ttab, twoT);
+                        }
+                      }//ttab
+		      }//tab*/
+                  }//twoJ
+                }//JJab
+              }//Jab
+            }//nnlj3
+          }//nnlj2
+        }//nnlj1
+      }//nlj3
+    }//nlj2
+  }//nlj1
+
+  std::cout << "!!! MEcount = " << MEcount << std::endl;
+
+  std::ifstream interaction2;	// interaction file
+  interaction2.open(fullpath.c_str(), std::ios::binary);
+  interaction2.seekg(0, interaction2.end);
+  long long length = interaction2.tellg();
+  interaction2.close();
+  std::cout << "!!! length = " << length << ", " << (length - 255*sizeof(char))/4 << std::endl;
+
+  //ME3JH.iMax = i;
+  HF_ME.V3 = new float[MEcount];
+  Darmstadt3_Read(fullpath, HF_ME.V3, MEcount, filetype);
+}
+
+void Darmstadt3_Read(std::string filepath, float *ME0, long long count, int type)
+{
+  int ME3J_HEADERSIZE = 255;
+  int BUFSIZE = ME3J_HEADERSIZE*sizeof(char);
+  gzFile gzfd;
+  FILE *fd;
+  char buf[BUFSIZE], *d;
+
+  if( type == 0 ){
+    // open file
+    fd = fopen(filepath.c_str(), "rb");
+    if( fd == NULL ){ std::cerr << "Matrix Element file, " << filepath << ", does not exist" << std::endl; exit(1); }
+    // read and check header
+    fread(buf, sizeof(char), ME3J_HEADERSIZE, fd);
+    if( std::strstr(buf,"me3j-f2-bin") == NULL ){ std::cerr << "Matrix Element file, " << filepath << " is wrong format" << std::endl; exit(1); }
+    // read data
+    fread(ME0, sizeof(float), count, fd);
+    // close file
+    fclose(fd);
+  }
+  else if( type == 1 ){
+    // open file
+    gzfd = gzopen(filepath.c_str(), "r");
+    if( !gzfd ){ std::cerr << "Matrix Element file, " << filepath << ", does not exist" << std::endl; exit(1); }
+    // read and check format identifier
+    gzgets(gzfd, buf, BUFSIZE);
+    if( std::strstr(buf,"me3j-f2") == NULL ){ std::cerr << "Matrix Element file, " << filepath << " is wrong format" << std::endl; exit(1); }
+    // read matrix elements
+    for(long long i = 0; i < count; i += 10){
+      gzgets(gzfd, buf, BUFSIZE);
+      d = std::strtok(buf, " ");
+      ME0[i] = std::atof(d);
+
+      for(long long i0 = i+1; i0 < std::min(i+10, count); ++i0){
+	d = std::strtok(NULL, " ");
+	ME0[i0] = std::atof(d);
+      }
+    }
+    // close file
+    gzclose(gzfd);
+  }
+  else{ std::cerr << "Wrong Darmstadt Matrix Element type" << std::endl; exit(1); }
+}
+
+
+//***************************************************************************
+// GetME in pn format
+//***************************************************************************
+double ME3J_GetME_pn(HF_Matrix_Elements &HF_ME, int p, int q, int r, int s, int t, int u, int j, int jj, int J)
+{
+  int mt, mtt, MT, MTT;
+  int tmin, tmax, ttmin, ttmax, Tmin, Tmax;
+  double V, CGC1, CGC2, CGC3, CGC4;
+
+  int p_nlj = SPB.qnums[p].nlj3;
+  int q_nlj = SPB.qnums[q].nlj3;
+  int r_nlj = SPB.qnums[r].nlj3;
+  int s_nlj = SPB.qnums[s].nlj3;
+  int t_nlj = SPB.qnums[t].nlj3;
+  int u_nlj = SPB.qnums[u].nlj3;
+
+  int p_t = SPB.qnums[p].t;
+  int q_t = SPB.qnums[q].t;
+  int r_t = SPB.qnums[r].t;
+  int s_t = SPB.qnums[s].t;
+  int t_t = SPB.qnums[t].t;
+  int u_t = SPB.qnums[u].t;
+
+  mt = p_t + q_t;
+  tmin = std::abs(mt);
+  tmax = 2;
+
+  mtt = s_t + t_t;
+  ttmin = std::abs(mtt);
+  ttmax = 2;
+
+  MT = mt + r_t;
+  MTT = mtt + u_t;
+  if( MT != MTT ){ return 0.0; }
+  Tmin = std::abs(MT);
+  Tmax = 3;
+  
+  V = 0.0;
+  for(int t = tmax; t >= tmin; t -= 2){
+    //std::cout << "get_CGC1( " << 1 << "," << p_t << "," << 1 << "," << q_t << "," << t << "," << mt << " ) = " << std::endl;
+    //std::cout << JCOUP.get_CGC(1, p_t, 1, q_t, t, mt) << std::endl;
+    CGC1 = JCOUP.get_CGC(1, p_t, 1, q_t, t, mt);
+    if( CGC1 == 0.0 ){ continue; }
+    for(int tt = ttmax; tt >= ttmin; tt -= 2){
+      //std::cout << "get_CGC2( " << 1 << "," << s_t << "," << 1 << "," << t_t << "," << tt << "," << mtt << " ) = " << std::endl;
+      //std::cout << JCOUP.get_CGC(1, s_t, 1, t_t, tt, mtt) << std::endl;
+      CGC2 = JCOUP.get_CGC(1, s_t, 1, t_t, tt, mtt);
+      if( CGC2 == 0.0 ){ continue; }
+      for(int T = Tmax; T >= Tmin; T -= 2){
+	//std::cout << "get_CGC3( " << t << "," << mt << "," << 1 << "," << r_t << "," << T << "," << MT << " ) = " << std::endl;
+	//std::cout << JCOUP.get_CGC(t, mt, 1, r_t, T, MT) << std::endl;
+	CGC3 = JCOUP.get_CGC(t, mt, 1, r_t, T, MT);
+	if( CGC3 == 0.0 ){ continue; }
+	//std::cout << "get_CGC4( " << tt << "," << mtt << "," << 1 << "," << u_t << "," << T << "," << MT << " ) = " << std::endl;
+	//std::cout << JCOUP.get_CGC(tt, mtt, 1, u_t, T, MT) << std::endl;
+	CGC4 = JCOUP.get_CGC(tt, mtt, 1, u_t, T, MT);
+	if( CGC4 == 0.0 ){ continue; }
+	V += CGC1 * CGC2 * CGC3 * CGC4 * ME3J_GetME(HF_ME, p_nlj, q_nlj, r_nlj, s_nlj, t_nlj, u_nlj, j, jj, J, t, tt, T);
+      }
+    }
+  }
+
+  return V;
+}
+
+
+//***************************************************************************
+// GetME
+//***************************************************************************
+// get specific [(ja,jb)Jab,jc]J[(ta,tb)tab,tc]T-coupled matrix element **
+//***************************************************************************
+// NOTE: no assumptions are made for the index ordering - routine determines
+//		 phases & possible 6j factors from ordering indices, and calls
+//		 GetME_Ordered
+// TODO: improve this!!!
+//***************************************************************************                    2J????????????????
+double ME3J_GetME(HF_Matrix_Elements &HF_ME, int nlj1, int nlj2, int nlj3, int nnlj1, int nnlj2, int nnlj3, int j12, int jj12, int twoJ, int t12, int tt12, int twoT)
+{
+  long long	idx, iidx;
+  int		tmp, nlja, nljb, nljc, nnlja, nnljb, nnljc;
+  int		twoja, twojb, twojja, twojjb;
+  int		j2, jj2, j2Min, j2Max, jj2Min, jj2Max, t2, tt2, t2Min, t2Max, tt2Min, tt2Max;
+  int		nlj1x, nlj2x, nlj3x, nnlj1x, nnlj2x, nnlj3x, j12x, jj12x, t12x, tt12x;
+
+  //*** do the internal math with double accuracy, for safety reasons
+  double	me, ovl1, ovl2;
+
+  //*** E3Max cutoff must be caught here, else there might be illegal memory accesses in ME3JH
+  if( SPB.e_nlj3[nlj1] + SPB.e_nlj3[nlj2] + SPB.e_nlj3[nlj3] > SPB.E3Max || SPB.e_nlj3[nnlj1] + SPB.e_nlj3[nnlj2] + SPB.e_nlj3[nnlj3] > SPB.E3Max )
+    { return 0.0; }
+
+  //*** sort indices in descending order
+  nlja  = nlj1;  nljb  = nlj2;  nljc  = nlj3;
+  nnlja = nnlj1; nnljb = nnlj2; nnljc = nnlj3;
+
+  if( nlja < nljb ){ tmp = nlja; nlja = nljb; nljb = tmp; }
+  if( nlja < nljc ){ tmp = nlja; nlja = nljc; nljc = tmp; }
+  if( nljb < nljc ){ tmp = nljb; nljb = nljc; nljc = tmp; }
+  if( nnlja < nnljb ){ tmp = nnlja; nnlja = nnljb; nnljb = tmp; }
+  if( nnlja < nnljc ){ tmp = nnlja; nnlja = nnljc; nnljc = tmp; }
+  if( nnljb < nnljc ){ tmp = nnljb; nnljb = nnljc; nnljc = tmp; }
+
+  //*** lower triangle is stored - swap indices if necessary
+  idx  = (nlja * SPB.nljDim3 + nljb) * SPB.nljDim3 + nljc;
+  iidx = (nnlja * SPB.nljDim3 + nnljb) * SPB.nljDim3 + nnljc;
+
+  if( iidx > idx ){
+    tmp = nlja; nlja = nnlja; nnlja = tmp;
+    tmp = nljb; nljb = nnljb; nnljb = tmp;
+    tmp = nljc; nljc = nnljc; nnljc = tmp;
+
+    nnlj1x = nlj1;
+    nnlj2x = nlj2;
+    nnlj3x = nlj3;
+
+    nlj1x = nnlj1;
+    nlj2x = nnlj2;
+    nlj3x = nnlj3;
+
+    j12x = jj12;
+    jj12x = j12;
+
+    t12x = tt12;
+    tt12x = t12;
+  }
+  else{
+    nlj1x = nlj1;
+    nlj2x = nlj2;
+    nlj3x = nlj3;
+
+    nnlj1x = nnlj1;
+    nnlj2x = nnlj2;
+    nnlj3x = nnlj3;
+
+    j12x = j12;
+    jj12x = jj12;
+    
+    t12x = t12;
+    tt12x = tt12;
+  }
+
+  twoja = SPB.twoj_nlj3[nlja];
+  twojb = SPB.twoj_nlj3[nljb];
+
+  twojja = SPB.twoj_nlj3[nnlja];
+  twojjb = SPB.twoj_nlj3[nnljb];
+
+  if( nljc == nlj3x ){
+    j2Min = j12x;
+    j2Max = j12x;
+    
+    t2Min = t12x;
+    t2Max = t12x;
+  }
+  else{
+    j2Min = std::abs(twoja - twojb);
+    j2Max = twoja + twojb;
+    
+    t2Min = 0;
+    t2Max = 2;
+  }
+
+  if( nnljc == nnlj3x ){
+    jj2Min = jj12x;
+    jj2Max = jj12x;
+    
+    tt2Min = tt12x;
+    tt2Max = tt12x;
+  }
+  else{
+    jj2Min = std::abs(twojja - twojjb);
+    jj2Max = twojja + twojjb;
+    
+    tt2Min = 0;
+    tt2Max = 2;
+  }
+
+  me = 0.0;
+  for(j2 = j2Min; j2 <= j2Max; j2 += 2){
+    for(t2 = t2Min; t2 <= t2Max; t2 += 2){
+      //if( t2 < std::abs(twoT - 1) || t2 > twoT + 1 ){ continue; }
+      ovl1 = ME3J_Overlap(HF_ME, nlj1x, nlj2x, nlj3x, j12x, t12x, nlja, nljb, nljc, j2, t2, twoJ, twoT);
+      
+      if( std::fabs(ovl1) > 1.0e-12 ){
+	for(jj2 = jj2Min; jj2 <= jj2Max; jj2 += 2){
+	  for(tt2 = tt2Min; tt2 <= tt2Max; tt2 += 2){
+	    //if( tt2 < std::abs(twoT - 1) || tt2 > twoT + 1 ){ continue; }
+	    ovl2 = ME3J_Overlap(HF_ME, nnlj1x, nnlj2x, nnlj3x, jj12x, tt12x, nnlja, nnljb, nnljc, jj2, tt2, twoJ, twoT);
+	    
+	    if( std::fabs(ovl1*ovl2) > 1.0e-12 ){
+	      me += ovl1 * ovl2 * ME3J_GetME_Ordered(HF_ME, nlja, nljb, nljc, nnlja, nnljb, nnljc, j2, jj2, twoJ, t2, tt2, twoT);
+	    }
+	  }
+	}
+      }
+    }
+  }
+
+  return me;
+}
+
+
+//********************************************************************
+// Overlap
+//********************************************************************
+// returns the overlap between states with different index ordering
+//********************************************************************
+// NOTE: we assume nlja >= nljb >= nljc, but no particular order for
+//       nlj1, nlj2, nlj3
+//********************************************************************               2J????????????????????
+double ME3J_Overlap(HF_Matrix_Elements &ME, int nlj1, int nlj2, int nlj3, int j12, int t12, int nlja, int nljb, int nljc, int jab, int tab, int twoJ, int twoT)
+{
+  int		twoj1, twoj2, twoj3;
+  double	phase;
+
+  twoj1 = SPB.twoj_nlj3[nlj1];
+  twoj2 = SPB.twoj_nlj3[nlj2];
+  twoj3 = SPB.twoj_nlj3[nlj3];
+
+  phase = 1.0;
+
+  if( nljc == nlj3 ){
+    if( tab != t12 || jab != j12 ){ return 0.0; }
+    if( nlja == nlj1 ){ return 1.0; }    //*** (abc) = (123)
+    else{                                //*** (abc) = (213)
+      if( ((j12 - (twoj1 + twoj2) + t12)/2)%2 ){ phase = -1.0; }
+      return phase;
+    }
+  }
+
+  if( tab < std::abs(twoT - 1) || tab > twoT + 1 ){ return 0.0; }
+  
+  if( nljc == nlj1 ){
+    if( nlja == nlj3 ){ phase = -1.0; }  //*** (abc) = (321)
+    else{                                //*** (abc) = (231)
+      if( (((twoj2 + twoj3) - jab - tab + 2)/2)%2 ){ phase = -1.0; }
+    }
+    /*std::cout << "( " << twoj1 << "," << twoj2 << "," << j12 << "," << twoj3 << "," << twoJ << "," << jab << " ) = " << std::endl;
+    std::cout << JCOUP.get_SixJ(twoj1, twoj2, j12, twoj3, twoJ, jab) << std::endl;
+    std::cout << "( " << 1 << "," << 1 << "," << t12 << "," << 1 << "," << twoT << "," << tab << " ) = " << std::endl;
+    std::cout << JCOUP.get_SixJ(1, 1, t12, 1, twoT, tab) << std::endl;*/
+
+    return phase * std::sqrt((j12 + 1.0)*(jab + 1.0)*(t12 + 1.0)*(tab + 1.0)) *
+      JCOUP.get_SixJ(twoj1, twoj2, j12, twoj3, twoJ, jab) * JCOUP.get_SixJ(1, 1, t12, 1, twoT, tab);
+    //CGC6(twoj1, twoj2, j12, twoj3, twoJ, jab) * CGC6(1, 1, t12, 1, twoT, tab);
+  }
+
+  if( nljc == nlj2 ){
+    if( nlja == nlj1 ){	                 //*** (abc) = (132)
+      if( ((-(twoj2 - twoj3) + j12 - jab + t12 - tab + 2)/2)%2 ){ phase = -1.0; }
+    }
+    else{	                         //*** (abc) = (312)
+      if( ((j12 - (twoj1 + twoj2) + t12 - 2)/2)%2 ){ phase = -1.0; }
+    }
+    /*std::cout << "( " << twoj2 << "," << twoj1 << "," << j12 << "," << twoj3 << "," << twoJ << "," << jab << " ) = " << std::endl;
+    std::cout << JCOUP.get_SixJ(twoj2, twoj1, j12, twoj3, twoJ, jab) << std::endl;
+    std::cout << "( " << 1 << "," << 1 << "," << t12 << "," << 1 << "," << twoT << "," << tab << " ) = " << std::endl;
+    std::cout << JCOUP.get_SixJ(1, 1, t12, 1, twoT, tab) << std::endl;*/
+
+    return  phase * std::sqrt((j12 + 1.0)*(jab + 1.0)*(t12 + 1.0)*(tab + 1.0)) *
+      JCOUP.get_SixJ(twoj2, twoj1, j12, twoj3, twoJ, jab) * JCOUP.get_SixJ(1, 1, t12, 1, twoT, tab);
+    //CGC6(twoj2, twoj1, j12, twoj3, twoJ, jab) * CGC6(1, 1, t12, 1, twoT, tab);
+  }
+
+  return 0.0;
+}
+
+
+//***************************************************************************
+// GetME_Ordered
+//***************************************************************************
+// get specific [(ja,jb)Jab,jc]J[(ta,tb)tab,tc]T-coupled matrix element **
+//***************************************************************************
+// NOTE: this requires indices to be ordered - calls to matrix elements should
+//       be made through GetME, which will ensure proper ordering
+//
+// TODO: further optimizations?
+//***************************************************************************                     2J?????????????????????
+float ME3J_GetME_Ordered(HF_Matrix_Elements &HF_ME, int nlj1, int nlj2, int nlj3, int nnlj1, int nnlj2, int nnlj3, int jab0, int jjab0, int twoJ0, int tab0, int ttab0, int twoT0)
+{
+  int   jab2, jabMin2, jabMax2, jjab2, jjabMin2, jjabMax2, twoJMin, twoJMax;
+  long long  i;
+
+  //*** initial index
+  i = HF_ME.ME3Idx[nlj1][nlj2][nlj3][nnlj1][nnlj2][nnlj3];
+
+  //*** parity or triangular condition violated
+  if( i < 0 ){ return(0.0); }
+
+  jabMax2 = (SPB.twoj_nlj3[nlj1] + SPB.twoj_nlj3[nlj2]);
+  jabMin2 = std::abs(SPB.twoj_nlj3[nlj1] - SPB.twoj_nlj3[nlj2]);
+
+  jjabMax2 = (SPB.twoj_nlj3[nnlj1] + SPB.twoj_nlj3[nnlj2]);
+  jjabMin2 = std::abs(SPB.twoj_nlj3[nnlj1] - SPB.twoj_nlj3[nnlj2]);
+
+  //*** possible isospin combinations:
+  //***
+  //***         tab             ttab            twoT            twoT/2
+  //***         0               0               1               0
+  //***         0               1               1               0
+  //***         1               0               1               0
+  //***         1               1               1               0
+  //***         1               1               3               1
+
+  for(jab2 = jabMin2; jab2 <= jabMax2; jab2 += 2){
+    for(jjab2 = jjabMin2; jjab2 <= jjabMax2; jjab2 += 2){
+      //*** diagonal loops
+      twoJMin = std::max( std::abs(jab2 - SPB.twoj_nlj3[nlj3]), std::abs(jjab2 - SPB.twoj_nlj3[nnlj3]) );
+      twoJMax = std::min( jab2 + SPB.twoj_nlj3[nlj3], jjab2 + SPB.twoj_nlj3[nnlj3] );
+
+      if( twoJMin > twoJMax ){ continue; }
+
+      if( jab2 == jab0 && jjab2 == jjab0 ){
+    	//i += ((twoJ0 - twoJMin)/2)*5 + tab0*2 + ttab0 + (twoT0/2);
+	i += ((twoJ0 - twoJMin)/2)*5 + tab0 + (ttab0/2) + (twoT0/2);
+    	return  HF_ME.V3[i];
+      }
+      i += ((twoJMax - twoJMin)/2 + 1)*5;
+    }
+  }
+
+  return 0.0;
 }
